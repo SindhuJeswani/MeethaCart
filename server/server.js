@@ -129,6 +129,15 @@ const startServer = async () => {
   try {
     await connectDB();
     await ensureAdminExists();
+
+    // If categories/items collection is empty, auto-seed initial catalog
+    const { Category } = await import('./models/Category.js');
+    const catCount = await Category.countDocuments();
+    if (catCount === 0) {
+      console.log('🌱 [Seeder] Initial database is empty. Auto-seeding catalog...');
+      const { seedDatabase } = await import('./scripts/seed.js');
+      await seedDatabase();
+    }
     app.listen(PORT, () => {
       console.log(`\n🍰 ===============================================`);
       console.log(`🍰 MeethaCart Server running on http://localhost:${PORT}`);

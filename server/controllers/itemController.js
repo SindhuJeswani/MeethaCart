@@ -17,7 +17,7 @@ export const getItems = async (req, res) => {
       isEggless,
       sort,
       page = 1,
-      limit = 12
+      limit = 24
     } = req.query;
 
     const query = { isAvailable: true };
@@ -74,7 +74,9 @@ export const getItems = async (req, res) => {
       sortOption = { createdAt: -1 };
     }
 
-    const skip = (Number(page) - 1) * Number(limit);
+    const parsedLimit = limit === 'all' ? 100 : Math.min(Number(limit) || 24, 100);
+    const parsedPage = Math.max(Number(page) || 1, 1);
+    const skip = (parsedPage - 1) * parsedLimit;
 
     const [items, total] = await Promise.all([
       Item.find(query)
@@ -82,7 +84,7 @@ export const getItems = async (req, res) => {
         .populate('category', 'name slug')
         .sort(sortOption)
         .skip(skip)
-        .limit(Number(limit)),
+        .limit(parsedLimit),
       Item.countDocuments(query)
     ]);
 
@@ -90,8 +92,8 @@ export const getItems = async (req, res) => {
       success: true,
       total,
       count: items.length,
-      page: Number(page),
-      pages: Math.ceil(total / Number(limit)) || 1,
+      page: parsedPage,
+      pages: Math.ceil(total / parsedLimit) || 1,
       items
     });
   } catch (error) {

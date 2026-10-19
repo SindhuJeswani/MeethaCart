@@ -3,7 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import api from '../../services/api';
 import ItemCard from '../../components/items/ItemCard';
 import ItemFilterSidebar from '../../components/items/ItemFilterSidebar';
-import { Search, ShoppingBag, SlidersHorizontal, X, RefreshCw } from 'lucide-react';
+import { Search, ShoppingBag, SlidersHorizontal, X, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const BrowseItems = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -11,6 +11,7 @@ const BrowseItems = () => {
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
 
   // Filter States initialized from URL params
@@ -19,6 +20,8 @@ const BrowseItems = () => {
   const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') || '6000');
   const [isEggless, setIsEggless] = useState(searchParams.get('isEggless') === 'true');
   const [sort, setSort] = useState(searchParams.get('sort') || 'newest');
+  const [page, setPage] = useState(Number(searchParams.get('page')) || 1);
+  const [limit, setLimit] = useState(searchParams.get('limit') || '24');
   const [showMobileFilter, setShowMobileFilter] = useState(false);
 
   // Sync state if URL search query changes (e.g. from navbar search)
@@ -44,7 +47,7 @@ const BrowseItems = () => {
     fetchCategories();
   }, []);
 
-  // Fetch Items on filter change
+  // Fetch Items on filter, sort, or pagination change
   const fetchItems = async () => {
     try {
       setIsLoading(true);
@@ -55,6 +58,8 @@ const BrowseItems = () => {
       if (maxPrice && Number(maxPrice) < 6000) params.append('maxPrice', maxPrice);
       if (isEggless) params.append('isEggless', 'true');
       if (sort) params.append('sort', sort);
+      if (page) params.append('page', page);
+      if (limit) params.append('limit', limit);
 
       // Sync state back to URL query parameters
       setSearchParams(params, { replace: true });
@@ -63,6 +68,7 @@ const BrowseItems = () => {
       if (res.data?.success) {
         setItems(res.data.items || []);
         setTotalCount(res.data.total ?? res.data.count ?? (res.data.items?.length || 0));
+        setTotalPages(res.data.pages || 1);
       }
     } catch (err) {
       console.error('Error fetching items:', err.message);
@@ -71,12 +77,18 @@ const BrowseItems = () => {
     }
   };
 
+  // Reset to page 1 whenever filters change
+  useEffect(() => {
+    setPage(1);
+  }, [selectedCategory, maxPrice, isEggless, sort, search]);
+
   useEffect(() => {
     fetchItems();
-  }, [selectedCategory, maxPrice, isEggless, sort]);
+  }, [selectedCategory, maxPrice, isEggless, sort, page, limit]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
+    setPage(1);
     fetchItems();
   };
 
@@ -86,6 +98,8 @@ const BrowseItems = () => {
     setMaxPrice('6000');
     setIsEggless(false);
     setSort('newest');
+    setPage(1);
+    setLimit('24');
     setSearchParams({});
   };
 
@@ -176,26 +190,48 @@ const BrowseItems = () => {
         {/* Items Grid & Sort Toolbar */}
         <div className="flex-1 space-y-4 w-full">
 
-          {/* Top Bar: Count & Sort */}
+          {/* Top Bar: Count, Per-Page & Sort */}
           <div className="bg-white rounded-lg border border-bakery-200 p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="text-xs sm:text-sm text-bakery-700">
               Showing <strong className="text-chocolate">{items.length}</strong> of{' '}
               <strong className="text-chocolate">{totalCount}</strong> items
             </div>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <label className="text-xs font-medium text-bakery-600 whitespace-nowrap">
-                Sort:
-              </label>
-              <select
-                value={sort}
-                onChange={(e) => setSort(e.target.value)}
-                className="input-bakery text-xs py-1 px-2.5 bg-white font-medium rounded-md"
-              >
-                <option value="newest">Newest first</option>
-                <option value="price_asc">Price: low to high</option>
-                <option value="price_desc">Price: high to low</option>
-              </select>
+            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+              {/* Items per page selector */}
+              <div className="flex items-center gap-1.5">
+                <label className="text-xs font-medium text-bakery-600 whitespace-nowrap">
+                  Show:
+                </label>
+                <select
+                  value={limit}
+                  onChange={(e) => {
+                    setLimit(e.target.value);
+                    setPage(1);
+                  }}
+                  className="input-bakery text-xs py-1 px-2 bg-white font-medium rounded-md"
+                >
+                  <option value="12">12</option>
+                  <option value="24">24</option>
+                  <option value="all">All ({totalCount})</option>
+                </select>
+              </div>
+
+              {/* Sort selector */}
+              <div className="flex items-center gap-1.5">
+                <label className="text-xs font-medium text-bakery-600 whitespace-nowrap">
+                  Sort:
+                </label>
+                <select
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value)}
+                  className="input-bakery text-xs py-1 px-2.5 bg-white font-medium rounded-md"
+                >
+                  <option value="newest">Newest first</option>
+                  <option value="price_asc">Price: low to high</option>
+                  <option value="price_desc">Price: high to low</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -278,6 +314,58 @@ const BrowseItems = () => {
               {items.map((item) => (
                 <ItemCard key={item._id} item={item} />
               ))}
+            </div>
+          )}
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-bakery-200">
+              <span className="text-xs text-bakery-600 font-medium">
+                Page {page} of {totalPages}
+              </span>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  disabled={page <= 1}
+                  onClick={() => {
+                    setPage((p) => Math.max(p - 1, 1));
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="btn-secondary text-xs py-1 px-2.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Prev</span>
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pNum) => (
+                  <button
+                    key={pNum}
+                    type="button"
+                    onClick={() => {
+                      setPage(pNum);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className={`w-7 h-7 rounded-md text-xs font-bold transition-all ${
+                      page === pNum
+                        ? 'bg-caramel text-white shadow-xs'
+                        : 'bg-white text-chocolate border border-bakery-200 hover:bg-bakery-50'
+                    }`}
+                  >
+                    {pNum}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  disabled={page >= totalPages}
+                  onClick={() => {
+                    setPage((p) => Math.min(p + 1, totalPages));
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="btn-secondary text-xs py-1 px-2.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+                >
+                  <span>Next</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           )}
 
