@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from '../../context/LanguageContext';
-import { ShieldCheck, RefreshCw, AlertCircle, CheckCircle2, ArrowRight, Info, Terminal } from 'lucide-react';
+import { ShieldCheck, RefreshCw, AlertCircle, CheckCircle2, ArrowRight, Info } from 'lucide-react';
+import AuthLayout from '../../components/auth/AuthLayout';
 
 const VerifyOtp = () => {
   const location = useLocation();
@@ -58,7 +59,6 @@ const VerifyOtp = () => {
       } else if (purpose === 'login_2fa') {
         res = await verifyLoginOtp(email, cleanOtp);
       } else if (purpose === 'password_reset') {
-        // Direct to reset password form with the verified code
         navigate('/reset-password', {
           state: { email, otp: cleanOtp }
         });
@@ -67,8 +67,7 @@ const VerifyOtp = () => {
 
       setSuccessMsg('Verification successful! Redirecting...');
       
-      // Determine redirection based on verified user's role
-      const userRole = res.user?.role;
+      const userRole = res?.user?.role;
       setTimeout(() => {
         if (userRole === 'admin') {
           navigate('/admin/dashboard', { replace: true });
@@ -94,7 +93,7 @@ const VerifyOtp = () => {
     try {
       setIsResending(true);
       const res = await resendOtp(email, purpose);
-      setSuccessMsg(res.message || 'A fresh security code has been sent!');
+      setSuccessMsg(res.message || 'A fresh verification code has been sent.');
       setCooldown(res.cooldownSeconds || 60);
       setOtp('');
     } catch (err) {
@@ -104,125 +103,101 @@ const VerifyOtp = () => {
     }
   };
 
+  const benefits = [
+    'Protecting your account and transactions with two-factor security',
+    'Instant verification code sent directly to your registered email',
+    'No complicated passwords needed for quick access recovery'
+  ];
+
   return (
-    <div className="min-h-[90vh] flex items-center justify-center px-4 py-14 bg-bakery-50">
-      <div className="w-full max-w-md animate-slide-up">
-
-        {/* Decorative blobs */}
-        <div className="fixed top-1/4 -left-20 w-64 h-64 rounded-full bg-strawberry/8 blur-3xl pointer-events-none" />
-        <div className="fixed bottom-1/4 -right-20 w-52 h-52 rounded-full bg-caramel/8 blur-3xl pointer-events-none" />
-        
-        {/* Header */}
-        <div className="text-center mb-8 space-y-3">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-caramel to-amber-600 text-white shadow-warm-lg mb-1">
-            <ShieldCheck className="w-8 h-8" />
-          </div>
-          <h1 className="text-3xl font-serif font-bold text-chocolate">
-            {t('auth.verifyOtpTitle')}
-          </h1>
-          <p className="text-sm text-bakery-600">
-            {t('auth.verifyOtpSubtitle')}{' '}
-            <strong className="text-chocolate font-semibold">{email}</strong>
-          </p>
-        </div>
-
-        {/* Card */}
-        <div className="card-bakery p-8">
-
-          {/* Delivery & Spam Disclaimer */}
-          <div className="mb-5 p-3.5 rounded-xl bg-bakery-200/50 border border-bakery-300 text-xs text-bakery-800 flex items-start gap-2.5">
-            <Info className="w-4 h-4 text-caramel shrink-0 mt-0.5" />
-            <p className="leading-relaxed">
-              {t('auth.spamDisclaimer')}
-            </p>
-          </div>
-          
-          {error && (
-            <div className="alert-error mb-4">
-              <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {successMsg && (
-            <div className="alert-success mb-4">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-              <span>{successMsg}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            
-            {/* 6-Digit OTP Box */}
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-bakery-700 mb-2 text-center">
-                6-Digit Security Code
-              </label>
-              <input
-                id="otp-input"
-                type="text"
-                maxLength={6}
-                value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                placeholder="• • • • • •"
-                autoFocus
-                className="w-full text-center tracking-[12px] text-2xl font-mono font-bold py-3.5 px-4 rounded-xl border border-bakery-300 bg-white text-chocolate focus:ring-4 focus:ring-caramel/20 focus:border-caramel outline-none transition-all"
-              />
-              <p className="text-xs text-bakery-500 text-center mt-2">
-                Code expires in 5 minutes • Single use only
-              </p>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isSubmitting || otp.length !== 6}
-              className="btn-primary w-full py-3.5 text-base shadow-warm"
-            >
-              {isSubmitting ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <>
-                  <span>{t('auth.verifyBtn')}</span>
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
-            </button>
-          </form>
-
-          {/* Resend Cooldown Section */}
-          <div className="mt-6 pt-5 border-t border-bakery-200/60 flex items-center justify-between text-sm">
-            <span className="text-bakery-600">Didn't receive the code?</span>
-            {cooldown > 0 ? (
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-bakery-100 text-bakery-700">
-                Resend in {cooldown}s
-              </span>
-            ) : (
-              <button
-                type="button"
-                onClick={handleResend}
-                disabled={isResending}
-                className="text-xs font-bold text-caramel hover:text-caramel-dark flex items-center gap-1.5 transition-colors disabled:opacity-50"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isResending ? 'animate-spin' : ''}`} />
-                <span>{t('auth.resendOtp')}</span>
-              </button>
-            )}
-          </div>
-
-        </div>
-
-        {/* Back Link */}
-        <div className="text-center mt-6">
-          <Link
-            to="/login"
-            className="text-xs font-medium text-bakery-600 hover:text-bakery-900 transition-colors"
-          >
-            ← {t('auth.backToLogin')}
-          </Link>
-        </div>
-
+    <AuthLayout
+      headline="Secure Email OTP Verification"
+      benefits={benefits}
+      footerNote="2-Step Security Check"
+      formTitle="Verify your email"
+      formSubtitle={email ? `We sent a 6-digit verification code to ${email}` : 'Enter your 6-digit verification code'}
+      footerLinkText="Need to start over?"
+      footerLinkAction="Back to sign in"
+      footerLinkTo="/login"
+    >
+      {/* Delivery & Spam Disclaimer */}
+      <div className="mb-4 p-3 rounded-lg bg-bakery-100 border border-bakery-200 text-xs text-bakery-800 flex items-start gap-2">
+        <Info className="w-4 h-4 text-caramel shrink-0 mt-0.5" />
+        <p className="leading-relaxed">
+          {t('auth.spamDisclaimer') || 'If you do not see the email in your inbox within a minute, please check your spam or junk folder.'}
+        </p>
       </div>
-    </div>
+
+      {error && (
+        <div className="alert-error mb-4">
+          <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {successMsg && (
+        <div className="alert-success mb-4">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+          <span>{successMsg}</span>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* OTP Input */}
+        <div>
+          <label className="block text-xs font-semibold text-bakery-700 mb-1.5 text-center">
+            {t('auth.enterOtp') || 'Enter 6-Digit Code'}
+          </label>
+          <input
+            id="otp-input"
+            type="text"
+            maxLength="6"
+            value={otp}
+            onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+            placeholder="••••••"
+            className="w-full text-center tracking-[0.5em] font-mono text-2xl py-3 rounded-lg border border-bakery-300 focus:outline-none focus:border-caramel focus:ring-2 focus:ring-caramel/20 transition-all bg-bakery-50 text-chocolate font-bold"
+            autoFocus
+            autoComplete="one-time-code"
+          />
+        </div>
+
+        {/* Submit */}
+        <button
+          type="submit"
+          id="verify-otp-btn"
+          disabled={isSubmitting || otp.length !== 6}
+          className="btn-primary w-full py-2.5 text-sm font-medium"
+        >
+          {isSubmitting ? (
+            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : (
+            <>
+              <span>{t('auth.verifyButton') || 'Verify & Continue'}</span>
+              <ArrowRight className="w-4 h-4" />
+            </>
+          )}
+        </button>
+
+        {/* Resend OTP */}
+        <div className="pt-2 text-center text-xs text-bakery-600">
+          {cooldown > 0 ? (
+            <p className="text-bakery-500">
+              Resend code in <strong className="text-chocolate font-mono">{cooldown}s</strong>
+            </p>
+          ) : (
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={isResending}
+              className="inline-flex items-center gap-1 font-semibold text-caramel hover:text-caramel-dark transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isResending ? 'animate-spin' : ''}`} />
+              <span>Resend verification code</span>
+            </button>
+          )}
+        </div>
+      </form>
+    </AuthLayout>
   );
 };
 

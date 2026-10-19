@@ -4,7 +4,9 @@ import {
   getSellers,
   updateSellerStatus,
   getUsers,
-  getAdminOrders
+  getAdminOrders,
+  deleteUser,
+  updateUserRole
 } from '../controllers/adminController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { authorize } from '../middleware/roleMiddleware.js';
@@ -24,6 +26,8 @@ router.patch('/sellers/:id/status', updateSellerStatus);
 
 // User management directory
 router.get('/users', getUsers);
+router.delete('/users/:id', deleteUser);
+router.patch('/users/:id/role', updateUserRole);
 
 // Orders monitoring
 router.get('/orders', getAdminOrders);

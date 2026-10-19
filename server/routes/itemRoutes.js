@@ -14,12 +14,12 @@ import { uploadItemImages, handleUploadError } from '../middleware/uploadMiddlew
 
 const router = express.Router();
 
+// Seller my-items MUST be before /:id to avoid Express matching "seller" as an item ID
+router.get('/seller/my-items', protect, authorize('seller', 'admin'), getMyItems);
+
 // Public catalog routes
 router.get('/', getItems);
 router.get('/:id', getItemById);
-
-// Seller routes (Requires login, role: seller/admin, and approved status)
-router.get('/seller/my-items', protect, authorize('seller', 'admin'), getMyItems);
 
 router.post(
   '/',

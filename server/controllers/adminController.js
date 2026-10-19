@@ -118,14 +118,29 @@ export const updateSellerStatus = async (req, res) => {
       });
     }
 
-    const seller = await User.findOne({ _id: id, role: 'seller' });
-    if (!seller) {
+    const targetUser = await User.findById(id);
+    if (!targetUser) {
       return res.status(404).json({
         success: false,
-        message: 'Seller not found.'
+        message: 'Seller / User not found.'
       });
     }
 
+    if (targetUser.role === 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Admin accounts cannot be blocked, suspended, or modified.'
+      });
+    }
+
+    if (targetUser.role !== 'seller') {
+      return res.status(400).json({
+        success: false,
+        message: 'Target user is not a seller.'
+      });
+    }
+
+    const seller = targetUser;
     seller.sellerStatus = status;
     await seller.save();
 
@@ -208,6 +223,58 @@ export const getAdminOrders = async (req, res) => {
       orders,
       note: 'Orders module will be fully populated in Milestone 4.'
     });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/**
+ * @desc    Delete user account (Admin protected)
+ * @route   DELETE /api/admin/users/:id
+ * @access  Protected (Admin)
+ */
+export const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const target = await User.findById(id);
+    if (!target) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+    if (target.role === 'admin') {
+      return res.status(403).json({ success: false, message: 'Admin accounts cannot be deleted.' });
+    }
+    await User.findByIdAndDelete(id);
+    return res.status(200).json({ success: true, message: 'User deleted successfully.' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/**
+ * @desc    Update user role (Admin protected)
+ * @route   PATCH /api/admin/users/:id/role
+ * @access  Protected (Admin)
+ */
+export const updateUserRole = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+    const target = await User.findById(id);
+    if (!target) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+    if (target.role === 'admin') {
+      return res.status(403).json({ success: false, message: 'Admin accounts cannot have their role changed.' });
+    }
+    if (role === 'admin') {
+      return res.status(403).json({ success: false, message: 'Assigning admin role is prohibited.' });
+    }
+    if (!['buyer', 'seller'].includes(role)) {
+      return res.status(400).json({ success: false, message: 'Invalid role. Only buyer and seller are allowed.' });
+    }
+    target.role = role;
+    await target.save();
+    return res.status(200).json({ success: true, message: `User role updated to ${role}.` });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }

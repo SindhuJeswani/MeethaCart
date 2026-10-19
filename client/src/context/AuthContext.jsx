@@ -77,6 +77,12 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     const res = await api.post('/auth/login', { email, password });
     if (res.data?.success) {
+      // Direct login bypass without OTP (e.g. Admin)
+      if (res.data.token && res.data.user) {
+        saveSession(res.data.token, res.data.user);
+        return res.data;
+      }
+
       const authState = {
         email: res.data.email,
         purpose: 'login_2fa',

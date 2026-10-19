@@ -58,84 +58,89 @@
 /* ── Component Layer ─────────────────────────────────── */
 @layer components {
 
-  /* Primary CTA Button — Strawberry Pink */
+  /* Primary CTA Button */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2
            text-white font-semibold
-           px-6 py-3 rounded-2xl
-           shadow-sm hover:shadow-md
-           transition-all duration-200
+           px-5 py-2.5 rounded-lg
+           transition-all duration-150
            active:scale-[0.97]
            disabled:opacity-50 disabled:pointer-events-none
            focus-visible:outline-none;
     background-color: var(--color-cta);
   }
-  .btn-primary:hover {
-    background-color: var(--color-cta-hover);
-  }
-  .btn-primary:focus-visible {
-    box-shadow: 0 0 0 3px rgba(232, 100, 124, 0.4);
-  }
+  .btn-primary:hover { background-color: var(--color-cta-hover); }
+  .btn-primary:focus-visible { box-shadow: 0 0 0 3px rgba(232,100,124,0.35); }
 
-  /* Secondary Button — Warm Cream outline */
+  /* Secondary Button */
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2
            text-bakery-800 font-semibold
-           px-6 py-3 rounded-2xl
+           px-5 py-2.5 rounded-lg
            border border-bakery-300 hover:border-bakery-400
-           transition-all duration-200
+           transition-all duration-150
            active:scale-[0.97]
            disabled:opacity-50 disabled:pointer-events-none
            focus-visible:outline-none;
     background-color: var(--color-surface);
   }
-  .btn-secondary:hover {
-    background-color: #EFE5D5;
-  }
+  .btn-secondary:hover { background-color: #EFE5D5; }
 
-  /* Outline Button — Caramel */
+  /* Outline Button */
   .btn-outline {
     @apply inline-flex items-center justify-center gap-2
-           font-semibold
-           px-6 py-2.5 rounded-2xl
-           transition-all duration-200
+           font-semibold text-sm
+           px-4 py-2 rounded-lg
+           transition-all duration-150
            active:scale-[0.97]
            focus-visible:outline-none;
-    border: 2px solid var(--color-primary);
+    border: 1.5px solid var(--color-primary);
     color: var(--color-primary);
   }
-  .btn-outline:hover {
-    background-color: var(--color-primary);
-    color: #ffffff;
-  }
+  .btn-outline:hover { background-color: var(--color-primary); color: #fff; }
 
   /* Ghost Button */
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2
            text-bakery-700 hover:bg-bakery-100
-           font-medium px-4 py-2 rounded-xl
+           font-medium px-3 py-2 rounded-md
            transition-all duration-150;
   }
-  .btn-ghost:hover {
-    color: var(--color-primary);
-  }
+  .btn-ghost:hover { color: var(--color-primary); }
 
-  /* Card — Soft vanilla surface with warm shadow */
+  /* Panel card — sections, dashboards */
   .card-bakery {
-    @apply bg-bakery-100 rounded-2xl
+    @apply bg-white rounded-xl
            border border-bakery-200
            shadow-warm
            transition-all duration-200;
   }
-
-  /* Elevated card hover effect */
   .card-bakery-hover {
     @apply card-bakery hover:shadow-warm-lg hover:-translate-y-0.5 cursor-pointer;
   }
 
+  /* Product card — item listings */
+  .card-item {
+    @apply bg-white rounded-lg border border-bakery-200
+           transition-all duration-150
+           hover:border-bakery-300 hover:shadow-warm;
+  }
+
+  /* Category / filter chip */
+  .chip {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full
+           text-xs font-semibold border border-bakery-200
+           bg-white text-bakery-700
+           hover:border-caramel hover:text-caramel
+           transition-all duration-150 cursor-pointer whitespace-nowrap;
+  }
+  .chip-active {
+    @apply chip bg-caramel/10 text-caramel border-caramel/40;
+  }
+
   /* Input fields */
   .input-bakery {
-    @apply w-full px-4 py-3 rounded-xl
+    @apply w-full px-3 py-2.5 rounded-md
            border border-bakery-300 bg-white
            text-bakery-900 placeholder-bakery-400
            focus:outline-none
@@ -149,7 +154,7 @@
 
   /* Label */
   .label-bakery {
-    @apply block text-xs font-semibold uppercase tracking-widest text-bakery-700 mb-2;
+    @apply block text-xs font-semibold text-bakery-700 mb-1.5;
   }
 
   /* Badge pill */
@@ -188,9 +193,9 @@
   .alert-success { @apply flex items-start gap-3 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm; }
   .alert-info    { @apply flex items-start gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-sm; }
 
-  /* Page container */
+  /* Page container — shared alignment scale */
   .page-container {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+    @apply w-full max-w-[1200px] mx-auto px-4 md:px-6;
   }
 }
 

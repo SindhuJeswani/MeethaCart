@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from '../../context/LanguageContext';
-import { User, Mail, Lock, Store, Phone, Globe, ArrowRight, AlertCircle, Cake, Sparkles } from 'lucide-react';
+import { User, Mail, Lock, Store, Phone, Globe, ArrowRight, AlertCircle, ShieldCheck } from 'lucide-react';
+import AuthLayout from '../../components/auth/AuthLayout';
 
 const Register = () => {
   const [searchParams] = useSearchParams();
@@ -15,13 +16,19 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [bakeryName, setBakeryName] = useState('');
-  const [preferredLanguage, setPreferredLanguage] = useState('en');
+  const { register } = useAuth();
+  const { t, lang } = useTranslation();
+  const navigate = useNavigate();
+
+  const [preferredLanguage, setPreferredLanguage] = useState(lang || 'en');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { register } = useAuth();
-  const { t } = useTranslation();
-  const navigate = useNavigate();
+  useEffect(() => {
+    if (lang) {
+      setPreferredLanguage(lang);
+    }
+  }, [lang]);
 
   useEffect(() => {
     if (searchParams.get('role') === 'seller') {
@@ -49,7 +56,7 @@ const Register = () => {
     }
 
     if (role === 'seller' && !bakeryName.trim()) {
-      setError('Bakery Brand Name is required for home baker sellers.');
+      setError('Bakery name is required for seller registration.');
       return;
     }
 
@@ -65,7 +72,6 @@ const Register = () => {
         bakeryName: role === 'seller' ? bakeryName.trim() : ''
       });
 
-      // Navigate to OTP verification
       navigate('/verify-otp', {
         state: {
           email: res.email,
@@ -80,231 +86,229 @@ const Register = () => {
     }
   };
 
+  const sellerBenefits = [
+    'Create your online storefront in minutes',
+    'List custom cakes, cookies, traditional mithai, and more',
+    'Receive orders directly from buyers in your local area'
+  ];
+
+  const buyerBenefits = [
+    'Freshly made bakes from verified local home bakers',
+    'Request custom designs, weights, and dates',
+    'Bilingual interface supporting English and اردو'
+  ];
+
   return (
-    <div className="min-h-[90vh] flex items-center justify-center px-4 py-14 bg-bakery-50">
-      <div className="w-full max-w-lg animate-slide-up">
-
-        {/* Decorative blobs */}
-        <div className="fixed top-1/3 -right-20 w-64 h-64 rounded-full bg-caramel/8 blur-3xl pointer-events-none" />
-        <div className="fixed bottom-1/3 -left-20 w-52 h-52 rounded-full bg-strawberry/8 blur-3xl pointer-events-none" />
-        
-        {/* Header */}
-        <div className="text-center mb-8 space-y-3">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-caramel to-amber-600 text-white shadow-warm-lg mb-1">
-            <Cake className="w-8 h-8" />
-          </div>
-          <h1 className="text-3xl font-serif font-bold text-chocolate">
-            {t('auth.registerTitle')}
-          </h1>
-          <p className="text-sm text-bakery-600">
-            {t('auth.registerSubtitle')}
-          </p>
-        </div>
-
-        {/* Form Container */}
-        <div className="card-bakery p-8">
-          
-          {/* Role Selector Tabs */}
-          <div className="grid grid-cols-2 gap-2 p-1.5 bg-bakery-200/60 rounded-xl mb-6 border border-bakery-200">
-            <button
-              type="button"
-              onClick={() => setRole('buyer')}
-              className={`py-2.5 px-4 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${
-                role === 'buyer'
-                  ? 'bg-white text-chocolate shadow-sm border border-bakery-200'
-                  : 'text-bakery-600 hover:text-chocolate'
-              }`}
-            >
-              <User className="w-4 h-4 text-caramel" />
-              <span>Buyer (Foodie)</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setRole('seller')}
-              className={`py-2.5 px-4 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${
-                role === 'seller'
-                  ? 'bg-white text-chocolate shadow-sm border border-bakery-200'
-                  : 'text-bakery-600 hover:text-chocolate'
-              }`}
-            >
-              <Store className="w-4 h-4 text-caramel" />
-              <span>Seller (Home Baker)</span>
-            </button>
-          </div>
-
-          {error && (
-            <div className="alert-error mb-4">
-              <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            
-            {/* Full Name */}
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-bakery-700 mb-1.5">
-                {t('auth.fullNameLabel')}
-              </label>
-              <div className="relative">
-                <User className="w-5 h-5 text-bakery-400 absolute left-3.5 top-3" />
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder={t('auth.fullNamePlaceholder')}
-                  required
-                  className="input-bakery pl-11"
-                />
-              </div>
-            </div>
-
-            {/* Email */}
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-bakery-700 mb-1.5">
-                {t('auth.emailLabel')}
-              </label>
-              <div className="relative">
-                <Mail className="w-5 h-5 text-bakery-400 absolute left-3.5 top-3" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder={t('auth.emailPlaceholder')}
-                  required
-                  className="input-bakery pl-11"
-                />
-              </div>
-            </div>
-
-            {/* Bakery Brand Name (Conditional if Seller) */}
-            {role === 'seller' && (
-              <div className="p-4 rounded-xl bg-amber-50/70 border border-amber-200/80 space-y-2">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900 uppercase tracking-wider">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                  <span>{t('auth.bakeryNameLabel')}</span>
-                </div>
-                <div className="relative">
-                  <Store className="w-5 h-5 text-amber-600 absolute left-3.5 top-3" />
-                  <input
-                    type="text"
-                    value={bakeryName}
-                    onChange={(e) => setBakeryName(e.target.value)}
-                    placeholder={t('auth.bakeryNamePlaceholder')}
-                    required={role === 'seller'}
-                    className="input-bakery pl-11 bg-white"
-                  />
-                </div>
-                <p className="text-[11px] text-amber-800">
-                  Note: Sellers start in 'Pending' status and require Admin approval before publishing items.
-                </p>
-              </div>
-            )}
-
-            {/* Phone & Language Preference in Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-bakery-700 mb-1.5">
-                  {t('auth.phoneLabel')}
-                </label>
-                <div className="relative">
-                  <Phone className="w-5 h-5 text-bakery-400 absolute left-3.5 top-3" />
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder={t('auth.phonePlaceholder')}
-                    className="input-bakery pl-11"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-bakery-700 mb-1.5">
-                  {t('auth.prefLangLabel')}
-                </label>
-                <div className="relative">
-                  <Globe className="w-5 h-5 text-bakery-400 absolute left-3.5 top-3" />
-                  <select
-                    value={preferredLanguage}
-                    onChange={(e) => setPreferredLanguage(e.target.value)}
-                    className="input-bakery pl-11 appearance-none bg-white"
-                  >
-                    <option value="en">English</option>
-                    <option value="ur">اردو (Urdu)</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Password & Confirm Password */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-bakery-700 mb-1.5">
-                  {t('auth.passwordLabel')}
-                </label>
-                <div className="relative">
-                  <Lock className="w-5 h-5 text-bakery-400 absolute left-3.5 top-3" />
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Min 8 chars"
-                    required
-                    className="input-bakery pl-11"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-bakery-700 mb-1.5">
-                  {t('auth.confirmPasswordLabel')}
-                </label>
-                <div className="relative">
-                  <Lock className="w-5 h-5 text-bakery-400 absolute left-3.5 top-3" />
-                  <input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Repeat password"
-                    required
-                    className="input-bakery pl-11"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="btn-primary w-full py-3.5 text-base shadow-warm mt-4"
-            >
-              {isSubmitting ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <>
-                  <span>{t('auth.signUpBtn')}</span>
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
-            </button>
-          </form>
-
-        </div>
-
-        {/* Bottom CTA */}
-        <p className="text-center mt-6 text-sm text-bakery-600">
-          {t('auth.haveAccount')}{' '}
-          <Link
-            to="/login"
-            className="font-semibold text-caramel hover:text-caramel-dark underline underline-offset-4 transition-colors"
-          >
-            {t('auth.signInBtn')}
-          </Link>
-        </p>
-
+    <AuthLayout
+      headline={
+        role === 'seller'
+          ? 'Start selling your homemade treats today'
+          : 'Join MeethaCart to discover local homemade bakes'
+      }
+      benefits={role === 'seller' ? sellerBenefits : buyerBenefits}
+      footerNote="Secure Email OTP Verification"
+      formTitle="Create an account"
+      formSubtitle={
+        role === 'seller'
+          ? 'Register as a home baker seller'
+          : 'Register to order fresh baked items'
+      }
+      footerLinkText="Already have an account?"
+      footerLinkAction="Sign in"
+      footerLinkTo="/login"
+    >
+      {/* Role Selector Tabs */}
+      <div className="grid grid-cols-2 gap-2 p-1 bg-bakery-100 rounded-lg mb-5 border border-bakery-200">
+        <button
+          type="button"
+          id="role-buyer"
+          onClick={() => setRole('buyer')}
+          className={`py-2 px-3 text-xs font-semibold rounded-md transition-all flex items-center justify-center gap-2 ${
+            role === 'buyer'
+              ? 'bg-white text-chocolate shadow-sm border border-bakery-200'
+              : 'text-bakery-600 hover:text-chocolate'
+          }`}
+        >
+          <User className="w-3.5 h-3.5 text-caramel" />
+          <span>Buyer</span>
+        </button>
+        <button
+          type="button"
+          id="role-seller"
+          onClick={() => setRole('seller')}
+          className={`py-2 px-3 text-xs font-semibold rounded-md transition-all flex items-center justify-center gap-2 ${
+            role === 'seller'
+              ? 'bg-white text-chocolate shadow-sm border border-bakery-200'
+              : 'text-bakery-600 hover:text-chocolate'
+          }`}
+        >
+          <Store className="w-3.5 h-3.5 text-caramel" />
+          <span>Seller (Baker)</span>
+        </button>
       </div>
-    </div>
+
+      {error && (
+        <div className="alert-error mb-4">
+          <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-3.5">
+        {/* Full Name */}
+        <div>
+          <label className="block text-xs font-semibold text-bakery-700 mb-1">
+            Full name
+          </label>
+          <div className="relative">
+            <User className="w-4 h-4 text-bakery-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter your name"
+              required
+              className="input-bakery pl-10"
+            />
+          </div>
+        </div>
+
+        {/* Bakery Name (Only for Sellers) */}
+        {role === 'seller' && (
+          <div>
+            <label className="block text-xs font-semibold text-bakery-700 mb-1">
+              Bakery or brand name
+            </label>
+            <div className="relative">
+              <Store className="w-4 h-4 text-bakery-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={bakeryName}
+                onChange={(e) => setBakeryName(e.target.value)}
+                placeholder="e.g. Sara's Kitchen Bakes"
+                required
+                className="input-bakery pl-10"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Email */}
+        <div>
+          <label className="block text-xs font-semibold text-bakery-700 mb-1">
+            Email address
+          </label>
+          <div className="relative">
+            <Mail className="w-4 h-4 text-bakery-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="name@example.com"
+              required
+              autoComplete="email"
+              className="input-bakery pl-10"
+            />
+          </div>
+        </div>
+
+        {/* Phone & Language */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-semibold text-bakery-700 mb-1">
+              Phone number
+            </label>
+            <div className="relative">
+              <Phone className="w-4 h-4 text-bakery-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="0300 1234567"
+                className="input-bakery pl-10"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-bakery-700 mb-1">
+              Language
+            </label>
+            <div className="relative">
+              <Globe className="w-4 h-4 text-bakery-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <select
+                value={preferredLanguage}
+                onChange={(e) => setPreferredLanguage(e.target.value)}
+                className="input-bakery pl-10"
+              >
+                <option value="en">English</option>
+                <option value="ur">اردو (Urdu)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Password & Confirm */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-semibold text-bakery-700 mb-1">
+              Password
+            </label>
+            <div className="relative">
+              <Lock className="w-4 h-4 text-bakery-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Min 8 characters"
+                required
+                autoComplete="new-password"
+                className="input-bakery pl-10"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-bakery-700 mb-1">
+              Confirm password
+            </label>
+            <div className="relative">
+              <Lock className="w-4 h-4 text-bakery-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Re-enter password"
+                required
+                autoComplete="new-password"
+                className="input-bakery pl-10"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Submit */}
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="btn-primary w-full py-2.5 text-sm font-medium mt-2"
+        >
+          {isSubmitting ? (
+            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : (
+            <>
+              <span>Create account</span>
+              <ArrowRight className="w-4 h-4" />
+            </>
+          )}
+        </button>
+      </form>
+
+      <div className="pt-3 border-t border-bakery-100 mt-4 flex items-center gap-1.5 text-xs text-bakery-500">
+        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+        <span>We will send an OTP code to your email to verify your account.</span>
+      </div>
+    </AuthLayout>
   );
 };
 

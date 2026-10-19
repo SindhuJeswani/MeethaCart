@@ -32,13 +32,13 @@ export const LanguageProvider = ({ children }) => {
           if (fallback && fallback[fKey] !== undefined) {
             fallback = fallback[fKey];
           } else {
-            return path;
+            return '';
           }
         }
         return fallback;
       }
     }
-    return current;
+    return current !== undefined ? current : '';
   };
 
   const toggleLanguage = () => {

@@ -8,8 +8,11 @@ import {
   ShoppingBag,
   Shield,
   ArrowLeft,
-  Cake
+  BarChart3,
+  TrendingUp
 } from 'lucide-react';
+
+import Logo from '../common/Logo';
 
 const AdminSidebar = ({ pendingCount = 0 }) => {
   const navItems = [
@@ -35,10 +38,22 @@ const AdminSidebar = ({ pendingCount = 0 }) => {
       icon: Users
     },
     {
+      to: '/admin/analytics',
+      label: 'Sales Analytics',
+      icon: BarChart3,
+      soon: true
+    },
+    {
+      to: '/admin/demand-forecasting',
+      label: 'Demand Forecast',
+      icon: TrendingUp,
+      soon: true
+    },
+    {
       to: '/admin/orders',
       label: 'Orders Monitor',
       icon: ShoppingBag,
-      subtext: 'M4'
+      soon: true
     }
   ];
 
@@ -46,18 +61,12 @@ const AdminSidebar = ({ pendingCount = 0 }) => {
     <aside className="w-full md:w-64 bg-white border-r border-bakery-200/80 p-5 flex flex-col justify-between shrink-0">
       <div className="space-y-6">
         
-        {/* Admin Header */}
-        <div className="flex items-center gap-3 px-2">
-          <div className="w-10 h-10 rounded-xl bg-amber-600 text-white flex items-center justify-center shadow-sm">
-            <Shield className="w-5 h-5" />
-          </div>
-          <div>
-            <h2 className="font-serif font-bold text-chocolate text-base leading-tight">
-              Admin Portal
-            </h2>
-            <span className="text-[11px] font-semibold text-amber-800 tracking-wider uppercase">
-              MeethaCart Control
-            </span>
+        {/* Brand Header */}
+        <div className="px-2 pb-4 border-b border-bakery-200">
+          <Logo variant="dark" size="sm" to="/" />
+          <div className="flex items-center gap-1.5 mt-2 text-[11px] font-semibold text-caramel uppercase tracking-wider">
+            <Shield className="w-3.5 h-3.5" />
+            <span>Admin Control Center</span>
           </div>
         </div>
 
@@ -84,6 +93,11 @@ const AdminSidebar = ({ pendingCount = 0 }) => {
                 {item.badge && (
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200 text-amber-950">
                     {item.badge}
+                  </span>
+                )}
+                {item.soon && (
+                  <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-amber-100 text-amber-900 border border-amber-200">
+                    Soon
                   </span>
                 )}
                 {item.subtext && (

@@ -208,6 +208,35 @@ const BuyerDashboard = () => {
             </div>
           </div>
 
+          {/* Buyer Services & Upcoming Modules */}
+          <div className="card-bakery space-y-3 bg-white border border-bakery-200">
+            <h3 className="font-serif font-bold text-chocolate text-base">
+              Buyer Services
+            </h3>
+            <div className="space-y-1.5 text-xs">
+              <Link to="/orders" className="flex items-center justify-between p-2 rounded-md hover:bg-bakery-100 transition-colors">
+                <span className="font-medium text-bakery-800">Order History & Tracking</span>
+                <span className="text-[10px] bg-amber-100 text-amber-900 border border-amber-200 px-1.5 py-0.5 rounded font-semibold">Soon</span>
+              </Link>
+              <Link to="/wishlist" className="flex items-center justify-between p-2 rounded-md hover:bg-bakery-100 transition-colors">
+                <span className="font-medium text-bakery-800">Wishlist & Saved Items</span>
+                <span className="text-[10px] bg-amber-100 text-amber-900 border border-amber-200 px-1.5 py-0.5 rounded font-semibold">Soon</span>
+              </Link>
+              <Link to="/custom-requests" className="flex items-center justify-between p-2 rounded-md hover:bg-bakery-100 transition-colors">
+                <span className="font-medium text-bakery-800">Custom Cake Requests</span>
+                <span className="text-[10px] bg-amber-100 text-amber-900 border border-amber-200 px-1.5 py-0.5 rounded font-semibold">Soon</span>
+              </Link>
+              <Link to="/messages" className="flex items-center justify-between p-2 rounded-md hover:bg-bakery-100 transition-colors">
+                <span className="font-medium text-bakery-800">Baker Messages & Chat</span>
+                <span className="text-[10px] bg-amber-100 text-amber-900 border border-amber-200 px-1.5 py-0.5 rounded font-semibold">Soon</span>
+              </Link>
+              <Link to="/wallet" className="flex items-center justify-between p-2 rounded-md hover:bg-bakery-100 transition-colors">
+                <span className="font-medium text-bakery-800">Wallet & Credits</span>
+                <span className="text-[10px] bg-amber-100 text-amber-900 border border-amber-200 px-1.5 py-0.5 rounded font-semibold">Soon</span>
+              </Link>
+            </div>
+          </div>
+
           <div className="card-bakery bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
             <div className="flex items-center gap-2 text-amber-900 font-bold text-sm mb-2">
               <Heart className="w-4 h-4 text-amber-600 fill-amber-600" />

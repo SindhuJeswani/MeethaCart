@@ -43,6 +43,21 @@ export const register = async (req, res) => {
       });
     }
 
+    // Admin-only protection: reject admin registration attempts
+    if (role === 'admin') {
+      return res.status(400).json({
+        success: false,
+        message: 'Registration with admin role is prohibited. Only buyer and seller roles are allowed.'
+      });
+    }
+
+    if (role && !['buyer', 'seller'].includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid role. Only buyer and seller roles are allowed.'
+      });
+    }
+
     if (password.length < 8) {
       return res.status(400).json({
         success: false,
@@ -196,6 +211,7 @@ export const login = async (req, res) => {
         message: 'Invalid email or password.'
       });
     }
+
 
     // Check account verification
     if (!user.isVerified) {

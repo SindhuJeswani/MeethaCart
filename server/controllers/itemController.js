@@ -108,6 +108,14 @@ export const getItemById = async (req, res) => {
   try {
     const { id } = req.params;
 
+    // Guard against malformed IDs before hitting Mongoose (prevents 500 CastError)
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid item ID format.'
+      });
+    }
+
     const item = await Item.findById(id)
       .populate('seller', 'name bakeryName bio avatar phone address createdAt sellerStatus')
       .populate('category', 'name slug description');

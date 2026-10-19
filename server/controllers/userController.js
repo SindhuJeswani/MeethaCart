@@ -28,7 +28,15 @@ export const getMe = async (req, res) => {
  */
 export const updateProfile = async (req, res) => {
   try {
-    const { name, phone, bio, bakeryName, address, avatar, preferredLanguage } = req.body;
+    const { name, phone, bio, bakeryName, address, avatar, preferredLanguage, role } = req.body;
+
+    // Admin-only protection: reject any attempt to elevate role to admin
+    if (role === 'admin') {
+      return res.status(400).json({
+        success: false,
+        message: 'Modifying role to admin is strictly prohibited.'
+      });
+    }
 
     const user = await User.findById(req.user._id);
     if (!user) {

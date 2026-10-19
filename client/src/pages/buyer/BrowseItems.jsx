@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import api from '../../services/api';
 import ItemCard from '../../components/items/ItemCard';
 import ItemFilterSidebar from '../../components/items/ItemFilterSidebar';
-import { Search, ShoppingBag, SlidersHorizontal, X, RefreshCw, Cake } from 'lucide-react';
+import { Search, ShoppingBag, SlidersHorizontal, X, RefreshCw } from 'lucide-react';
 
 const BrowseItems = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -21,13 +21,21 @@ const BrowseItems = () => {
   const [sort, setSort] = useState(searchParams.get('sort') || 'newest');
   const [showMobileFilter, setShowMobileFilter] = useState(false);
 
+  // Sync state if URL search query changes (e.g. from navbar search)
+  useEffect(() => {
+    const urlSearch = searchParams.get('search') || '';
+    const urlCat = searchParams.get('category') || 'all';
+    setSearch(urlSearch);
+    setSelectedCategory(urlCat);
+  }, [searchParams]);
+
   // Fetch Categories once on mount
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const res = await api.get('/categories');
         if (res.data?.success) {
-          setCategories(res.data.categories);
+          setCategories(res.data.categories || []);
         }
       } catch (err) {
         console.warn('Error loading categories:', err.message);
@@ -53,8 +61,8 @@ const BrowseItems = () => {
 
       const res = await api.get(`/items?${params.toString()}`);
       if (res.data?.success) {
-        setItems(res.data.items);
-        setTotalCount(res.data.total || res.data.count);
+        setItems(res.data.items || []);
+        setTotalCount(res.data.total ?? res.data.count ?? (res.data.items?.length || 0));
       }
     } catch (err) {
       console.error('Error fetching items:', err.message);
@@ -82,30 +90,40 @@ const BrowseItems = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      
-      {/* Search Header Banner */}
-      <div className="rounded-3xl bg-gradient-to-r from-amber-800 via-amber-900 to-amber-950 p-6 sm:p-10 text-white shadow-warm-lg flex flex-col items-center text-center space-y-4">
-        <div className="w-12 h-12 rounded-2xl bg-caramel/20 text-caramel flex items-center justify-center border border-caramel/30">
-          <Cake className="w-6 h-6" />
-        </div>
-        <h1 className="text-3xl sm:text-4xl font-serif font-bold tracking-tight text-white">
-          Explore the Bakery Catalog
-        </h1>
-        <p className="text-sm text-amber-200/90 max-w-xl">
-          Browse handcrafted cakes, traditional mithai, artisan breads, and more — made by home bakers near you.
-        </p>
+    <div className="page-container py-6 space-y-6">
 
-        {/* Search Bar */}
-        <form onSubmit={handleSearchSubmit} className="w-full max-w-2xl relative pt-2">
-          <div className="relative flex items-center">
-            <Search className="w-5 h-5 text-bakery-400 absolute left-4 pointer-events-none" />
+      {/* Breadcrumb & Header */}
+      <div className="space-y-1.5 pb-2 border-b border-bakery-200">
+        <nav className="flex items-center gap-1.5 text-xs text-bakery-500">
+          <Link to="/" className="hover:text-chocolate">Home</Link>
+          <span>/</span>
+          <span className="text-bakery-800 font-medium">All items</span>
+          {selectedCategory !== 'all' && (
+            <>
+              <span>/</span>
+              <span className="text-chocolate font-medium capitalize">{selectedCategory}</span>
+            </>
+          )}
+        </nav>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-serif font-bold text-chocolate">
+              {selectedCategory !== 'all' ? `${selectedCategory}` : 'All bakery items'}
+            </h1>
+            <p className="text-xs sm:text-sm text-bakery-600 mt-0.5">
+              Homemade treats prepared fresh by independent bakers across Pakistan.
+            </p>
+          </div>
+
+          {/* Search bar */}
+          <form onSubmit={handleSearchSubmit} className="relative w-full sm:w-72">
+            <Search className="w-4 h-4 text-bakery-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search cakes, gulab jamun, sourdough, cookies..."
-              className="w-full pl-12 pr-28 py-3.5 rounded-2xl bg-white text-chocolate placeholder-bakery-400 focus:outline-none focus:ring-4 focus:ring-amber-500/30 text-sm shadow-md font-medium"
+              placeholder="Search items..."
+              className="w-full pl-9 pr-8 py-2 rounded-md bg-white border border-bakery-200 text-chocolate placeholder-bakery-400 text-xs focus:outline-none focus:border-caramel"
             />
             {search && (
               <button
@@ -114,35 +132,30 @@ const BrowseItems = () => {
                   setSearch('');
                   fetchItems();
                 }}
-                className="absolute right-24 text-bakery-400 hover:text-bakery-700"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-bakery-400 hover:text-bakery-700"
               >
-                <X className="w-4 h-4" />
+                <X className="w-3.5 h-3.5" />
               </button>
             )}
-            <button
-              type="submit"
-              className="absolute right-2 top-2 bottom-2 px-5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-xs"
-            >
-              <span>Search</span>
-            </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
 
-      {/* Main Catalog Layout */}
-      <div className="flex flex-col lg:flex-row gap-8 items-start">
-        
+      {/* Catalog Layout */}
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
+
         {/* Mobile Filter Toggle */}
-        <div className="lg:hidden w-full flex items-center justify-between pb-2 border-b border-bakery-200">
+        <div className="lg:hidden w-full flex items-center justify-between py-2 border-b border-bakery-200">
           <button
+            type="button"
             onClick={() => setShowMobileFilter(!showMobileFilter)}
-            className="btn-secondary text-xs py-2 px-4"
+            className="btn-secondary text-xs py-1.5 px-3"
           >
-            <SlidersHorizontal className="w-4 h-4 text-caramel" />
-            <span>{showMobileFilter ? 'Hide Filters' : 'Show Filters'}</span>
+            <SlidersHorizontal className="w-3.5 h-3.5 text-caramel" />
+            <span>{showMobileFilter ? 'Hide filters' : 'Filters'}</span>
           </button>
-          <span className="text-xs font-semibold text-bakery-600">
-            {totalCount} Items Found
+          <span className="text-xs text-bakery-600 font-medium">
+            {totalCount} {totalCount === 1 ? 'item' : 'items'}
           </span>
         </div>
 
@@ -161,30 +174,27 @@ const BrowseItems = () => {
         </div>
 
         {/* Items Grid & Sort Toolbar */}
-        <div className="flex-1 space-y-6 w-full">
-          
+        <div className="flex-1 space-y-4 w-full">
+
           {/* Top Bar: Count & Sort */}
-          <div className="card-bakery p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-bakery-200">
-            <div className="text-sm font-semibold text-chocolate flex items-center gap-2">
-              <ShoppingBag className="w-4 h-4 text-amber-600" />
-              <span>
-                Showing <strong className="text-amber-800">{items.length}</strong> of{' '}
-                <strong className="text-amber-800">{totalCount}</strong> freshly baked items
-              </span>
+          <div className="bg-white rounded-lg border border-bakery-200 p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="text-xs sm:text-sm text-bakery-700">
+              Showing <strong className="text-chocolate">{items.length}</strong> of{' '}
+              <strong className="text-chocolate">{totalCount}</strong> items
             </div>
 
             <div className="flex items-center gap-2 w-full sm:w-auto">
-              <label className="text-xs font-bold uppercase tracking-wider text-bakery-600 whitespace-nowrap">
-                Sort By:
+              <label className="text-xs font-medium text-bakery-600 whitespace-nowrap">
+                Sort:
               </label>
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value)}
-                className="input-bakery text-xs py-1.5 px-3 bg-bakery-50 font-medium"
+                className="input-bakery text-xs py-1 px-2.5 bg-white font-medium rounded-md"
               >
-                <option value="newest">Newest First</option>
-                <option value="price_asc">Price: Low to High</option>
-                <option value="price_desc">Price: High to Low</option>
+                <option value="newest">Newest first</option>
+                <option value="price_asc">Price: low to high</option>
+                <option value="price_desc">Price: high to low</option>
               </select>
             </div>
           </div>
@@ -192,47 +202,48 @@ const BrowseItems = () => {
           {/* Active Filter Pills */}
           {(selectedCategory !== 'all' || Number(maxPrice) < 6000 || isEggless || search) && (
             <div className="flex flex-wrap items-center gap-2 text-xs">
-              <span className="text-bakery-500 font-medium">Active filters:</span>
+              <span className="text-bakery-500">Active filters:</span>
 
               {search && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 font-semibold">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-bakery-100 text-chocolate font-medium border border-bakery-200">
                   <span>"{search}"</span>
-                  <button onClick={() => setSearch('')} className="hover:text-red-700">
+                  <button onClick={() => setSearch('')} className="hover:text-strawberry">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
               )}
 
               {selectedCategory !== 'all' && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 font-semibold">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-bakery-100 text-chocolate font-medium border border-bakery-200">
                   <span>Category: {selectedCategory}</span>
-                  <button onClick={() => setSelectedCategory('all')} className="hover:text-red-700">
+                  <button onClick={() => setSelectedCategory('all')} className="hover:text-strawberry">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
               )}
 
               {Number(maxPrice) < 6000 && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 font-semibold">
-                  <span>Under PKR {Number(maxPrice).toLocaleString()}</span>
-                  <button onClick={() => setMaxPrice('6000')} className="hover:text-red-700">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-bakery-100 text-chocolate font-medium border border-bakery-200">
+                  <span>Under Rs. {Number(maxPrice).toLocaleString()}</span>
+                  <button onClick={() => setMaxPrice('6000')} className="hover:text-strawberry">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
               )}
 
               {isEggless && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-900 font-semibold">
-                  <span>Eggless Only 🍃</span>
-                  <button onClick={() => setIsEggless(false)} className="hover:text-red-700">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-medium border border-emerald-200">
+                  <span>Eggless only</span>
+                  <button onClick={() => setIsEggless(false)} className="hover:text-rose-700">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
               )}
 
               <button
+                type="button"
                 onClick={handleResetFilters}
-                className="text-xs text-amber-700 hover:text-amber-900 underline font-medium ml-1"
+                className="text-xs text-caramel hover:text-caramel-dark underline font-medium ml-1"
               >
                 Clear all
               </button>
@@ -241,25 +252,29 @@ const BrowseItems = () => {
 
           {/* Item Grid */}
           {isLoading ? (
-            <div className="py-20 text-center flex flex-col items-center justify-center gap-3">
-              <RefreshCw className="w-8 h-8 text-amber-600 animate-spin" />
-              <p className="text-sm font-medium text-bakery-700">Loading bakery delights...</p>
+            <div className="py-20 text-center flex flex-col items-center justify-center gap-2">
+              <RefreshCw className="w-6 h-6 text-caramel animate-spin" />
+              <p className="text-xs text-bakery-600">Loading items...</p>
             </div>
           ) : items.length === 0 ? (
-            <div className="card-bakery text-center py-20 px-4">
-              <ShoppingBag className="w-12 h-12 text-bakery-300 mx-auto mb-3" />
-              <h3 className="text-xl font-serif font-bold text-chocolate mb-1">
-                No Items Matched
+            <div className="bg-white rounded-lg border border-bakery-200 text-center py-16 px-4">
+              <ShoppingBag className="w-10 h-10 text-bakery-300 mx-auto mb-2" />
+              <h3 className="text-base font-serif font-bold text-chocolate mb-1">
+                No items found
               </h3>
-              <p className="text-xs text-bakery-600 max-w-md mx-auto mb-6">
-                Try searching for something else or adjusting your price and category filters.
+              <p className="text-xs text-bakery-600 max-w-sm mx-auto mb-4">
+                No items match your selected filters. Try removing some filters or searching for something else.
               </p>
-              <button onClick={handleResetFilters} className="btn-primary text-xs py-2 px-5 inline-flex">
-                Reset All Filters
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="btn-primary text-xs py-1.5 px-4 inline-flex"
+              >
+                Reset all filters
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
               {items.map((item) => (
                 <ItemCard key={item._id} item={item} />
               ))}

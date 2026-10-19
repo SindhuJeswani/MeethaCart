@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { useTranslation } from '../../context/LanguageContext';
-import { Mail, ArrowRight, AlertCircle, KeyRound, CheckCircle2, Info } from 'lucide-react';
+import { Mail, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
+import AuthLayout from '../../components/auth/AuthLayout';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -27,7 +28,7 @@ const ForgotPassword = () => {
       setIsSubmitting(true);
       const res = await api.post('/auth/forgot-password', { email: email.trim().toLowerCase() });
 
-      setSuccess('Reset code dispatched! Check your email or terminal.');
+      setSuccess('Reset code sent! Redirecting to verification...');
       setTimeout(() => {
         navigate('/verify-otp', {
           state: {
@@ -36,7 +37,7 @@ const ForgotPassword = () => {
             cooldownSeconds: res.data?.cooldownSeconds || 60
           }
         });
-      }, 900);
+      }, 800);
     } catch (err) {
       setError(err.message || 'Failed to request password reset.');
     } finally {
@@ -44,93 +45,72 @@ const ForgotPassword = () => {
     }
   };
 
+  const benefits = [
+    'Quick recovery via your verified email address',
+    'Secure 6-digit one-time authorization code',
+    'Set a new strong password and regain access instantly'
+  ];
+
   return (
-    <div className="min-h-[90vh] flex items-center justify-center px-4 py-14 bg-bakery-50">
-      <div className="w-full max-w-md animate-slide-up">
-        
-        <div className="text-center mb-8 space-y-3">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-caramel to-amber-600 text-white shadow-warm-lg mb-1">
-            <KeyRound className="w-8 h-8" />
+    <AuthLayout
+      headline="Reset your account password"
+      benefits={benefits}
+      footerNote="Account Security & Recovery"
+      formTitle={t('auth.forgotTitle') || 'Forgot password?'}
+      formSubtitle={t('auth.forgotSubtitle') || 'Enter your email address and we will send you a verification code.'}
+      footerLinkText="Remembered your password?"
+      footerLinkAction="Back to sign in"
+      footerLinkTo="/login"
+    >
+      {error && (
+        <div className="alert-error mb-4">
+          <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {success && (
+        <div className="alert-success mb-4">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+          <span>{success}</span>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-xs font-semibold text-bakery-700 mb-1.5">
+            {t('auth.emailLabel') || 'Email address'}
+          </label>
+          <div className="relative">
+            <Mail className="w-4 h-4 text-bakery-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="name@example.com"
+              required
+              autoComplete="email"
+              className="input-bakery pl-10"
+            />
           </div>
-          <h1 className="text-3xl font-serif font-bold text-chocolate">
-            {t('auth.forgotTitle')}
-          </h1>
-          <p className="text-sm text-bakery-600">
-            {t('auth.forgotSubtitle')}
-          </p>
         </div>
 
-        <div className="card-bakery p-8">
-
-          {/* Delivery & Spam Disclaimer */}
-          <div className="mb-5 p-3.5 rounded-xl bg-bakery-200/50 border border-bakery-300 text-xs text-bakery-800 flex items-start gap-2.5">
-            <Info className="w-4 h-4 text-caramel shrink-0 mt-0.5" />
-            <p className="leading-relaxed">
-              {t('auth.spamDisclaimer')}
-            </p>
-          </div>
-          
-          {error && (
-            <div className="alert-error mb-4">
-              <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-              <span>{error}</span>
-            </div>
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="btn-primary w-full py-2.5 text-sm font-medium mt-2"
+        >
+          {isSubmitting ? (
+            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : (
+            <>
+              <span>{t('auth.sendCode') || 'Send verification code'}</span>
+              <ArrowRight className="w-4 h-4" />
+            </>
           )}
-
-          {success && (
-            <div className="alert-success mb-4">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-              <span>{success}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-bakery-700 mb-2">
-                {t('auth.emailLabel')}
-              </label>
-              <div className="relative">
-                <Mail className="w-5 h-5 text-bakery-400 absolute left-3.5 top-3" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder={t('auth.emailPlaceholder')}
-                  required
-                  className="input-bakery pl-11"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="btn-primary w-full py-3 text-base shadow-warm"
-            >
-              {isSubmitting ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <>
-                  <span>{t('auth.sendResetOtp')}</span>
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
-            </button>
-          </form>
-
-        </div>
-
-        <div className="text-center mt-6">
-          <Link
-            to="/login"
-            className="text-xs font-medium text-bakery-600 hover:text-bakery-900 transition-colors"
-          >
-            ← {t('auth.backToLogin')}
-          </Link>
-        </div>
-
-      </div>
-    </div>
+        </button>
+      </form>
+    </AuthLayout>
   );
 };
 

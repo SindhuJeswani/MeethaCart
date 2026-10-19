@@ -344,6 +344,31 @@ const SellerDashboard = () => {
             </div>
           </div>
 
+          {/* Seller Tools & Upcoming Modules */}
+          <div className="card-bakery space-y-3 bg-white border border-bakery-200">
+            <h3 className="font-serif font-bold text-chocolate text-base">
+              Storefront Tools
+            </h3>
+            <div className="space-y-1.5 text-xs">
+              <Link to="/seller/analytics" className="flex items-center justify-between p-2 rounded-md hover:bg-bakery-100 transition-colors">
+                <span className="font-medium text-bakery-800">Sales Analytics</span>
+                <span className="text-[10px] bg-amber-100 text-amber-900 border border-amber-200 px-1.5 py-0.5 rounded font-semibold">Soon</span>
+              </Link>
+              <Link to="/seller/demand-forecasting" className="flex items-center justify-between p-2 rounded-md hover:bg-bakery-100 transition-colors">
+                <span className="font-medium text-bakery-800">AI Demand Forecast</span>
+                <span className="text-[10px] bg-amber-100 text-amber-900 border border-amber-200 px-1.5 py-0.5 rounded font-semibold">Soon</span>
+              </Link>
+              <Link to="/messages" className="flex items-center justify-between p-2 rounded-md hover:bg-bakery-100 transition-colors">
+                <span className="font-medium text-bakery-800">Customer Chat</span>
+                <span className="text-[10px] bg-amber-100 text-amber-900 border border-amber-200 px-1.5 py-0.5 rounded font-semibold">Soon</span>
+              </Link>
+              <Link to="/wallet" className="flex items-center justify-between p-2 rounded-md hover:bg-bakery-100 transition-colors">
+                <span className="font-medium text-bakery-800">Payouts & Wallet</span>
+                <span className="text-[10px] bg-amber-100 text-amber-900 border border-amber-200 px-1.5 py-0.5 rounded font-semibold">Soon</span>
+              </Link>
+            </div>
+          </div>
+
           <div className="card-bakery bg-bakery-100 border-bakery-200">
             <div className="flex items-center gap-2 text-chocolate font-bold text-xs mb-2">
               <Info className="w-4 h-4 text-caramel" />

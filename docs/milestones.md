@@ -58,7 +58,7 @@ This checklist tracks the implementation, security validations, and test evidenc
 
 ## Seed Data & Testing Checklist
 - [x] Database Seeder Script:
-  - [x] 1 Admin (`admin@meethacart.com`)
+  - [x] 1 Admin (Dedicated env-configured account)
   - [x] 3 Sellers (2 approved, 1 pending)
   - [x] 3 Buyers
   - [x] 5 Categories (Custom Cakes, Traditional Mithai, Artisanal Breads, Cookies & Biscuits, Cupcakes)

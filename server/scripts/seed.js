@@ -1,11 +1,15 @@
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { connectDB } from '../config/db.js';
 import { User } from '../models/User.js';
 import { Category } from '../models/Category.js';
 import { Item } from '../models/Item.js';
 import { Order } from '../models/Order.js';
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 export const seedDatabase = async () => {
   console.log('\n🌱 =======================================================');
@@ -14,25 +18,57 @@ export const seedDatabase = async () => {
 
   await connectDB();
 
-  // 1. Clear existing collections
-  await User.deleteMany({});
+  const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim();
+  const adminPassword = process.env.ADMIN_PASSWORD;
+
+  if (!adminEmail || !adminPassword) {
+    throw new Error('ADMIN_EMAIL and ADMIN_PASSWORD must be configured in server/.env');
+  }
+
+  // 1. Clear existing non-admin users, remove any old/stale admins, and clear related collections
+  await User.deleteMany({
+    $or: [
+      { email: 'admin@meethacart.com' },
+      { role: 'admin', email: { $ne: adminEmail } },
+      { role: { $ne: 'admin' } }
+    ]
+  });
   await Category.deleteMany({});
   await Item.deleteMany({});
   await Order.deleteMany({});
-  console.log('✓ Cleared existing collections.');
+  console.log('✓ Cleared non-admin collections and removed old/stale admin accounts.');
 
-  // 2. Create 1 Admin
-  const admin = await User.create({
-    name: 'MeethaCart Admin',
-    email: 'admin@meethacart.com',
-    password: 'AdminPassword123!',
-    role: 'admin',
-    isVerified: true,
-    sellerStatus: 'approved',
-    preferredLanguage: 'en',
-    phone: '03000000001'
-  });
-  console.log(`✓ Seeded Admin: ${admin.email} (Password: AdminPassword123!)`);
+  // 2. Upsert the single dedicated Admin
+  let admin = await User.findOne({ email: adminEmail });
+  if (admin) {
+    admin.name = 'Sindhu Jeswani';
+    admin.password = adminPassword; // Triggers pre-save bcrypt hash
+    admin.role = 'admin';
+    admin.isVerified = true;
+    admin.sellerStatus = 'approved';
+    admin.preferredLanguage = 'en';
+    await admin.save();
+    console.log('✓ Updated existing Admin account.');
+  } else {
+    admin = await User.create({
+      name: 'Sindhu Jeswani',
+      email: adminEmail,
+      password: adminPassword, // Triggers pre-save bcrypt hash
+      role: 'admin',
+      isVerified: true,
+      sellerStatus: 'approved',
+      preferredLanguage: 'en',
+      phone: '03000000001'
+    });
+    console.log('✓ Created dedicated Admin account.');
+  }
+
+  // Verify exactly one admin exists in the database
+  const adminCount = await User.countDocuments({ role: 'admin' });
+  if (adminCount !== 1) {
+    throw new Error(`Integrity check failed: Expected exactly 1 admin, found ${adminCount}`);
+  }
+  console.log(`✓ Admin integrity confirmed: Exactly ${adminCount} admin user exists.`);
 
   // 3. Create 3 Sellers (2 Approved, 1 Pending)
   const sellerAyesha = await User.create({
@@ -386,10 +422,7 @@ export const seedDatabase = async () => {
 
   console.log('\n🎉 =======================================================');
   console.log('🎉 SEEDING COMPLETED SUCCESSFULLY!');
-  console.log('🎉 Admin Credentials:');
-  console.log('   Email:    admin@meethacart.com');
-  console.log('   Password: AdminPassword123!');
-  console.log('   Role:     admin');
+  console.log('🎉 Database initialized with single verified admin and sample catalog.');
   console.log('🎉 =======================================================\n');
 };
 

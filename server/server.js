@@ -81,10 +81,54 @@ app.use((err, req, res, next) => {
   });
 });
 
+// Ensure admin user configured via env is present, active, and the ONLY admin
+const ensureAdminExists = async () => {
+  try {
+    const { User } = await import('./models/User.js');
+    const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim();
+    if (!adminEmail) return;
+
+    // Purge old default admin and any duplicate admin accounts
+    await User.deleteMany({
+      $or: [
+        { email: 'admin@meethacart.com' },
+        { role: 'admin', email: { $ne: adminEmail } }
+      ]
+    });
+
+    let admin = await User.findOne({ email: adminEmail });
+    if (!admin && process.env.ADMIN_PASSWORD) {
+      admin = await User.create({
+        name: 'Sindhu Jeswani',
+        email: adminEmail,
+        password: process.env.ADMIN_PASSWORD,
+        role: 'admin',
+        isVerified: true,
+        sellerStatus: 'approved',
+        preferredLanguage: 'en',
+        phone: '03000000001'
+      });
+      console.log('👑 [Auth] Admin account initialized.');
+    } else if (admin) {
+      let needsSave = false;
+      if (admin.role !== 'admin') { admin.role = 'admin'; needsSave = true; }
+      if (!admin.isVerified) { admin.isVerified = true; needsSave = true; }
+      if (admin.name !== 'Sindhu Jeswani') { admin.name = 'Sindhu Jeswani'; needsSave = true; }
+      if (needsSave) {
+        await admin.save();
+        console.log('👑 [Auth] Admin account synchronized.');
+      }
+    }
+  } catch (err) {
+    console.error('⚠️ [Auth] Warning ensuring admin user:', err.message);
+  }
+};
+
 // Start Server after DB Connection
 const startServer = async () => {
   try {
     await connectDB();
+    await ensureAdminExists();
     app.listen(PORT, () => {
       console.log(`\n🍰 ===============================================`);
       console.log(`🍰 MeethaCart Server running on http://localhost:${PORT}`);

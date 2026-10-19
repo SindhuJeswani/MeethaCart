@@ -33,7 +33,7 @@ export const protect = async (req, res, next) => {
       });
     }
 
-    if (!user.isVerified) {
+    if (!user.isVerified && user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Account not verified. Please verify your account via OTP first.'

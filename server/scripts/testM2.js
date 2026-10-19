@@ -24,7 +24,7 @@ const runM2Tests = async () => {
   // Step 1: Run seed script to ensure fresh, consistent state
   await seedDatabase();
 
-  const adminUser = await User.findOne({ email: 'admin@meethacart.com' });
+  const adminUser = await User.findOne({ role: 'admin' });
   const buyerUser = await User.findOne({ email: 'hamza.buyer@meethacart.com' });
   const pendingSeller = await User.findOne({ email: 'zainab.oven@meethacart.com' });
 

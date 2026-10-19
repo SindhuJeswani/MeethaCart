@@ -41,15 +41,18 @@ class EmailService {
     const title = titles[purpose] || 'Your MeethaCart Security Code';
     const mode = process.env.EMAIL_MODE || 'dev';
 
-    // In DEV mode, print in console with prominent banner for easy testing
-    if (mode === 'dev') {
+    // Always log OTP in console during development or for demo @meethacart.com accounts
+    if (process.env.NODE_ENV !== 'production' || mode === 'dev' || to.endsWith('@meethacart.com')) {
       console.log('\n======================================================');
-      console.log(`[EMAIL SERVICE - DEV MODE]`);
+      console.log(`[MEETHACART OTP - DEV & DEMO ACCOUNTS]`);
       console.log(`TO:      ${to}`);
-      console.log(`SUBJECT: ${title}`);
       console.log(`PURPOSE: ${purpose}`);
       console.log(`OTP:     >>> ${otp} <<< (Valid for 5 minutes)`);
       console.log('======================================================\n');
+    }
+
+    // In pure DEV mode, skip SMTP
+    if (mode === 'dev') {
       return { success: true, mode: 'dev' };
     }
 

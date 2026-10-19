@@ -1,0 +1,5 @@
+.env
+.env.local
+.env.*.local
+.mongo_dev_uri
+node_modules/
