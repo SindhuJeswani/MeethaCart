@@ -1,0 +1,225 @@
+/* ── Google Fonts (must be first) ───────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base Layer ──────────────────────────────────────── */
+@layer base {
+  :root {
+    --color-bg:         #FFF6E9;
+    --color-surface:    #FFFBF3;
+    --color-primary:    #C77B30;
+    --color-heading:    #4A2C1A;
+    --color-cta:        #E8647C;
+    --color-cta-hover:  #D04A65;
+    --color-border:     #EFE5D5;
+    --shadow-warm:      0 4px 20px -2px rgba(74,44,26,0.10), 0 2px 6px -1px rgba(74,44,26,0.06);
+    --shadow-warm-lg:   0 12px 40px -4px rgba(74,44,26,0.14), 0 4px 12px -2px rgba(74,44,26,0.08);
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-bakery-50 text-bakery-900 font-sans antialiased;
+    background-color: var(--color-bg);
+  }
+
+  h1, h2, h3, h4, h5 {
+    @apply font-serif;
+    color: var(--color-heading);
+  }
+
+  /* RTL support for Urdu */
+  [dir="rtl"] {
+    @apply tracking-normal;
+    font-family: 'Plus Jakarta Sans', 'Noto Nastaliq Urdu', serif;
+  }
+
+  ::selection {
+    background-color: rgba(199, 123, 48, 0.2);
+    color: var(--color-heading);
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background-color: #FFFBF3; }
+  ::-webkit-scrollbar-thumb { background-color: rgba(199, 123, 48, 0.5); border-radius: 9999px; }
+  ::-webkit-scrollbar-thumb:hover { background-color: rgba(199, 123, 48, 1); }
+}
+
+/* ── Component Layer ─────────────────────────────────── */
+@layer components {
+
+  /* Primary CTA Button — Strawberry Pink */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2
+           text-white font-semibold
+           px-6 py-3 rounded-2xl
+           shadow-sm hover:shadow-md
+           transition-all duration-200
+           active:scale-[0.97]
+           disabled:opacity-50 disabled:pointer-events-none
+           focus-visible:outline-none;
+    background-color: var(--color-cta);
+  }
+  .btn-primary:hover {
+    background-color: var(--color-cta-hover);
+  }
+  .btn-primary:focus-visible {
+    box-shadow: 0 0 0 3px rgba(232, 100, 124, 0.4);
+  }
+
+  /* Secondary Button — Warm Cream outline */
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2
+           text-bakery-800 font-semibold
+           px-6 py-3 rounded-2xl
+           border border-bakery-300 hover:border-bakery-400
+           transition-all duration-200
+           active:scale-[0.97]
+           disabled:opacity-50 disabled:pointer-events-none
+           focus-visible:outline-none;
+    background-color: var(--color-surface);
+  }
+  .btn-secondary:hover {
+    background-color: #EFE5D5;
+  }
+
+  /* Outline Button — Caramel */
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2
+           font-semibold
+           px-6 py-2.5 rounded-2xl
+           transition-all duration-200
+           active:scale-[0.97]
+           focus-visible:outline-none;
+    border: 2px solid var(--color-primary);
+    color: var(--color-primary);
+  }
+  .btn-outline:hover {
+    background-color: var(--color-primary);
+    color: #ffffff;
+  }
+
+  /* Ghost Button */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2
+           text-bakery-700 hover:bg-bakery-100
+           font-medium px-4 py-2 rounded-xl
+           transition-all duration-150;
+  }
+  .btn-ghost:hover {
+    color: var(--color-primary);
+  }
+
+  /* Card — Soft vanilla surface with warm shadow */
+  .card-bakery {
+    @apply bg-bakery-100 rounded-2xl
+           border border-bakery-200
+           shadow-warm
+           transition-all duration-200;
+  }
+
+  /* Elevated card hover effect */
+  .card-bakery-hover {
+    @apply card-bakery hover:shadow-warm-lg hover:-translate-y-0.5 cursor-pointer;
+  }
+
+  /* Input fields */
+  .input-bakery {
+    @apply w-full px-4 py-3 rounded-xl
+           border border-bakery-300 bg-white
+           text-bakery-900 placeholder-bakery-400
+           focus:outline-none
+           transition-all duration-150
+           text-sm;
+  }
+  .input-bakery:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(199, 123, 48, 0.2);
+  }
+
+  /* Label */
+  .label-bakery {
+    @apply block text-xs font-semibold uppercase tracking-widest text-bakery-700 mb-2;
+  }
+
+  /* Badge pill */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold;
+  }
+  .badge-caramel {
+    @apply badge;
+    background-color: rgba(199, 123, 48, 0.12);
+    color: #C77B30;
+    border: 1px solid rgba(199, 123, 48, 0.25);
+  }
+  .badge-green   { @apply badge bg-emerald-50 text-emerald-700 border border-emerald-200; }
+  .badge-pink {
+    @apply badge;
+    background-color: rgba(232, 100, 124, 0.12);
+    color: #E8647C;
+    border: 1px solid rgba(232, 100, 124, 0.25);
+  }
+  .badge-warm    { @apply badge bg-amber-50 text-amber-800 border border-amber-200; }
+
+  /* Section heading style */
+  .section-eyebrow {
+    @apply text-xs font-bold uppercase tracking-[0.18em] text-caramel;
+  }
+
+  /* Skeleton / loading shimmer */
+  .skeleton {
+    @apply bg-gradient-to-r from-bakery-200 via-bakery-100 to-bakery-200;
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  /* Alert / toast variants */
+  .alert-error   { @apply flex items-start gap-3 p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm; }
+  .alert-success { @apply flex items-start gap-3 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm; }
+  .alert-info    { @apply flex items-start gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-sm; }
+
+  /* Page container */
+  .page-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+}
+
+/* ── Utility Layer ───────────────────────────────────── */
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+  .text-gradient-caramel {
+    background-image: linear-gradient(to right, #C77B30, #F59E0B);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .text-gradient-chocolate {
+    background-image: linear-gradient(to right, #4A2C1A, #C77B30);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  /* Glass morphism */
+  .glass {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background-color: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+  }
+  .glass-dark {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background-color: rgba(74, 44, 26, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
