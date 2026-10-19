@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Cake, Heart, Globe, Instagram, Twitter } from 'lucide-react';
+import { Heart, Globe, ShieldCheck, Sparkles, Award } from 'lucide-react';
 import { useTranslation } from '../../context/LanguageContext';
+import BrandLogo from './BrandLogo';
 
 const Footer = () => {
   const { t, lang, toggleLanguage } = useTranslation();
@@ -19,28 +20,33 @@ const Footer = () => {
       <div className="page-container py-14">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
 
-          {/* Brand */}
+          {/* Brand & About */}
           <div className="md:col-span-2 space-y-5">
-            <Link to="/" className="flex items-center gap-3 group w-fit">
-              <div className="w-10 h-10 rounded-xl bg-caramel flex items-center justify-center text-white shadow-md">
-                <Cake className="w-5 h-5" />
-              </div>
-              <span className="font-serif text-2xl font-bold tracking-tight text-white">
-                Meetha<span className="text-caramel">Cart</span>
-              </span>
+            <Link to="/" className="inline-block w-fit">
+              <BrandLogo size="md" />
             </Link>
-            <p className="text-white/60 text-sm max-w-sm leading-relaxed">
-              An AI-powered bilingual marketplace connecting buyers with talented home bakers. Supporting local craft, one order at a time.
+            <p className="text-white/70 text-sm max-w-sm leading-relaxed">
+              Pakistan's premier marketplace celebrating homemade sweets, artisanal breads, and bespoke bakery creations. Connecting conscious food lovers with passionate local home bakers.
             </p>
-            <div className="flex items-center gap-3 flex-wrap">
-              <span className="badge badge-caramel text-[11px]">Final Year Project</span>
-              <span className="badge badge-warm text-[11px]">MERN Stack</span>
-              <span className="badge badge-green text-[11px]">Bilingual EN/اردو</span>
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-amber-200 border border-white/15">
+                <ShieldCheck className="w-3.5 h-3.5 text-caramel" />
+                Verified Bakers
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-emerald-200 border border-white/15">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                Fresh on Order
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-amber-100 border border-white/15">
+                <Award className="w-3.5 h-3.5 text-amber-300" />
+                Hygiene Inspected
+              </span>
             </div>
+            
             {/* Language toggle in footer */}
             <button
               onClick={toggleLanguage}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/20 text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 transition-all w-fit"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/20 text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 transition-all w-fit"
             >
               <Globe className="w-4 h-4 text-caramel" />
               {lang === 'en' ? 'Switch to اردو' : 'Switch to English'}
@@ -49,50 +55,50 @@ const Footer = () => {
 
           {/* Marketplace links */}
           <div>
-            <h4 className="font-serif text-white text-base font-semibold mb-5">Marketplace</h4>
+            <h4 className="font-serif text-white text-base font-semibold mb-5">Explore Bakery</h4>
             <ul className="space-y-2.5 text-sm">
               <li>
-                <Link to="/items" className="text-white/60 hover:text-caramel transition-colors flex items-center gap-1.5">
-                  Browse Catalog
+                <Link to="/items" className="text-white/65 hover:text-caramel transition-colors flex items-center gap-1.5">
+                  Artisanal Catalog
                 </Link>
               </li>
               <li>
-                <Link to="/register?role=seller" className="text-white/60 hover:text-caramel transition-colors">
-                  Become a Seller
+                <Link to="/items?category=traditional-mithai" className="text-white/65 hover:text-caramel transition-colors">
+                  Traditional Mithai
                 </Link>
               </li>
               <li>
-                <Link to="/login" className="text-white/60 hover:text-caramel transition-colors">
-                  Sign In
+                <Link to="/register?role=seller" className="text-white/65 hover:text-caramel transition-colors">
+                  Partner with MeethaCart
                 </Link>
               </li>
               <li>
-                <Link to="/register" className="text-white/60 hover:text-caramel transition-colors">
-                  Create Account
+                <Link to="/login" className="text-white/65 hover:text-caramel transition-colors">
+                  Baker Studio Login
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Tech stack */}
+          {/* Quality & Trust */}
           <div>
-            <h4 className="font-serif text-white text-base font-semibold mb-5">FYP Architecture</h4>
-            <ul className="space-y-2 text-sm text-white/55 leading-relaxed">
-              <li>React + Vite (Frontend)</li>
-              <li>Node.js + Express (Backend)</li>
-              <li>MongoDB + Mongoose (DB)</li>
-              <li>JWT + OTP 2FA Auth</li>
-              <li>Role-Based Access Control</li>
+            <h4 className="font-serif text-white text-base font-semibold mb-5">Our Quality Standards</h4>
+            <ul className="space-y-2.5 text-sm text-white/65 leading-relaxed">
+              <li>Authentic Family Recipes</li>
+              <li>Pure Butter & Desi Ghee</li>
+              <li>Safe Eco-Friendly Packaging</li>
+              <li>Strict Hygiene Guidelines</li>
+              <li>Direct Baker Communication</li>
             </ul>
           </div>
 
         </div>
 
         {/* Bottom bar */}
-        <div className="border-t border-white/10 mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-white/40 gap-3">
-          <p>© 2026 MeethaCart. All rights reserved. Built as a Final Year Project.</p>
+        <div className="border-t border-white/10 mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-white/50 gap-3">
+          <p>© 2026 MeethaCart. All rights reserved. Handcrafted for homemade bakery lovers.</p>
           <p className="flex items-center gap-1.5">
-            Crafted with <Heart className="w-3.5 h-3.5 text-strawberry fill-strawberry" /> by the MeethaCart team
+            Baking with <Heart className="w-3.5 h-3.5 text-strawberry fill-strawberry" /> for local artisan bakeries
           </p>
         </div>
       </div>

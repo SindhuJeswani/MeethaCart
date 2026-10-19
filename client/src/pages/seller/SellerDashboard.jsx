@@ -344,13 +344,13 @@ const SellerDashboard = () => {
             </div>
           </div>
 
-          <div className="card-bakery bg-amber-50/50 border-amber-200">
-            <div className="flex items-center gap-2 text-amber-900 font-bold text-xs mb-2">
-              <Info className="w-4 h-4 text-amber-600" />
-              <span>FYP Security Guard Check</span>
+          <div className="card-bakery bg-bakery-100 border-bakery-200">
+            <div className="flex items-center gap-2 text-chocolate font-bold text-xs mb-2">
+              <Info className="w-4 h-4 text-caramel" />
+              <span>Baker Quality & Hygiene Guidelines</span>
             </div>
-            <p className="text-xs text-amber-900/80 leading-relaxed">
-              In M3, even if a user bypasses client buttons, the backend API rejects non-approved sellers with HTTP 403 Forbidden.
+            <p className="text-xs text-bakery-700 leading-relaxed">
+              To preserve authentic taste and food safety, all listed treats must be prepared fresh with premium ingredients and safely packaged.
             </p>
           </div>
         </div>

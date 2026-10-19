@@ -148,7 +148,7 @@ const BuyerDashboard = () => {
 
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-bakery-700 mb-1.5">
-                    Preferred Language (FYP Bilingual)
+                    Preferred Language
                   </label>
                   <div className="relative">
                     <Globe className="w-4 h-4 text-bakery-400 absolute left-3.5 top-3.5" />
@@ -201,7 +201,7 @@ const BuyerDashboard = () => {
             <div className="p-4 rounded-xl bg-bakery-100/70 border border-bakery-200 text-center py-8">
               <Clock className="w-8 h-8 text-amber-600/70 mx-auto mb-2" />
               <p className="text-sm font-semibold text-bakery-800">No active orders yet</p>
-              <p className="text-xs text-bakery-500 mt-1">Orders and cart module will be linked in upcoming FYP module.</p>
+              <p className="text-xs text-bakery-500 mt-1">Browse our artisan bakeries and discover freshly baked homemade delights.</p>
               <Link to="/items" className="btn-outline text-xs mt-4 py-2 px-4 inline-flex">
                 Explore Bakery Items
               </Link>

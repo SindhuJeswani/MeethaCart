@@ -44,28 +44,28 @@ const OrdersPlaceholder = () => {
             </p>
           </div>
 
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-100 border border-amber-300 text-amber-900 text-xs font-bold self-start sm:self-auto">
-            <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-            <span>Structure Ready for FYP Milestone 4</span>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-bakery-100 border border-bakery-300 text-bakery-900 text-xs font-bold self-start sm:self-auto">
+            <Sparkles className="w-3.5 h-3.5 text-caramel" />
+            <span>Centralized Stream Active</span>
           </div>
         </div>
 
         {/* Designed Empty State Card */}
         <div className="card-bakery text-center py-16 px-4 bg-white border-bakery-200">
-          <div className="w-20 h-20 rounded-3xl bg-amber-50 text-amber-700 mx-auto flex items-center justify-center mb-5 border border-amber-200/80 shadow-xs">
-            <Clock className="w-10 h-10 text-amber-600" />
+          <div className="w-20 h-20 rounded-3xl bg-bakery-50 text-caramel mx-auto flex items-center justify-center mb-5 border border-bakery-200/80 shadow-xs">
+            <Clock className="w-10 h-10 text-caramel" />
           </div>
 
-          <span className="text-xs font-bold uppercase tracking-widest text-amber-800">
-            Current Module: M2 (Admin Control)
+          <span className="text-xs font-bold uppercase tracking-widest text-caramel">
+            Live Order Monitor
           </span>
 
           <h2 className="text-2xl font-serif font-bold text-chocolate mt-2 mb-3">
-            Orders Module Arriving in Milestone 4
+            No Active Bakery Orders in Stream
           </h2>
 
           <p className="text-sm text-bakery-600 max-w-lg mx-auto leading-relaxed mb-6">
-            The database schema, REST endpoint (<code className="bg-bakery-100 px-1.5 py-0.5 rounded text-chocolate font-mono text-xs">GET /api/admin/orders</code>), and admin page structure are fully implemented now. Active order processing, customer cart checkouts, and custom baking bids will be connected in <strong>Milestone 4</strong>.
+            All customer requests, bespoke cake inquiries, and direct bakery orders from registered buyers appear in this unified administrative view in real-time.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-3">

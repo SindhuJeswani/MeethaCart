@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from '../../context/LanguageContext';
 import { Cake, ShoppingBag, User, LogOut, LayoutDashboard, Globe, Store, Shield, Menu, X } from 'lucide-react';
+import BrandLogo from './BrandLogo';
 
 const Navbar = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -55,18 +56,8 @@ const Navbar = () => {
           <div className="flex items-center justify-between h-[70px]">
 
             {/* ── Logo ── */}
-            <Link to="/" className="flex items-center gap-3 group shrink-0">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-caramel to-amber-600 flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform duration-200">
-                <Cake className="w-5 h-5" />
-              </div>
-              <div className="leading-none">
-                <span className="font-serif text-xl font-bold tracking-tight text-white block">
-                  Meetha<span className="text-caramel">Cart</span>
-                </span>
-                <span className="text-[10px] font-medium tracking-wider uppercase text-white/50 block mt-0.5">
-                  {t('brand.tagline')}
-                </span>
-              </div>
+            <Link to="/" className="shrink-0">
+              <BrandLogo size="md" />
             </Link>
 
             {/* ── Desktop Nav Links ── */}

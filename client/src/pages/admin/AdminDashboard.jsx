@@ -270,13 +270,13 @@ const AdminDashboard = () => {
               <div className="w-10 h-10 rounded-xl bg-orange-100 text-orange-800 flex items-center justify-center group-hover:scale-105 transition-transform">
                 <ShoppingBag className="w-5 h-5" />
               </div>
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-bakery-100 text-bakery-600">
-                FYP M4 Scope
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-bakery-100 text-caramel">
+                Live Stream
               </span>
             </div>
             <h3 className="font-serif font-bold text-chocolate text-lg">Orders Monitor</h3>
             <p className="text-xs text-bakery-600 mt-1">
-              View customer orders across all home bakeries (designed empty state view).
+              View customer baking orders and custom requests across all home bakeries.
             </p>
           </Link>
         </div>

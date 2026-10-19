@@ -232,14 +232,14 @@ const ItemDetails = () => {
             </p>
           </div>
 
-          {/* Cart & Bidding Notice */}
+          {/* Custom Baking & Order Inquiries */}
           <div className="p-4 rounded-xl bg-bakery-100/70 border border-bakery-200 text-xs text-bakery-700 space-y-1">
             <div className="flex items-center gap-2 font-bold text-chocolate">
               <Sparkles className="w-4 h-4 text-caramel" />
-              <span>Ordering Roadmap (FYP M4)</span>
+              <span>Handcrafted Fresh on Demand</span>
             </div>
             <p className="text-[11px] text-bakery-600 leading-relaxed">
-              Direct cart checkout, custom tier cake bidding, and wallet transactions are scheduled for <strong>Milestone 4</strong>.
+              This treat is baked fresh on order by the home baker. Reach out through the baker storefront for bespoke flavor customizations or special event batch orders.
             </p>
           </div>
 

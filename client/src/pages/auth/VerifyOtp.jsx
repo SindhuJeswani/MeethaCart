@@ -209,16 +209,6 @@ const VerifyOtp = () => {
             )}
           </div>
 
-          {/* Dev Mode Reminder */}
-          <div className="mt-5 alert-info text-xs">
-            <Terminal className="w-4 h-4 text-caramel shrink-0 mt-0.5" />
-            <div>
-              <strong className="text-amber-900">Dev Testing Tip:</strong>{' '}
-              <span className="text-amber-800/90">Check your backend terminal — OTP is printed as{' '}</span>
-              <code className="bg-amber-200/70 px-1 py-0.5 rounded text-amber-950 font-mono font-bold">&gt;&gt;&gt; [OTP] &lt;&lt;&lt;</code>
-            </div>
-          </div>
-
         </div>
 
         {/* Back Link */}
