@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { useTranslation } from '../../context/LanguageContext';
-import { Mail, ArrowRight, AlertCircle, KeyRound, CheckCircle2 } from 'lucide-react';
+import { Mail, ArrowRight, AlertCircle, KeyRound, CheckCircle2, Info } from 'lucide-react';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -61,6 +61,14 @@ const ForgotPassword = () => {
         </div>
 
         <div className="card-bakery p-8">
+
+          {/* Delivery & Spam Disclaimer */}
+          <div className="mb-5 p-3.5 rounded-xl bg-bakery-200/50 border border-bakery-300 text-xs text-bakery-800 flex items-start gap-2.5">
+            <Info className="w-4 h-4 text-caramel shrink-0 mt-0.5" />
+            <p className="leading-relaxed">
+              {t('auth.spamDisclaimer')}
+            </p>
+          </div>
           
           {error && (
             <div className="alert-error mb-4">

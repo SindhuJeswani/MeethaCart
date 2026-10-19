@@ -7,12 +7,13 @@ import nodemailer from 'nodemailer';
  */
 class EmailService {
   constructor() {
-    this.mode = process.env.EMAIL_MODE || 'dev';
     this.transporter = null;
+  }
 
-    if (this.mode === 'smtp') {
+  getTransporter() {
+    if (!this.transporter) {
       this.transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
+        host: process.env.SMTP_HOST || 'smtp.gmail.com',
         port: Number(process.env.SMTP_PORT) || 587,
         secure: process.env.SMTP_PORT === '465',
         auth: {
@@ -21,6 +22,7 @@ class EmailService {
         }
       });
     }
+    return this.transporter;
   }
 
   /**
@@ -37,9 +39,10 @@ class EmailService {
     };
 
     const title = titles[purpose] || 'Your MeethaCart Security Code';
+    const mode = process.env.EMAIL_MODE || 'dev';
 
     // In DEV mode, print in console with prominent banner for easy testing
-    if (this.mode === 'dev') {
+    if (mode === 'dev') {
       console.log('\n======================================================');
       console.log(`[EMAIL SERVICE - DEV MODE]`);
       console.log(`TO:      ${to}`);
@@ -71,8 +74,9 @@ class EmailService {
     `;
 
     try {
-      const info = await this.transporter.sendMail({
-        from: process.env.EMAIL_FROM || '"MeethaCart Bakery" <no-reply@meethacart.com>',
+      const transporter = this.getTransporter();
+      const info = await transporter.sendMail({
+        from: process.env.EMAIL_FROM || '"MeethaCart Bakery" <sindhukumeri44@gmail.com>',
         to,
         subject: `${title} - MeethaCart`,
         html

@@ -52,7 +52,8 @@
     "haveAccount": "Already have an account?",
     "noAccount": "Don't have an account?",
     "backToLogin": "Back to Login",
-    "devModeNotice": "Dev Mode Notice: Since EMAIL_MODE is set to 'dev', the 6-digit OTP code is printed directly in the backend terminal console for instant testing."
+    "devModeNotice": "Dev Mode Notice: Since EMAIL_MODE is set to 'dev', the 6-digit OTP code is printed directly in the backend terminal console for instant testing.",
+    "spamDisclaimer": "If an account exists with this email address, a 6-digit verification code has been sent. Please check your Inbox as well as your Spam / Junk folder."
   },
   "seller": {
     "dashboardTitle": "Baker Studio Dashboard",

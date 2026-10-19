@@ -97,7 +97,7 @@ export const register = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: 'Registration initiated. A 6-digit verification code has been sent to your email.',
+      message: 'Registration initiated. If an account with this email exists, a 6-digit verification code has been sent. Please check your Inbox as well as your Spam / Junk folder.',
       email: normalizedEmail,
       cooldownSeconds: otpResult.cooldownSeconds
     });
@@ -348,7 +348,7 @@ export const forgotPassword = async (req, res) => {
     if (!user) {
       return res.status(200).json({
         success: true,
-        message: 'If an account exists with this email, a password reset code has been sent.',
+        message: 'If an account exists with this email, a 6-digit verification code has been sent. Please check your Inbox as well as your Spam / Junk folder.',
         email: normalizedEmail,
         cooldownSeconds: 60
       });
@@ -358,7 +358,7 @@ export const forgotPassword = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: 'A 6-digit password reset code has been sent to your email.',
+      message: 'If an account exists with this email, a 6-digit verification code has been sent. Please check your Inbox as well as your Spam / Junk folder.',
       email: normalizedEmail,
       cooldownSeconds: result.cooldownSeconds
     });
