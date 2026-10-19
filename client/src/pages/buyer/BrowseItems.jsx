@@ -4,8 +4,10 @@ import api from '../../services/api';
 import ItemCard from '../../components/items/ItemCard';
 import ItemFilterSidebar from '../../components/items/ItemFilterSidebar';
 import { Search, ShoppingBag, SlidersHorizontal, X, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useTranslation } from '../../context/LanguageContext';
 
 const BrowseItems = () => {
+  const { t, translateCategory } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [items, setItems] = useState([]);
@@ -109,23 +111,23 @@ const BrowseItems = () => {
       {/* Breadcrumb & Header */}
       <div className="space-y-1.5 pb-2 border-b border-bakery-200">
         <nav className="flex items-center gap-1.5 text-xs text-bakery-500">
-          <Link to="/" className="hover:text-chocolate">Home</Link>
+          <Link to="/" className="hover:text-chocolate">{t('nav.home') || 'Home'}</Link>
           <span>/</span>
-          <span className="text-bakery-800 font-medium">All items</span>
+          <span className="text-bakery-800 font-medium">{t('items.allItems') || 'All items'}</span>
           {selectedCategory !== 'all' && (
             <>
               <span>/</span>
-              <span className="text-chocolate font-medium capitalize">{selectedCategory}</span>
+              <span className="text-chocolate font-medium capitalize">{translateCategory(selectedCategory)}</span>
             </>
           )}
         </nav>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
           <div>
             <h1 className="text-2xl sm:text-3xl font-serif font-bold text-chocolate">
-              {selectedCategory !== 'all' ? `${selectedCategory}` : 'All bakery items'}
+              {selectedCategory !== 'all' ? translateCategory(selectedCategory) : (t('browse.title') || 'All bakery items')}
             </h1>
             <p className="text-xs sm:text-sm text-bakery-600 mt-0.5">
-              Homemade treats prepared fresh by independent bakers across Pakistan.
+              {t('browse.subtitle') || 'Homemade treats prepared fresh by independent bakers across Pakistan.'}
             </p>
           </div>
 
@@ -136,7 +138,7 @@ const BrowseItems = () => {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search items..."
+              placeholder={t('nav.searchPlaceholder') || 'Search items...'}
               className="w-full pl-9 pr-8 py-2 rounded-md bg-white border border-bakery-200 text-chocolate placeholder-bakery-400 text-xs focus:outline-none focus:border-caramel"
             />
             {search && (
@@ -166,10 +168,10 @@ const BrowseItems = () => {
             className="btn-secondary text-xs py-1.5 px-3"
           >
             <SlidersHorizontal className="w-3.5 h-3.5 text-caramel" />
-            <span>{showMobileFilter ? 'Hide filters' : 'Filters'}</span>
+            <span>{showMobileFilter ? (t('browse.hideFilters') || 'Hide filters') : (t('browse.filters') || 'Filters')}</span>
           </button>
           <span className="text-xs text-bakery-600 font-medium">
-            {totalCount} {totalCount === 1 ? 'item' : 'items'}
+            {totalCount} {totalCount === 1 ? (t('browse.item') || 'item') : (t('browse.items') || 'items')}
           </span>
         </div>
 
@@ -193,15 +195,15 @@ const BrowseItems = () => {
           {/* Top Bar: Count, Per-Page & Sort */}
           <div className="bg-white rounded-lg border border-bakery-200 p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="text-xs sm:text-sm text-bakery-700">
-              Showing <strong className="text-chocolate">{items.length}</strong> of{' '}
-              <strong className="text-chocolate">{totalCount}</strong> items
+              {t('browse.showing') || 'Showing'} <strong className="text-chocolate">{items.length}</strong> {t('browse.of') || 'of'}{' '}
+              <strong className="text-chocolate">{totalCount}</strong> {t('browse.items') || 'items'}
             </div>
 
             <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
               {/* Items per page selector */}
               <div className="flex items-center gap-1.5">
                 <label className="text-xs font-medium text-bakery-600 whitespace-nowrap">
-                  Show:
+                  {t('browse.show') || 'Show:'}
                 </label>
                 <select
                   value={limit}
@@ -213,23 +215,23 @@ const BrowseItems = () => {
                 >
                   <option value="12">12</option>
                   <option value="24">24</option>
-                  <option value="all">All ({totalCount})</option>
+                  <option value="all">{t('browse.all') || 'All'} ({totalCount})</option>
                 </select>
               </div>
 
               {/* Sort selector */}
               <div className="flex items-center gap-1.5">
                 <label className="text-xs font-medium text-bakery-600 whitespace-nowrap">
-                  Sort:
+                  {t('browse.sort') || 'Sort:'}
                 </label>
                 <select
                   value={sort}
                   onChange={(e) => setSort(e.target.value)}
                   className="input-bakery text-xs py-1 px-2.5 bg-white font-medium rounded-md"
                 >
-                  <option value="newest">Newest first</option>
-                  <option value="price_asc">Price: low to high</option>
-                  <option value="price_desc">Price: high to low</option>
+                  <option value="newest">{t('browse.sortNewest') || 'Newest first'}</option>
+                  <option value="price_asc">{t('browse.sortPriceAsc') || 'Price: low to high'}</option>
+                  <option value="price_desc">{t('browse.sortPriceDesc') || 'Price: high to low'}</option>
                 </select>
               </div>
             </div>
@@ -238,7 +240,7 @@ const BrowseItems = () => {
           {/* Active Filter Pills */}
           {(selectedCategory !== 'all' || Number(maxPrice) < 6000 || isEggless || search) && (
             <div className="flex flex-wrap items-center gap-2 text-xs">
-              <span className="text-bakery-500">Active filters:</span>
+              <span className="text-bakery-500">{t('browse.activeFilters') || 'Active filters:'}</span>
 
               {search && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-bakery-100 text-chocolate font-medium border border-bakery-200">
@@ -251,7 +253,7 @@ const BrowseItems = () => {
 
               {selectedCategory !== 'all' && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-bakery-100 text-chocolate font-medium border border-bakery-200">
-                  <span>Category: {selectedCategory}</span>
+                  <span>{t('browse.category') || 'Category:'} {translateCategory(selectedCategory)}</span>
                   <button onClick={() => setSelectedCategory('all')} className="hover:text-strawberry">
                     <X className="w-3 h-3" />
                   </button>
@@ -260,7 +262,7 @@ const BrowseItems = () => {
 
               {Number(maxPrice) < 6000 && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-bakery-100 text-chocolate font-medium border border-bakery-200">
-                  <span>Under Rs. {Number(maxPrice).toLocaleString()}</span>
+                  <span>{t('browse.under') || 'Under'} Rs. {Number(maxPrice).toLocaleString()}</span>
                   <button onClick={() => setMaxPrice('6000')} className="hover:text-strawberry">
                     <X className="w-3 h-3" />
                   </button>
@@ -269,7 +271,7 @@ const BrowseItems = () => {
 
               {isEggless && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-medium border border-emerald-200">
-                  <span>Eggless only</span>
+                  <span>{t('browse.egglessOnly') || 'Eggless only'}</span>
                   <button onClick={() => setIsEggless(false)} className="hover:text-rose-700">
                     <X className="w-3 h-3" />
                   </button>
@@ -281,7 +283,7 @@ const BrowseItems = () => {
                 onClick={handleResetFilters}
                 className="text-xs text-caramel hover:text-caramel-dark underline font-medium ml-1"
               >
-                Clear all
+                {t('browse.clearAll') || 'Clear all'}
               </button>
             </div>
           )}
@@ -290,23 +292,23 @@ const BrowseItems = () => {
           {isLoading ? (
             <div className="py-20 text-center flex flex-col items-center justify-center gap-2">
               <RefreshCw className="w-6 h-6 text-caramel animate-spin" />
-              <p className="text-xs text-bakery-600">Loading items...</p>
+              <p className="text-xs text-bakery-600">{t('browse.loading') || 'Loading items...'}</p>
             </div>
           ) : items.length === 0 ? (
             <div className="bg-white rounded-lg border border-bakery-200 text-center py-16 px-4">
               <ShoppingBag className="w-10 h-10 text-bakery-300 mx-auto mb-2" />
               <h3 className="text-base font-serif font-bold text-chocolate mb-1">
-                No items found
+                {t('browse.noItemsFound') || 'No items found'}
               </h3>
               <p className="text-xs text-bakery-600 max-w-sm mx-auto mb-4">
-                No items match your selected filters. Try removing some filters or searching for something else.
+                {t('browse.noItemsFoundDesc') || 'No items match your selected filters. Try removing some filters or searching for something else.'}
               </p>
               <button
                 type="button"
                 onClick={handleResetFilters}
                 className="btn-primary text-xs py-1.5 px-4 inline-flex"
               >
-                Reset all filters
+                {t('browse.resetFilters') || 'Reset all filters'}
               </button>
             </div>
           ) : (
@@ -321,7 +323,7 @@ const BrowseItems = () => {
           {totalPages > 1 && (
             <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-bakery-200">
               <span className="text-xs text-bakery-600 font-medium">
-                Page {page} of {totalPages}
+                {t('browse.page') || 'Page'} {page} {t('browse.of') || 'of'} {totalPages}
               </span>
               <div className="flex items-center gap-1.5">
                 <button
@@ -334,7 +336,7 @@ const BrowseItems = () => {
                   className="btn-secondary text-xs py-1 px-2.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Prev</span>
+                  <span>{t('browse.prev') || 'Prev'}</span>
                 </button>
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((pNum) => (
                   <button
@@ -362,7 +364,7 @@ const BrowseItems = () => {
                   }}
                   className="btn-secondary text-xs py-1 px-2.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
                 >
-                  <span>Next</span>
+                  <span>{t('browse.next') || 'Next'}</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>

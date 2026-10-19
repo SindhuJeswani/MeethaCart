@@ -9,7 +9,7 @@ import api from '../../services/api';
 const AUTH_ROUTES = ['/login', '/register', '/verify-otp', '/forgot-password', '/reset-password'];
 
 const Footer = () => {
-  const { lang, toggleLanguage } = useTranslation();
+  const { lang, toggleLanguage, t, translateCategory } = useTranslation();
   const location = useLocation();
   const [categories, setCategories] = useState([]);
 
@@ -42,13 +42,13 @@ const Footer = () => {
     return (
       <footer className="border-t border-bakery-200 bg-surface py-3.5 mt-auto">
         <Container className="flex flex-col sm:flex-row items-center justify-between text-xs text-bakery-600 gap-2">
-          <p>© {new Date().getFullYear()} MeethaCart. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} MeethaCart. {t('footer.copyright') || 'All rights reserved.'}</p>
           <div className="flex items-center gap-6">
             <Link to="/terms" className="hover:text-chocolate font-medium transition-colors">
-              Terms
+              {t('footer.termsShort') || 'Terms'}
             </Link>
             <Link to="/privacy" className="hover:text-chocolate font-medium transition-colors">
-              Privacy
+              {t('footer.privacyShort') || 'Privacy'}
             </Link>
           </div>
         </Container>
@@ -67,7 +67,7 @@ const Footer = () => {
           <div className="lg:col-span-4 space-y-4">
             <Logo variant="light" size="md" showSubtitle={true} to="/" />
             <p className="text-white/70 text-xs sm:text-sm leading-relaxed max-w-sm">
-              An online marketplace connecting local home bakers across Pakistan with people who love fresh, homemade baked goods.
+              {t('footer.desc') || 'An online marketplace connecting local home bakers across Pakistan with people who love fresh, homemade baked goods.'}
             </p>
             <div>
               <button
@@ -83,16 +83,18 @@ const Footer = () => {
 
           {/* Col 2: Shop (3 of 12 cols) */}
           <div className="lg:col-span-3 space-y-3">
-            <h4 className="text-white text-sm font-semibold font-serif tracking-wide">Shop</h4>
+            <h4 className="text-white text-sm font-semibold font-serif tracking-wide">
+              {t('footer.shop') || 'Shop'}
+            </h4>
             <ul className="space-y-2.5 text-xs sm:text-sm">
               <li>
                 <Link to="/items" className="text-white/70 hover:text-white transition-colors block">
-                  All items
+                  {t('footer.allItems') || 'All items'}
                 </Link>
               </li>
               <li>
                 <Link to="/items?sort=newest" className="text-white/70 hover:text-white transition-colors block">
-                  New arrivals
+                  {t('footer.newArrivals') || 'New arrivals'}
                 </Link>
               </li>
               {categories.map((cat) => (
@@ -101,7 +103,7 @@ const Footer = () => {
                     to={`/items?category=${encodeURIComponent(cat.slug || cat.name)}`}
                     className="text-white/70 hover:text-white transition-colors block"
                   >
-                    {cat.name}
+                    {translateCategory(cat.name || cat.slug)}
                   </Link>
                 </li>
               ))}
@@ -110,9 +112,9 @@ const Footer = () => {
                   to="/custom-requests"
                   className="text-white/70 hover:text-white transition-colors inline-flex items-center gap-1.5"
                 >
-                  <span>Custom requests</span>
+                  <span>{t('footer.customRequests') || 'Custom requests'}</span>
                   <span className="text-[10px] bg-amber-400/25 text-amber-200 border border-amber-400/30 px-1.5 py-0.5 rounded font-semibold">
-                    Soon
+                    {lang === 'ur' ? 'جلد' : 'Soon'}
                   </span>
                 </Link>
               </li>
@@ -121,16 +123,18 @@ const Footer = () => {
 
           {/* Col 3: Sell (2 of 12 cols) */}
           <div className="lg:col-span-2 space-y-3">
-            <h4 className="text-white text-sm font-semibold font-serif tracking-wide">Sell</h4>
+            <h4 className="text-white text-sm font-semibold font-serif tracking-wide">
+              {t('footer.sell') || 'Sell'}
+            </h4>
             <ul className="space-y-2.5 text-xs sm:text-sm">
               <li>
                 <Link to="/register?role=seller" className="text-white/70 hover:text-white transition-colors block">
-                  Become a seller
+                  {t('footer.becomeSeller') || 'Become a seller'}
                 </Link>
               </li>
               <li>
                 <Link to="/login" className="text-white/70 hover:text-white transition-colors block">
-                  Seller sign in
+                  {t('footer.sellerSignIn') || 'Seller sign in'}
                 </Link>
               </li>
               <li>
@@ -138,9 +142,9 @@ const Footer = () => {
                   to="/seller-guidelines"
                   className="text-white/70 hover:text-white transition-colors inline-flex items-center gap-1.5"
                 >
-                  <span>Seller guidelines</span>
+                  <span>{t('footer.sellerGuidelines') || 'Seller guidelines'}</span>
                   <span className="text-[10px] bg-amber-400/25 text-amber-200 border border-amber-400/30 px-1.5 py-0.5 rounded font-semibold">
-                    Soon
+                    {lang === 'ur' ? 'جلد' : 'Soon'}
                   </span>
                 </Link>
               </li>
@@ -149,7 +153,9 @@ const Footer = () => {
 
           {/* Col 4: Help & Contact (3 of 12 cols) */}
           <div className="lg:col-span-3 space-y-3">
-            <h4 className="text-white text-sm font-semibold font-serif tracking-wide">Help</h4>
+            <h4 className="text-white text-sm font-semibold font-serif tracking-wide">
+              {t('footer.help') || 'Help'}
+            </h4>
             <ul className="space-y-2.5 text-xs sm:text-sm">
               <li>
                 <a
@@ -165,20 +171,20 @@ const Footer = () => {
                   to="/help"
                   className="text-white/70 hover:text-white transition-colors inline-flex items-center gap-1.5"
                 >
-                  <span>Help centre</span>
+                  <span>{t('footer.helpCentre') || 'Help centre'}</span>
                   <span className="text-[10px] bg-amber-400/25 text-amber-200 border border-amber-400/30 px-1.5 py-0.5 rounded font-semibold">
-                    Soon
+                    {lang === 'ur' ? 'جلد' : 'Soon'}
                   </span>
                 </Link>
               </li>
               <li>
                 <Link to="/terms" className="text-white/70 hover:text-white transition-colors block">
-                  Terms of Service
+                  {t('footer.terms') || 'Terms of Service'}
                 </Link>
               </li>
               <li>
                 <Link to="/privacy" className="text-white/70 hover:text-white transition-colors block">
-                  Privacy Policy
+                  {t('footer.privacy') || 'Privacy Policy'}
                 </Link>
               </li>
             </ul>
@@ -188,13 +194,17 @@ const Footer = () => {
 
         {/* Full container width divider line */}
         <div className="border-t border-white/10 mt-10 pt-6 flex flex-col md:flex-row items-center justify-between text-xs text-white/55 gap-3">
-          <p>© {new Date().getFullYear()} MeethaCart. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} MeethaCart. {t('footer.copyright') || 'All rights reserved.'}</p>
           <p className="text-white/50 text-center md:text-left">
-            Available in Karachi, Lahore, Islamabad & across Pakistan.
+            {t('footer.tagline') || 'Available in Karachi, Lahore, Islamabad & across Pakistan.'}
           </p>
           <div className="flex items-center gap-4">
-            <Link to="/terms" className="hover:text-white/80 transition-colors">Terms</Link>
-            <Link to="/privacy" className="hover:text-white/80 transition-colors">Privacy</Link>
+            <Link to="/terms" className="hover:text-white/80 transition-colors">
+              {t('footer.termsShort') || 'Terms'}
+            </Link>
+            <Link to="/privacy" className="hover:text-white/80 transition-colors">
+              {t('footer.privacyShort') || 'Privacy'}
+            </Link>
           </div>
         </div>
       </Container>

@@ -4,8 +4,10 @@ import { ArrowRight, ShoppingBag, Store, Search, PackageCheck, UtensilsCrossed }
 import api from '../services/api';
 import ItemCard from '../components/items/ItemCard';
 import heroImg from '../assets/hero.jpg';
+import { useTranslation } from '../context/LanguageContext';
 
 const Home = () => {
+  const { t, translateCategory } = useTranslation();
   const [categories, setCategories] = useState([]);
   const [latestItems, setLatestItems] = useState([]);
   const [loadingItems, setLoadingItems] = useState(true);
@@ -56,7 +58,7 @@ const Home = () => {
               to="/items"
               className="px-3.5 py-1.5 rounded-full bg-bakery-100 text-chocolate font-medium hover:bg-bakery-200 whitespace-nowrap transition-colors"
             >
-              All items
+              {t('home.allItems') || 'All items'}
             </Link>
 
             {loadingCats ? (
@@ -72,7 +74,7 @@ const Home = () => {
                   to={`/items?category=${encodeURIComponent(cat.slug || cat.name)}`}
                   className="px-3.5 py-1.5 rounded-full border border-bakery-200 text-bakery-700 font-medium hover:bg-bakery-100 hover:text-chocolate whitespace-nowrap transition-colors"
                 >
-                  {cat.name}
+                  {translateCategory(cat.name || cat.slug)}
                 </Link>
               ))
             )}
@@ -87,10 +89,10 @@ const Home = () => {
           {/* Left: Text & Actions */}
           <div className="p-6 sm:p-10 md:col-span-7 flex flex-col justify-center space-y-4">
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-serif font-bold text-chocolate leading-tight">
-              Homemade cakes and bakes from local bakers in Pakistan
+              {t('home.heroTitle') || 'Homemade cakes and bakes from local bakers in Pakistan'}
             </h1>
             <p className="text-sm sm:text-base text-bakery-700 max-w-lg leading-relaxed">
-              Browse ready items or contact a baker directly for custom cakes and party orders.
+              {t('home.heroSubtitle') || 'Browse ready items or contact a baker directly for custom cakes and party orders.'}
             </p>
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <Link
@@ -99,7 +101,7 @@ const Home = () => {
                 className="btn-primary text-sm py-2.5 px-5 font-medium"
               >
                 <ShoppingBag className="w-4 h-4" />
-                <span>Browse items</span>
+                <span>{t('home.browseItems') || 'Browse items'}</span>
               </Link>
               <Link
                 to="/register?role=seller"
@@ -107,7 +109,7 @@ const Home = () => {
                 className="btn-secondary text-sm py-2.5 px-5 font-medium"
               >
                 <Store className="w-4 h-4" />
-                <span>Sell on MeethaCart</span>
+                <span>{t('home.sellOnMeethaCart') || 'Sell on MeethaCart'}</span>
               </Link>
             </div>
           </div>
@@ -129,15 +131,17 @@ const Home = () => {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl sm:text-2xl font-serif font-bold text-chocolate">
-              Latest items
+              {t('home.latestItems') || 'Latest items'}
             </h2>
-            <p className="text-xs sm:text-sm text-bakery-600">Freshly listed by local home bakers</p>
+            <p className="text-xs sm:text-sm text-bakery-600">
+              {t('home.latestItemsSubtitle') || 'Freshly listed by local home bakers'}
+            </p>
           </div>
           <Link
             to="/items"
             className="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-caramel hover:text-caramel-dark transition-colors"
           >
-            <span>View all items</span>
+            <span>{t('home.viewAll') || 'View all items'}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
@@ -150,7 +154,7 @@ const Home = () => {
           </div>
         ) : latestItems.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg border border-bakery-200 text-bakery-500 text-sm">
-            No items listed yet. Check back soon!
+            {t('home.noItemsListed') || 'No items listed yet. Check back soon!'}
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
@@ -166,17 +170,17 @@ const Home = () => {
         <div className="bg-white border border-bakery-200 rounded-lg p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <h3 className="font-serif font-bold text-chocolate text-base sm:text-lg">
-              Are you a home baker?
+              {t('home.sellerBannerTitle') || 'Are you a home baker?'}
             </h3>
             <p className="text-xs sm:text-sm text-bakery-600">
-              List your bakery items, receive orders from buyers in your city, and manage your storefront.
+              {t('home.sellerBannerDesc') || 'List your bakery items, receive orders from buyers in your city, and manage your storefront.'}
             </p>
           </div>
           <Link
             to="/register?role=seller"
             className="btn-primary text-xs sm:text-sm py-2 px-4 font-medium shrink-0"
           >
-            Become a seller
+            {t('home.becomeSeller') || 'Become a seller'}
           </Link>
         </div>
       </section>
@@ -185,7 +189,7 @@ const Home = () => {
       <section className="page-container pt-2">
         <div className="border-t border-bakery-200 pt-8 pb-4">
           <h2 className="text-center text-lg font-serif font-bold text-chocolate mb-6">
-            How MeethaCart works
+            {t('home.howItWorksTitle') || 'How MeethaCart works'}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
             <div className="flex items-start gap-3.5">
@@ -193,9 +197,11 @@ const Home = () => {
                 <Search className="w-4 h-4 text-caramel" />
               </div>
               <div>
-                <h4 className="font-semibold text-chocolate text-sm">1. Find a baker or item</h4>
+                <h4 className="font-semibold text-chocolate text-sm">
+                  {t('home.step1Title') || '1. Find a baker or item'}
+                </h4>
                 <p className="text-xs text-bakery-600 mt-1 leading-relaxed">
-                  Search by cake type, dessert category, or location to find bakers near you.
+                  {t('home.step1Desc') || 'Search by cake type, dessert category, or location to find bakers near you.'}
                 </p>
               </div>
             </div>
@@ -205,9 +211,11 @@ const Home = () => {
                 <UtensilsCrossed className="w-4 h-4 text-caramel" />
               </div>
               <div>
-                <h4 className="font-semibold text-chocolate text-sm">2. Order or request custom</h4>
+                <h4 className="font-semibold text-chocolate text-sm">
+                  {t('home.step2Title') || '2. Order or request custom'}
+                </h4>
                 <p className="text-xs text-bakery-600 mt-1 leading-relaxed">
-                  Choose ready items or contact the baker with custom flavors, weights, and dates.
+                  {t('home.step2Desc') || 'Choose ready items or contact the baker with custom flavors, weights, and dates.'}
                 </p>
               </div>
             </div>
@@ -217,9 +225,11 @@ const Home = () => {
                 <PackageCheck className="w-4 h-4 text-caramel" />
               </div>
               <div>
-                <h4 className="font-semibold text-chocolate text-sm">3. Freshly prepared for you</h4>
+                <h4 className="font-semibold text-chocolate text-sm">
+                  {t('home.step3Title') || '3. Freshly prepared for you'}
+                </h4>
                 <p className="text-xs text-bakery-600 mt-1 leading-relaxed">
-                  Your order is prepared fresh on demand and delivered on your specified schedule.
+                  {t('home.step3Desc') || 'Your order is prepared fresh on demand and delivered on your specified schedule.'}
                 </p>
               </div>
             </div>

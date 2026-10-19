@@ -45,8 +45,34 @@ export const LanguageProvider = ({ children }) => {
     setLang((prev) => (prev === 'en' ? 'ur' : 'en'));
   };
 
+  const translateCategory = (nameOrSlug) => {
+    if (!nameOrSlug) return '';
+    const isUr = lang === 'ur';
+    const slug = String(nameOrSlug).toLowerCase().trim().replace(/&/g, 'and').replace(/\s+/g, '-');
+
+    if (slug.includes('mithai') || slug.includes('traditional')) {
+      return isUr ? 'روایتی مٹھائی' : 'Traditional Mithai';
+    }
+    if (slug.includes('pastr') || slug.includes('cupcake')) {
+      return isUr ? 'پیسٹریز اور کپ کیکس' : 'Pastries & Cupcakes';
+    }
+    if (slug.includes('cake') || slug.includes('custom')) {
+      return isUr ? 'کسٹم کیکس' : 'Custom Cakes';
+    }
+    if (slug.includes('cookie') || slug.includes('biscuit')) {
+      return isUr ? 'کوکیز اور بسکٹ' : 'Cookies & Biscuits';
+    }
+    if (slug.includes('bread') || slug.includes('bun') || slug.includes('artisan')) {
+      return isUr ? 'روایتی بریڈز اور نان' : 'Artisanal Breads';
+    }
+    if (slug === 'all' || slug === 'all-items') {
+      return isUr ? 'تمام اشیاء' : 'All items';
+    }
+    return nameOrSlug;
+  };
+
   return (
-    <LanguageContext.Provider value={{ lang, setLang, toggleLanguage, t, isUrdu: lang === 'ur' }}>
+    <LanguageContext.Provider value={{ lang, setLang, toggleLanguage, t, translateCategory, isUrdu: lang === 'ur' }}>
       {children}
     </LanguageContext.Provider>
   );

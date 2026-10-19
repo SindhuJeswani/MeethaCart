@@ -41,18 +41,18 @@ const Navbar = () => {
   };
 
   const navLinks = [
-    { to: '/', label: 'Home' },
-    { to: '/items', label: 'Browse Items' },
-    { to: '/custom-requests', label: 'Custom Bakes', soon: true },
-    { to: '/cart', label: 'Cart', soon: true },
+    { to: '/', label: t('nav.home') || 'Home' },
+    { to: '/items', label: t('nav.browse') || 'Browse Items' },
+    { to: '/custom-requests', label: t('nav.customBakes') || 'Custom Bakes', soon: true },
+    { to: '/cart', label: t('nav.cart') || 'Cart', soon: true },
     ...(isAuthenticated && user?.role === 'seller'
-      ? [{ to: '/seller/dashboard', label: 'My Store', icon: <Store className="w-4 h-4" /> }]
+      ? [{ to: '/seller/dashboard', label: t('nav.bakerStudio') || 'My Store', icon: <Store className="w-4 h-4" /> }]
       : []),
     ...(isAuthenticated && user?.role === 'admin'
-      ? [{ to: '/admin/dashboard', label: 'Admin', icon: <Shield className="w-4 h-4" /> }]
+      ? [{ to: '/admin/dashboard', label: t('nav.adminPanel') || 'Admin', icon: <Shield className="w-4 h-4" /> }]
       : []),
     ...(isAuthenticated && user?.role === 'buyer'
-      ? [{ to: '/buyer/dashboard', label: 'My Orders', icon: <LayoutDashboard className="w-4 h-4" /> }]
+      ? [{ to: '/buyer/dashboard', label: t('nav.dashboard') || 'My Orders', icon: <LayoutDashboard className="w-4 h-4" /> }]
       : []),
   ];
 
@@ -69,7 +69,7 @@ const Navbar = () => {
             className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-amber-100 hover:text-white transition-colors py-1.5 px-3 rounded-md hover:bg-white/10"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Back to home</span>
+            <span>{t('nav.backToHome') || 'Back to home'}</span>
           </Link>
         </Container>
       </header>
@@ -94,7 +94,7 @@ const Navbar = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search cakes, mithai, cookies..."
+              placeholder={t('nav.searchPlaceholder') || 'Search cakes, mithai, cookies...'}
               className="flex-1 px-3.5 py-2 bg-transparent text-white text-sm placeholder-white/50 focus:outline-none"
             />
             <button
@@ -122,7 +122,7 @@ const Navbar = () => {
                 <span>{link.label}</span>
                 {link.soon && (
                   <span className="text-[10px] bg-amber-400/25 text-amber-200 border border-amber-400/30 px-1.5 py-0.5 rounded font-semibold ml-0.5">
-                    Soon
+                    {lang === 'ur' ? 'جلد' : 'Soon'}
                   </span>
                 )}
               </Link>
@@ -159,7 +159,7 @@ const Navbar = () => {
                 <button
                   onClick={handleLogout}
                   className="p-2 text-white/60 hover:text-red-300 hover:bg-red-500/10 rounded-md transition-all"
-                  title="Sign out"
+                  title={t('nav.logout') || 'Sign out'}
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
@@ -170,13 +170,13 @@ const Navbar = () => {
                   to="/login"
                   className="px-3 py-1.5 text-sm font-medium text-amber-100 hover:text-white rounded-md hover:bg-white/10 transition-all"
                 >
-                  Sign in
+                  {t('nav.login') || 'Sign in'}
                 </Link>
                 <Link
                   to="/register"
                   className="btn-primary text-sm py-1.5 px-3.5"
                 >
-                  Register
+                  {t('nav.register') || 'Register'}
                 </Link>
               </div>
             )}
@@ -227,7 +227,7 @@ const Navbar = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search items..."
+              placeholder={t('nav.searchPlaceholder') || 'Search items...'}
               className="flex-1 px-3 py-2.5 bg-transparent text-white text-sm placeholder-white/50 focus:outline-none"
             />
             <button type="submit" className="px-3.5 py-2.5 text-white/70">
@@ -253,7 +253,7 @@ const Navbar = () => {
                 </div>
                 {link.soon && (
                   <span className="text-[10px] bg-amber-400/25 text-amber-200 border border-amber-400/30 px-1.5 py-0.5 rounded font-semibold">
-                    Soon
+                    {lang === 'ur' ? 'جلد' : 'Soon'}
                   </span>
                 )}
               </Link>
@@ -274,7 +274,7 @@ const Navbar = () => {
                   className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-red-300 hover:bg-red-500/10 transition-all"
                 >
                   <LogOut className="w-4 h-4" />
-                  Sign out
+                  {t('nav.logout') || 'Sign out'}
                 </button>
               ) : (
                 <div className="flex items-center gap-2">
@@ -283,14 +283,14 @@ const Navbar = () => {
                     onClick={() => setMobileOpen(false)}
                     className="px-3 py-1.5 text-sm font-medium text-amber-100 hover:text-white rounded-md hover:bg-white/10 transition-all"
                   >
-                    Sign in
+                    {t('nav.login') || 'Sign in'}
                   </Link>
                   <Link
                     to="/register"
                     onClick={() => setMobileOpen(false)}
                     className="btn-primary text-sm py-1.5 px-3"
                   >
-                    Register
+                    {t('nav.register') || 'Register'}
                   </Link>
                 </div>
               )}

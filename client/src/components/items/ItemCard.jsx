@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, Store, Clock } from 'lucide-react';
 import fallbackImg from '../../assets/fallback-item.jpg';
+import { useTranslation } from '../../context/LanguageContext';
 
 const isFreshToday = (item) => {
   const ref = item.updatedAt || item.createdAt;
@@ -16,6 +17,7 @@ const isFreshToday = (item) => {
 };
 
 const ItemCard = ({ item }) => {
+  const { t, translateCategory } = useTranslation();
   const [isWishlisted, setIsWishlisted] = useState(false);
 
   const imageUrl = (() => {
@@ -74,7 +76,7 @@ const ItemCard = ({ item }) => {
         {outOfStock && (
           <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] flex items-center justify-center">
             <span className="px-2.5 py-1 rounded bg-rose-600 text-white font-semibold text-xs uppercase tracking-wider">
-              Out of stock
+              {t('items.outOfStock') || 'Out of stock'}
             </span>
           </div>
         )}
@@ -83,17 +85,17 @@ const ItemCard = ({ item }) => {
         <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1 pointer-events-none">
           {categoryName && (
             <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-white/95 text-chocolate shadow-sm border border-bakery-200">
-              {categoryName}
+              {translateCategory(categoryName)}
             </span>
           )}
           {showEggless && (
             <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-600 text-white shadow-sm">
-              Eggless
+              {t('items.eggless') || 'Eggless'}
             </span>
           )}
           {freshToday && !outOfStock && (
             <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-caramel text-white shadow-sm">
-              Fresh today
+              {t('items.freshToday') || 'Fresh today'}
             </span>
           )}
         </div>
@@ -128,7 +130,7 @@ const ItemCard = ({ item }) => {
             </div>
             {item?.preparationTimeHours ? (
               <span className="text-[10px] text-bakery-500 font-normal">
-                {item.preparationTimeHours}h prep time
+                {item.preparationTimeHours} {t('items.prepTimeHours') || 'h prep time'}
               </span>
             ) : null}
           </div>
@@ -137,7 +139,7 @@ const ItemCard = ({ item }) => {
             to={`/items/${item?._id}`}
             className="btn-primary text-xs py-1.5 px-3 font-medium rounded-md whitespace-nowrap"
           >
-            View item
+            {t('items.viewItem') || 'View item'}
           </Link>
         </div>
       </div>
