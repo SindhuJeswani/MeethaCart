@@ -89,7 +89,21 @@
     "allItems": "All items",
     "maxPrice": "Max price",
     "dietaryPreference": "Dietary preference",
-    "egglessOnly": "Eggless only"
+    "egglessOnly": "Eggless only",
+    "inStock": "In stock",
+    "available": "available",
+    "prepTime": "Preparation time",
+    "prepNoticePrefix": "This item typically requires",
+    "prepNoticeSuffix": "hours notice before dispatch.",
+    "aboutItem": "About this item",
+    "madeToOrder": "Made to order",
+    "madeToOrderDesc": "This item is prepared fresh on order by the home baker. For custom sizes, flavors, or party orders, you can reach out directly via the seller profile.",
+    "soldBy": "Sold by",
+    "homeBaker": "Home baker",
+    "viewSeller": "View seller profile",
+    "share": "Share",
+    "linkCopied": "Link copied",
+    "moreInCategory": "More in"
   },
   "auth": {
     "loginTitle": "Sign In",

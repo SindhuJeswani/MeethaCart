@@ -89,7 +89,21 @@
     "allItems": "تمام اشیاء",
     "maxPrice": "زیادہ سے زیادہ قیمت",
     "dietaryPreference": "غذائی ترجیح",
-    "egglessOnly": "صرف بغیر انڈے کے"
+    "egglessOnly": "صرف بغیر انڈے کے",
+    "inStock": "اسٹاک میں دستیاب",
+    "available": "دستیاب",
+    "prepTime": "تیاری کا وقت",
+    "prepNoticePrefix": "اس آئٹم کی تیاری کے لیے کم از کم",
+    "prepNoticeSuffix": "گھنٹے پہلے آرڈر درکار ہوتا ہے۔",
+    "aboutItem": "اس آئٹم کے بارے میں",
+    "madeToOrder": "فرمائش پر تازہ تیار",
+    "madeToOrderDesc": "یہ آئٹم ہوم بیکر کی طرف سے آپ کے آرڈر پر تازہ بنایا جاتا ہے۔ کسٹم سائز، ذائقے یا تقریبات کے لیے آپ بیکر کی پروفائل پر رابطہ کر سکتے ہیں۔",
+    "soldBy": "بیکر:",
+    "homeBaker": "ہوم بیکر",
+    "viewSeller": "بیکر پروفائل دیکھیں",
+    "share": "شیئر کریں",
+    "linkCopied": "لنک کاپی ہو گیا!",
+    "moreInCategory": "مزید"
   },
   "auth": {
     "loginTitle": "خوش آمدید",

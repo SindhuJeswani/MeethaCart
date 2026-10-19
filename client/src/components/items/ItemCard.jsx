@@ -17,7 +17,7 @@ const isFreshToday = (item) => {
 };
 
 const ItemCard = ({ item }) => {
-  const { t, translateCategory } = useTranslation();
+  const { t, translateCategory, translateItemTitle } = useTranslation();
   const [isWishlisted, setIsWishlisted] = useState(false);
 
   const imageUrl = (() => {
@@ -48,7 +48,7 @@ const ItemCard = ({ item }) => {
         <Link to={`/items/${item?._id}`} className="block w-full h-full">
           <img
             src={imageUrl || fallbackImg}
-            alt={item?.title || 'Bakery item'}
+            alt={translateItemTitle(item) || 'Bakery item'}
             className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
             loading="lazy"
             onError={(e) => {
@@ -117,7 +117,7 @@ const ItemCard = ({ item }) => {
           {/* Item title */}
           <Link to={`/items/${item?._id}`} className="block mt-1">
             <h3 className="font-medium text-chocolate text-sm leading-snug line-clamp-2 group-hover:text-caramel transition-colors">
-              {item?.title}
+              {translateItemTitle(item)}
             </h3>
           </Link>
         </div>

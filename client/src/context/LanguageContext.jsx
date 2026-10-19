@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import en from '../i18n/en.json';
 import ur from '../i18n/ur.json';
+import { getItemTitle, getItemDescription } from '../utils/itemTranslations';
 
 const translations = { en, ur };
 
@@ -71,8 +72,22 @@ export const LanguageProvider = ({ children }) => {
     return nameOrSlug;
   };
 
+  const translateItemTitle = (itemOrTitle) => getItemTitle(itemOrTitle, lang);
+  const translateItemDescription = (itemOrDesc) => getItemDescription(itemOrDesc, lang);
+
   return (
-    <LanguageContext.Provider value={{ lang, setLang, toggleLanguage, t, translateCategory, isUrdu: lang === 'ur' }}>
+    <LanguageContext.Provider
+      value={{
+        lang,
+        setLang,
+        toggleLanguage,
+        t,
+        translateCategory,
+        translateItemTitle,
+        translateItemDescription,
+        isUrdu: lang === 'ur'
+      }}
+    >
       {children}
     </LanguageContext.Provider>
   );
