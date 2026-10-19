@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from '../../context/LanguageContext';
 
 /**
  * Reusable MeethaCart Brand Logo Component
@@ -18,6 +19,8 @@ const Logo = ({
   showSubtitle = false,
   className = ''
 }) => {
+  const { lang, t } = useTranslation();
+  const isUr = lang === 'ur';
   // Sizing definitions ensuring desktop >= 22px, mobile >= 18px
   const sizeConfig = {
     sm: {
@@ -90,12 +93,18 @@ const Logo = ({
 
       {/* ── Brand Wordmark ── */}
       <div className="flex flex-col leading-none">
-        <span className={`font-serif ${currentSize.titleText} font-bold tracking-tight ${textColor} whitespace-nowrap`}>
-          Meetha<span className={`${accentColor} font-serif font-extrabold`}>Cart</span>
-        </span>
+        {isUr ? (
+          <span className={`font-serif ${currentSize.titleText} font-bold tracking-tight ${textColor} whitespace-nowrap`}>
+            میٹھا <span className={`${accentColor} font-serif font-extrabold`}>کارٹ</span>
+          </span>
+        ) : (
+          <span className={`font-serif ${currentSize.titleText} font-bold tracking-tight ${textColor} whitespace-nowrap`}>
+            Meetha<span className={`${accentColor} font-serif font-extrabold`}>Cart</span>
+          </span>
+        )}
         {showSubtitle && (
           <span className={`block ${currentSize.subtitleText} uppercase font-semibold mt-1 ${subtextColor}`}>
-            Homemade Bakery · Pakistan
+            {isUr ? 'گھریلو اور روایتی بیکری · پاکستان' : 'Homemade Bakery · Pakistan'}
           </span>
         )}
       </div>

@@ -136,10 +136,10 @@ const Navbar = () => {
             <button
               onClick={toggleLanguage}
               className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-white/20 text-xs font-semibold text-amber-100/90 hover:text-white hover:bg-white/10 transition-all"
-              title="Toggle English / اردو"
+              title={lang === 'en' ? 'اردو میں دیکھیں' : 'Switch to English'}
             >
               <Globe className="w-3.5 h-3.5 text-caramel-light" />
-              <span>{lang === 'en' ? 'اردو' : 'EN'}</span>
+              <span>{lang === 'en' ? 'اردو' : 'English'}</span>
             </button>
 
             {isAuthenticated ? (
@@ -153,7 +153,9 @@ const Navbar = () => {
                   </div>
                   <span className="hidden xl:block max-w-[100px] truncate text-white/90 text-xs">{user?.name}</span>
                   <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-caramel/30 text-amber-200 border border-caramel/40">
-                    {user?.role}
+                    {lang === 'ur'
+                      ? (user?.role === 'admin' ? 'ایڈمن' : user?.role === 'seller' ? 'سیلر' : 'خریدار')
+                      : user?.role}
                   </span>
                 </Link>
                 <button

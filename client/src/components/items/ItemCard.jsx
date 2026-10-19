@@ -17,7 +17,7 @@ const isFreshToday = (item) => {
 };
 
 const ItemCard = ({ item }) => {
-  const { t, translateCategory, translateItemTitle } = useTranslation();
+  const { t, translateCategory, translateItemTitle, lang } = useTranslation();
   const [isWishlisted, setIsWishlisted] = useState(false);
 
   const imageUrl = (() => {
@@ -28,8 +28,17 @@ const ItemCard = ({ item }) => {
     return img;
   })();
 
-  const sellerName = item?.seller?.bakeryName || item?.seller?.name || 'Home Baker';
-  const sellerCity = item?.seller?.city || item?.seller?.location || '';
+  const sellerName = item?.seller?.bakeryName || item?.seller?.name || (lang === 'ur' ? 'ہوم بیکر' : 'Home Baker');
+  const rawCity = item?.seller?.city || item?.seller?.location || '';
+  const sellerCity = (() => {
+    if (!rawCity || lang !== 'ur') return rawCity;
+    let c = rawCity;
+    c = c.replace(/Lahore/gi, 'لاہور');
+    c = c.replace(/Karachi/gi, 'کراچی');
+    c = c.replace(/Islamabad/gi, 'اسلام آباد');
+    c = c.replace(/Rawalpindi/gi, 'راولپنڈی');
+    return c;
+  })();
   const categoryName = item?.category?.name || '';
   const freshToday = isFreshToday(item);
   const outOfStock = item?.stock !== undefined && item.stock <= 0;
@@ -126,7 +135,7 @@ const ItemCard = ({ item }) => {
         <div className="pt-2 border-t border-bakery-100 flex items-center justify-between gap-2 mt-auto">
           <div>
             <div className="text-base font-bold text-chocolate leading-tight">
-              Rs. {item?.price ? item.price.toLocaleString() : '0'}
+              {lang === 'ur' ? 'روپے ' : 'Rs. '}{item?.price ? item.price.toLocaleString() : '0'}
             </div>
             {item?.preparationTimeHours ? (
               <span className="text-[10px] text-bakery-500 font-normal">
