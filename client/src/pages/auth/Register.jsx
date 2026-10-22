@@ -1,62 +1,59 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from '../../context/LanguageContext';
-import { User, Mail, Lock, Store, Phone, Globe, ArrowRight, AlertCircle, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, User, Store, Phone, Globe, ArrowRight, AlertCircle, ShieldCheck, CheckCircle } from 'lucide-react';
 import AuthLayout from '../../components/auth/AuthLayout';
+import {
+  shakeVariant,
+  fadeUp,
+  buttonTap,
+  TIMING,
+  EASING
+} from '../../animations/motion';
 
 const Register = () => {
-  const [searchParams] = useSearchParams();
-  const initialRole = searchParams.get('role') === 'seller' ? 'seller' : 'buyer';
-
-  const [role, setRole] = useState(initialRole);
+  const [role, setRole] = useState('buyer'); // 'buyer' or 'seller'
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [phone, setPhone] = useState('');
   const [bakeryName, setBakeryName] = useState('');
-  const { register } = useAuth();
-  const { t, lang } = useTranslation();
-  const navigate = useNavigate();
-
-  const [preferredLanguage, setPreferredLanguage] = useState(lang || 'en');
+  const [phone, setPhone] = useState('');
+  const [preferredLanguage, setPreferredLanguage] = useState('en');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isShaking, setIsShaking] = useState(false);
 
-  useEffect(() => {
-    if (lang) {
-      setPreferredLanguage(lang);
-    }
-  }, [lang]);
+  const { register } = useAuth();
+  const { t } = useTranslation();
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    if (searchParams.get('role') === 'seller') {
-      setRole('seller');
-    }
-  }, [searchParams]);
+  const triggerShake = () => {
+    setIsShaking(true);
+    setTimeout(() => setIsShaking(false), 450);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    if (!name.trim() || !email.trim() || !password) {
-      setError('Name, email, and password are required.');
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      triggerShake();
       return;
     }
 
     if (password.length < 8) {
       setError('Password must be at least 8 characters long.');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match.');
+      triggerShake();
       return;
     }
 
     if (role === 'seller' && !bakeryName.trim()) {
-      setError('Bakery name is required for seller registration.');
+      setError('Bakery name is required for sellers.');
+      triggerShake();
       return;
     }
 
@@ -64,7 +61,7 @@ const Register = () => {
       setIsSubmitting(true);
       const res = await register({
         name: name.trim(),
-        email: email.trim().toLowerCase(),
+        email: email.trim(),
         password,
         role,
         preferredLanguage,
@@ -76,11 +73,13 @@ const Register = () => {
         state: {
           email: res.email,
           purpose: 'signup_verification',
-          cooldownSeconds: res.cooldownSeconds || 60
+          cooldownSeconds: res.cooldownSeconds || 60,
+          devOtp: res.devOtp
         }
       });
     } catch (err) {
       setError(err.message || 'Registration failed.');
+      triggerShake();
     } finally {
       setIsSubmitting(false);
     }
@@ -95,7 +94,7 @@ const Register = () => {
   const buyerBenefits = [
     'Freshly made bakes from verified local home bakers',
     'Request custom designs, weights, and dates',
-    'Bilingual interface supporting English and اردو'
+    'Bilingual interface supporting English and ????'
   ];
 
   return (
@@ -117,44 +116,78 @@ const Register = () => {
       footerLinkAction="Sign in"
       footerLinkTo="/login"
     >
-      {/* Role Selector Tabs */}
-      <div className="grid grid-cols-2 gap-2 p-1 bg-bakery-100 rounded-lg mb-5 border border-bakery-200">
-        <button
+      {/* Animated Role Selection Cards */}
+      <div className="grid grid-cols-2 gap-3 p-1.5 bg-bakery-100/80 rounded-xl mb-5 border border-bakery-200">
+        <motion.button
           type="button"
           id="role-buyer"
           onClick={() => setRole('buyer')}
-          className={`py-2 px-3 text-xs font-semibold rounded-md transition-all flex items-center justify-center gap-2 ${
+          whileHover={{ scale: 1.02 }}
+          whileTap={buttonTap}
+          className={`relative py-2.5 px-3 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${
             role === 'buyer'
-              ? 'bg-white text-chocolate shadow-sm border border-bakery-200'
+              ? 'bg-white text-chocolate shadow-warm border border-caramel/40'
               : 'text-bakery-600 hover:text-chocolate'
           }`}
         >
-          <User className="w-3.5 h-3.5 text-caramel" />
+          {role === 'buyer' && (
+            <motion.div
+              layoutId="role-highlight"
+              className="absolute inset-0 border-2 border-caramel rounded-lg pointer-events-none"
+              transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+            />
+          )}
+          <User className={`w-4 h-4 ${role === 'buyer' ? 'text-caramel' : 'text-bakery-400'}`} />
           <span>Buyer</span>
-        </button>
-        <button
+          {role === 'buyer' && <CheckCircle className="w-3.5 h-3.5 text-caramel ml-auto" />}
+        </motion.button>
+
+        <motion.button
           type="button"
           id="role-seller"
           onClick={() => setRole('seller')}
-          className={`py-2 px-3 text-xs font-semibold rounded-md transition-all flex items-center justify-center gap-2 ${
+          whileHover={{ scale: 1.02 }}
+          whileTap={buttonTap}
+          className={`relative py-2.5 px-3 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${
             role === 'seller'
-              ? 'bg-white text-chocolate shadow-sm border border-bakery-200'
+              ? 'bg-white text-chocolate shadow-warm border border-caramel/40'
               : 'text-bakery-600 hover:text-chocolate'
           }`}
         >
-          <Store className="w-3.5 h-3.5 text-caramel" />
+          {role === 'seller' && (
+            <motion.div
+              layoutId="role-highlight"
+              className="absolute inset-0 border-2 border-caramel rounded-lg pointer-events-none"
+              transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+            />
+          )}
+          <Store className={`w-4 h-4 ${role === 'seller' ? 'text-caramel' : 'text-bakery-400'}`} />
           <span>Seller (Baker)</span>
-        </button>
+          {role === 'seller' && <CheckCircle className="w-3.5 h-3.5 text-caramel ml-auto" />}
+        </motion.button>
       </div>
 
-      {error && (
-        <div className="alert-error mb-4">
-          <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
-          <span>{error}</span>
-        </div>
-      )}
+      {/* Animated Error Alert */}
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.98 }}
+            className="alert-error mb-4"
+          >
+            <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+            <span>{error}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <form onSubmit={handleSubmit} className="space-y-3.5">
+      <motion.form
+        variants={shakeVariant}
+        animate={isShaking ? 'shake' : 'idle'}
+        onSubmit={handleSubmit}
+        className="space-y-3.5"
+      >
         {/* Full Name */}
         <div>
           <label className="block text-xs font-semibold text-bakery-700 mb-1">
@@ -168,30 +201,38 @@ const Register = () => {
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter your name"
               required
-              className="input-bakery pl-10"
+              className="input-bakery pl-10 transition-all duration-150 focus:ring-2 focus:ring-caramel/20"
             />
           </div>
         </div>
 
-        {/* Bakery Name (Only for Sellers) */}
-        {role === 'seller' && (
-          <div>
-            <label className="block text-xs font-semibold text-bakery-700 mb-1">
-              Bakery or brand name
-            </label>
-            <div className="relative">
-              <Store className="w-4 h-4 text-bakery-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                value={bakeryName}
-                onChange={(e) => setBakeryName(e.target.value)}
-                placeholder="e.g. Sara's Kitchen Bakes"
-                required
-                className="input-bakery pl-10"
-              />
-            </div>
-          </div>
-        )}
+        {/* Bakery Name (Only for Sellers) with smooth AnimatePresence */}
+        <AnimatePresence>
+          {role === 'seller' && (
+            <motion.div
+              initial={{ opacity: 0, height: 0, y: -6 }}
+              animate={{ opacity: 1, height: 'auto', y: 0 }}
+              exit={{ opacity: 0, height: 0, y: -6 }}
+              transition={{ duration: TIMING.normal, ease: EASING.out }}
+              className="overflow-hidden"
+            >
+              <label className="block text-xs font-semibold text-bakery-700 mb-1">
+                Bakery or brand name
+              </label>
+              <div className="relative">
+                <Store className="w-4 h-4 text-bakery-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={bakeryName}
+                  onChange={(e) => setBakeryName(e.target.value)}
+                  placeholder="e.g. Sara's Kitchen Bakes"
+                  required={role === 'seller'}
+                  className="input-bakery pl-10 transition-all duration-150 focus:ring-2 focus:ring-caramel/20"
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Email */}
         <div>
@@ -207,7 +248,7 @@ const Register = () => {
               placeholder="name@example.com"
               required
               autoComplete="email"
-              className="input-bakery pl-10"
+              className="input-bakery pl-10 transition-all duration-150 focus:ring-2 focus:ring-caramel/20"
             />
           </div>
         </div>
@@ -225,7 +266,7 @@ const Register = () => {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="0300 1234567"
-                className="input-bakery pl-10"
+                className="input-bakery pl-10 transition-all duration-150 focus:ring-2 focus:ring-caramel/20"
               />
             </div>
           </div>
@@ -239,10 +280,10 @@ const Register = () => {
               <select
                 value={preferredLanguage}
                 onChange={(e) => setPreferredLanguage(e.target.value)}
-                className="input-bakery pl-10"
+                className="input-bakery pl-10 transition-all duration-150 focus:ring-2 focus:ring-caramel/20"
               >
                 <option value="en">English</option>
-                <option value="ur">اردو (Urdu)</option>
+                <option value="ur">???? (Urdu)</option>
               </select>
             </div>
           </div>
@@ -263,7 +304,7 @@ const Register = () => {
                 placeholder="Min 8 characters"
                 required
                 autoComplete="new-password"
-                className="input-bakery pl-10"
+                className="input-bakery pl-10 transition-all duration-150 focus:ring-2 focus:ring-caramel/20"
               />
             </div>
           </div>
@@ -281,17 +322,19 @@ const Register = () => {
                 placeholder="Re-enter password"
                 required
                 autoComplete="new-password"
-                className="input-bakery pl-10"
+                className="input-bakery pl-10 transition-all duration-150 focus:ring-2 focus:ring-caramel/20"
               />
             </div>
           </div>
         </div>
 
-        {/* Submit */}
-        <button
+        {/* Submit with scale & spinner */}
+        <motion.button
+          whileHover={{ scale: 1.015, y: -1 }}
+          whileTap={buttonTap}
           type="submit"
           disabled={isSubmitting}
-          className="btn-primary w-full py-2.5 text-sm font-medium mt-2"
+          className="btn-primary w-full py-2.5 text-sm font-semibold shadow-md transition-all duration-200 mt-2 flex items-center justify-center gap-2"
         >
           {isSubmitting ? (
             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -301,8 +344,8 @@ const Register = () => {
               <ArrowRight className="w-4 h-4" />
             </>
           )}
-        </button>
-      </form>
+        </motion.button>
+      </motion.form>
 
       <div className="pt-3 border-t border-bakery-100 mt-4 flex items-center gap-1.5 text-xs text-bakery-500">
         <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />

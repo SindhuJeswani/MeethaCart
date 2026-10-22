@@ -1,7 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useTranslation } from '../context/LanguageContext';
-import { ArrowLeft, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, Sparkles } from 'lucide-react';
+import { fadeUp, buttonTap, TIMING, EASING } from '../animations/motion';
 
 const UnderBaking = ({
   title = 'This Feature',
@@ -9,17 +11,25 @@ const UnderBaking = ({
   description = '',
   descUrdu = ''
 }) => {
-  const { lang, isUrdu } = useTranslation();
+  const { isUrdu } = useTranslation();
 
   const activeTitle = isUrdu && titleUrdu ? titleUrdu : title;
   const activeDesc = isUrdu && descUrdu ? descUrdu : description;
 
   return (
     <div className="min-h-[75vh] flex items-center justify-center px-4 py-16 bg-bakery-50">
-      <div className="max-w-md w-full bg-white rounded-xl border border-bakery-200 p-8 sm:p-10 text-center shadow-sm space-y-6">
-        
-        {/* Oven / Baking Illustration */}
-        <div className="w-20 h-20 mx-auto rounded-2xl bg-bakery-100 border border-bakery-200 flex items-center justify-center text-chocolate">
+      <motion.div
+        variants={fadeUp}
+        initial="hidden"
+        animate="visible"
+        className="max-w-md w-full bg-white rounded-2xl border border-bakery-200 p-8 sm:p-10 text-center shadow-warm space-y-6"
+      >
+        {/* Animated Oven / Baking Illustration with subtle floating & steam */}
+        <motion.div
+          animate={{ y: [0, -6, 0] }}
+          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+          className="w-20 h-20 mx-auto rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-chocolate shadow-xs"
+        >
           <svg
             viewBox="0 0 64 64"
             fill="none"
@@ -33,7 +43,7 @@ const UnderBaking = ({
             <rect x="16" y="24" width="32" height="20" rx="3" fill="#4A2C1A" opacity="0.1" stroke="#4A2C1A" strokeWidth="2" />
             {/* Oven Handle */}
             <line x1="20" y1="19" x2="44" y2="19" stroke="#C77B30" strokeWidth="3" strokeLinecap="round" />
-            {/* Heat waves / Steam */}
+            {/* Heat waves / Steam with subtle pulse */}
             <path d="M26 36C26 33 28 32 28 29" stroke="#C77B30" strokeWidth="2" strokeLinecap="round" />
             <path d="M32 36C32 33 34 32 34 29" stroke="#C77B30" strokeWidth="2" strokeLinecap="round" />
             <path d="M38 36C38 33 40 32 40 29" stroke="#C77B30" strokeWidth="2" strokeLinecap="round" />
@@ -41,11 +51,11 @@ const UnderBaking = ({
             <rect x="14" y="54" width="6" height="3" rx="1" fill="#4A2C1A" />
             <rect x="44" y="54" width="6" height="3" rx="1" fill="#4A2C1A" />
           </svg>
-        </div>
+        </motion.div>
 
         {/* Content */}
         <div className="space-y-2">
-          <span className="inline-block px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-900 border border-amber-200">
+          <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-900 border border-amber-200">
             {isUrdu ? 'زیرِ تیاری' : 'Coming Soon'}
           </span>
 
@@ -55,19 +65,13 @@ const UnderBaking = ({
 
           <p className="text-sm font-medium text-chocolate/90 leading-relaxed">
             {isUrdu
-              ? `${activeTitle} ابھی اوون میں ہے اور اگلی اپڈیٹ میں دستیاب ہوگا۔`
-              : `${activeTitle} is still in the oven. It will be ready in a future update.`}
+              ? activeTitle + ' ابھی اوون میں ہے اور اگلی اپڈیٹ میں دستیاب ہوگا۔'
+              : activeTitle + ' is still in the oven. It will be ready in an upcoming milestone.'}
           </p>
 
           {activeDesc && (
             <p className="text-xs text-bakery-600 mt-1 leading-relaxed">
               {activeDesc}
-            </p>
-          )}
-
-          {isUrdu && (
-            <p className="text-xs text-amber-800 font-semibold pt-1">
-              یہ فیچر ابھی تیار ہو رہا ہے۔
             </p>
           )}
         </div>
@@ -76,21 +80,21 @@ const UnderBaking = ({
         <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link
             to="/"
-            className="w-full sm:w-auto btn-secondary text-xs py-2.5 px-4 rounded-md font-medium inline-flex items-center justify-center gap-1.5"
+            className="w-full sm:w-auto btn-secondary text-xs py-2.5 px-4 rounded-lg font-medium inline-flex items-center justify-center gap-1.5 shadow-xs"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>{isUrdu ? 'ہوم پیج پر جائیں' : 'Back to home'}</span>
           </Link>
           <Link
             to="/items"
-            className="w-full sm:w-auto btn-primary text-xs py-2.5 px-4 rounded-md font-medium inline-flex items-center justify-center gap-1.5"
+            className="w-full sm:w-auto btn-primary text-xs py-2.5 px-4 rounded-lg font-medium inline-flex items-center justify-center gap-1.5 shadow-xs"
           >
             <ShoppingBag className="w-3.5 h-3.5" />
             <span>{isUrdu ? 'اشیاء دیکھیں' : 'Browse items'}</span>
           </Link>
         </div>
 
-      </div>
+      </motion.div>
     </div>
   );
 };

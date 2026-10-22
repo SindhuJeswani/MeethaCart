@@ -75,7 +75,8 @@ class OtpService {
     return {
       success: true,
       cooldownSeconds: RESEND_COOLDOWN_SECONDS,
-      expiresInMinutes: OTP_VALIDITY_MINUTES
+      expiresInMinutes: OTP_VALIDITY_MINUTES,
+      devOtp: (process.env.NODE_ENV !== 'production' || process.env.EMAIL_MODE === 'dev') ? plainOtp : undefined
     };
   }
 

@@ -20,9 +20,11 @@ export const connectDB = async () => {
     const conn = await mongoose.connect(uri, {
       serverSelectionTimeoutMS: 2000
     });
+    await conn.connection.db.listCollections().toArray();
     console.log(`[Database] MongoDB Connected to host: ${conn.connection.host}`);
     return conn;
   } catch (error) {
+    try { await mongoose.disconnect(); } catch (dErr) {}
     if (process.env.NODE_ENV === 'production') {
       throw error;
     }

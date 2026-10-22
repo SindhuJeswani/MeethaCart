@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from '../../context/LanguageContext';
 import { Mail, Lock, ArrowRight, AlertCircle, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import AuthLayout from '../../components/auth/AuthLayout';
+import { shakeVariant, buttonTap } from '../../animations/motion';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -11,11 +13,17 @@ const Login = () => {
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isShaking, setIsShaking] = useState(false);
 
   const { login } = useAuth();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const triggerShake = () => {
+    setIsShaking(true);
+    setTimeout(() => setIsShaking(false), 450);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,6 +31,7 @@ const Login = () => {
 
     if (!email || !password) {
       setError('Please provide both email and password.');
+      triggerShake();
       return;
     }
 
@@ -46,11 +55,13 @@ const Login = () => {
           email: res.email,
           purpose: 'login_2fa',
           cooldownSeconds: res.cooldownSeconds || 60,
-          from: location.state?.from
+          from: location.state?.from,
+          devOtp: res.devOtp
         }
       });
     } catch (err) {
       setError(err.message || 'Invalid credentials.');
+      triggerShake();
     } finally {
       setIsSubmitting(false);
     }
@@ -73,15 +84,27 @@ const Login = () => {
       footerLinkAction="Create one"
       footerLinkTo="/register"
     >
+      {/* Animated Error Alert */}
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.98 }}
+            className="alert-error mb-4"
+          >
+            <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+            <span>{error}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {error && (
-        <div className="alert-error mb-4">
-          <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
-          <span>{error}</span>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <motion.form
+        variants={shakeVariant}
+        animate={isShaking ? 'shake' : 'idle'}
+        onSubmit={handleSubmit}
+        className="space-y-4"
+      >
         {/* Email */}
         <div>
           <label className="block text-xs font-semibold text-bakery-700 mb-1.5">
@@ -97,7 +120,7 @@ const Login = () => {
               placeholder="name@example.com"
               required
               autoComplete="email"
-              className="input-bakery pl-10"
+              className="input-bakery pl-10 transition-all duration-150 focus:ring-2 focus:ring-caramel/20"
             />
           </div>
         </div>
@@ -110,7 +133,7 @@ const Login = () => {
             </label>
             <Link
               to="/forgot-password"
-              className="text-xs font-medium text-caramel hover:text-caramel-dark transition-colors"
+              className="text-xs font-medium text-caramel hover:text-caramel-dark transition-colors inline-block hover:scale-[1.02]"
             >
               {t('auth.forgotPassword') || 'Forgot password?'}
             </Link>
@@ -125,25 +148,28 @@ const Login = () => {
               placeholder="Enter your password"
               required
               autoComplete="current-password"
-              className="input-bakery pl-10 pr-10"
+              className="input-bakery pl-10 pr-10 transition-all duration-150 focus:ring-2 focus:ring-caramel/20"
             />
-            <button
+            <motion.button
+              whileTap={{ scale: 0.9 }}
               type="button"
               onClick={() => setShowPass(!showPass)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-bakery-400 hover:text-bakery-600 transition-colors"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-bakery-400 hover:text-bakery-600 transition-colors p-0.5"
               aria-label={showPass ? 'Hide password' : 'Show password'}
             >
               {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
+            </motion.button>
           </div>
         </div>
 
-        {/* Submit */}
-        <button
+        {/* Submit with hover lift & press shrink */}
+        <motion.button
+          whileHover={{ scale: 1.015, y: -1 }}
+          whileTap={buttonTap}
           type="submit"
           id="login-submit-btn"
           disabled={isSubmitting}
-          className="btn-primary w-full py-2.5 text-sm font-medium mt-2"
+          className="btn-primary w-full py-2.5 text-sm font-semibold shadow-md transition-all duration-200 mt-2 flex items-center justify-center gap-2"
         >
           {isSubmitting ? (
             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -153,8 +179,8 @@ const Login = () => {
               <ArrowRight className="w-4 h-4" />
             </>
           )}
-        </button>
-      </form>
+        </motion.button>
+      </motion.form>
 
       <div className="pt-3 border-t border-bakery-100 mt-4 flex items-center gap-1.5 text-xs text-bakery-500">
         <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />

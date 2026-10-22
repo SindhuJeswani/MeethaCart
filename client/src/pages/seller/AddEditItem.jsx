@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import {
   ShoppingBag,
   UploadCloud,
@@ -15,12 +17,20 @@ import {
   Save,
   Image as ImageIcon
 } from 'lucide-react';
+import {
+  fadeUp,
+  scaleIn,
+  buttonTap,
+  TIMING,
+  EASING
+} from '../../animations/motion';
 
 const AddEditItem = () => {
   const { id } = useParams();
   const isEditing = Boolean(id);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const toast = useToast();
 
   const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
@@ -39,8 +49,8 @@ const AddEditItem = () => {
   const [existingImages, setExistingImages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
   // 1. Fetch categories
   useEffect(() => {
@@ -96,7 +106,6 @@ const AddEditItem = () => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
 
-    // Validate size limit (5MB)
     for (const f of files) {
       if (f.size > 5 * 1024 * 1024) {
         setError(`File '${f.name}' exceeds the 5MB size limit.`);
@@ -105,8 +114,6 @@ const AddEditItem = () => {
     }
 
     setSelectedFiles((prev) => [...prev, ...files].slice(0, 5));
-
-    // Generate local preview URLs
     const newPreviews = files.map((file) => URL.createObjectURL(file));
     setPreviewUrls((prev) => [...prev, ...newPreviews].slice(0, 5));
     setError('');
@@ -124,7 +131,6 @@ const AddEditItem = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setSuccess('');
 
     if (!formData.title.trim() || !formData.description.trim() || !formData.category || !formData.price) {
       setError('Please fill in all required fields.');
@@ -138,6 +144,7 @@ const AddEditItem = () => {
 
     try {
       setIsSubmitting(true);
+      setUploadProgress(15);
 
       const submitData = new FormData();
       submitData.append('title', formData.title.trim());
@@ -148,22 +155,23 @@ const AddEditItem = () => {
       submitData.append('preparationTimeHours', formData.preparationTimeHours);
       submitData.append('isEggless', formData.isEggless);
 
-      // Append uploaded files
       selectedFiles.forEach((file) => {
         submitData.append('images', file);
       });
 
-      // Append existing images if editing
       if (isEditing) {
         existingImages.forEach((img) => {
           submitData.append('images', img);
         });
       }
 
-      // If an external image URL was typed in
       if (formData.imageUrl.trim()) {
         submitData.append('images', formData.imageUrl.trim());
       }
+
+      const progressInterval = setInterval(() => {
+        setUploadProgress((p) => (p < 85 ? p + 15 : p));
+      }, 150);
 
       let res;
       if (isEditing) {
@@ -176,10 +184,13 @@ const AddEditItem = () => {
         });
       }
 
-      setSuccess(res.data?.message || 'Bakery item saved successfully!');
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+
+      toast.success(res.data?.message || 'Bakery item saved successfully!');
       setTimeout(() => {
         navigate('/seller/items');
-      }, 900);
+      }, 700);
     } catch (err) {
       setError(err.message || 'Failed to save bakery item.');
     } finally {
@@ -198,12 +209,15 @@ const AddEditItem = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-      
       {/* Header */}
-      <div>
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: TIMING.normal, ease: EASING.out }}
+      >
         <Link
           to="/seller/items"
-          className="text-xs font-semibold text-amber-800 hover:text-amber-950 inline-flex items-center gap-1 mb-2"
+          className="text-xs font-semibold text-amber-800 hover:text-amber-950 inline-flex items-center gap-1 mb-2 hover:-translate-x-1 transition-transform"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Back to My Bakery Catalog</span>
@@ -216,158 +230,157 @@ const AddEditItem = () => {
             ? 'Update recipe details, pricing, stock, and preparation time.'
             : 'Fill out the details below to list your delicious treat in the MeethaCart marketplace.'}
         </p>
-      </div>
+      </motion.div>
 
       {error && (
-        <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+        <div className="alert-error">
+          <AlertCircle className="w-5 h-5 text-rose-500 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
-      {success && (
-        <div className="p-4 rounded-xl bg-green-50 border border-green-200 text-green-800 text-sm flex items-start gap-3">
-          <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
-          <span>{success}</span>
-        </div>
-      )}
-
       {/* Main Form */}
-      <form onSubmit={handleSubmit} className="card-bakery p-6 sm:p-8 space-y-6">
-        
-        {/* Title */}
-        <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-bakery-700 mb-1.5">
-            Bakery Item Title *
-          </label>
-          <input
-            type="text"
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            placeholder="e.g. Belgian Dark Chocolate Fudge Cake (2 Lbs)"
-            required
-            className="input-bakery text-sm font-medium"
-          />
-        </div>
+      <motion.form
+        variants={fadeUp}
+        initial="hidden"
+        animate="visible"
+        onSubmit={handleSubmit}
+        className="space-y-6"
+      >
+        {/* Section 1: Basic Information */}
+        <div className="card-bakery p-6 space-y-4 shadow-warm">
+          <h2 className="font-serif font-bold text-chocolate text-lg border-b border-bakery-200/80 pb-3 flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-amber-600" />
+            <span>Recipe & Basic Information</span>
+          </h2>
 
-        {/* Category & Price in Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-bakery-700 mb-1.5">
-              Category *
+            <label className="block text-xs font-semibold text-bakery-700 mb-1.5 uppercase tracking-wider">
+              Item Title *
             </label>
-            <select
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              placeholder="e.g. Belgian Chocolate Fudge Cake, Almond Gulab Jamun"
               required
-              className="input-bakery text-sm font-medium appearance-none bg-white"
-            >
-              {categories.map((cat) => (
-                <option key={cat._id} value={cat._id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
+              className="input-bakery text-sm focus:ring-2 focus:ring-caramel/20"
+            />
           </div>
 
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-bakery-700 mb-1.5">
-              Price in PKR *
-            </label>
-            <div className="relative">
-              <span className="absolute left-3.5 top-3 text-xs font-bold text-bakery-500">
-                PKR
-              </span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-bakery-700 mb-1.5 uppercase tracking-wider">
+                Category *
+              </label>
+              <select
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                required
+                className="input-bakery text-sm focus:ring-2 focus:ring-caramel/20"
+              >
+                {categories.map((c) => (
+                  <option key={c._id} value={c._id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-bakery-700 mb-1.5 uppercase tracking-wider">
+                Price (PKR) *
+              </label>
               <input
                 type="number"
                 min="1"
                 value={formData.price}
                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                placeholder="2500"
+                placeholder="e.g. 1500"
                 required
-                className="input-bakery pl-14 text-sm font-bold text-chocolate"
+                className="input-bakery text-sm focus:ring-2 focus:ring-caramel/20"
               />
             </div>
           </div>
-        </div>
 
-        {/* Stock & Preparation Time in Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-bakery-700 mb-1.5">
-              Available Stock (Units)
+            <label className="block text-xs font-semibold text-bakery-700 mb-1.5 uppercase tracking-wider">
+              Description & Ingredients *
             </label>
-            <input
-              type="number"
-              min="0"
-              value={formData.stock}
-              onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-              placeholder="5"
-              className="input-bakery text-sm"
+            <textarea
+              rows={4}
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Describe your homemade creation, key ingredients, serving size (e.g. 2 lbs), and flavor profile..."
+              required
+              className="input-bakery text-sm focus:ring-2 focus:ring-caramel/20"
             />
           </div>
+        </div>
 
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-bakery-700 mb-1.5">
-              Preparation Time (Hours)
-            </label>
-            <div className="relative">
-              <Clock className="w-4 h-4 text-bakery-400 absolute left-3.5 top-3.5" />
+        {/* Section 2: Fulfillment & Diet */}
+        <div className="card-bakery p-6 space-y-4 shadow-warm">
+          <h2 className="font-serif font-bold text-chocolate text-lg border-b border-bakery-200/80 pb-3 flex items-center gap-2">
+            <Clock className="w-5 h-5 text-amber-600" />
+            <span>Fulfillment, Stock & Dietary</span>
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-bakery-700 mb-1.5 uppercase tracking-wider">
+                Available Stock Units *
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={formData.stock}
+                onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                placeholder="5"
+                required
+                className="input-bakery text-sm focus:ring-2 focus:ring-caramel/20"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-bakery-700 mb-1.5 uppercase tracking-wider">
+                Preparation Time (Hours Notice) *
+              </label>
               <input
                 type="number"
                 min="1"
                 value={formData.preparationTimeHours}
                 onChange={(e) => setFormData({ ...formData, preparationTimeHours: e.target.value })}
-                placeholder="12 or 24"
-                className="input-bakery pl-10 text-sm"
+                placeholder="24"
+                required
+                className="input-bakery text-sm focus:ring-2 focus:ring-caramel/20"
               />
             </div>
-            <span className="text-[11px] text-bakery-500 mt-1 block">
-              How many hours in advance does a customer need to place an order?
-            </span>
+          </div>
+
+          <div className="pt-2">
+            <label className="flex items-center gap-2.5 p-3 rounded-xl bg-bakery-50/70 border border-bakery-200 cursor-pointer hover:bg-bakery-100 transition-colors">
+              <input
+                type="checkbox"
+                checked={formData.isEggless}
+                onChange={(e) => setFormData({ ...formData, isEggless: e.target.checked })}
+                className="w-4 h-4 rounded text-caramel focus:ring-caramel border-bakery-300"
+              />
+              <div>
+                <span className="block text-xs font-bold text-chocolate">Eggless Recipe</span>
+                <span className="text-[11px] text-bakery-600">
+                  Highlight this item in the catalog for customers with egg allergies or vegetarian preferences.
+                </span>
+              </div>
+            </label>
           </div>
         </div>
 
-        {/* Eggless Checkbox */}
-        <div className="p-4 rounded-xl bg-bakery-50 border border-bakery-200/80">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={formData.isEggless}
-              onChange={(e) => setFormData({ ...formData, isEggless: e.target.checked })}
-              className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-bakery-300"
-            />
-            <div>
-              <span className="text-xs font-bold text-bakery-900 block">
-                Eggless / Vegetarian Recipe 🍃
-              </span>
-              <span className="text-[11px] text-bakery-500">
-                Check this if your sweet is prepared without eggs (e.g. Traditional Mithai, eggless cakes).
-              </span>
-            </div>
-          </label>
-        </div>
-
-        {/* Description */}
-        <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-bakery-700 mb-1.5">
-            Detailed Recipe & Description *
-          </label>
-          <textarea
-            rows={4}
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            placeholder="Describe the layers, ingredients (e.g. Belgian Callebaut chocolate, organic flour, pure desi ghee), taste notes, serving recommendations..."
-            required
-            className="input-bakery text-sm leading-relaxed"
-          />
-        </div>
-
-        {/* Image Upload Section */}
-        <div className="space-y-3 pt-2">
-          <label className="block text-xs font-bold uppercase tracking-wider text-bakery-700">
-            Bakery Item Photos (Up to 5 images, max 5MB each)
-          </label>
+        {/* Section 3: Photo Upload with Animated Previews */}
+        <div className="card-bakery p-6 space-y-4 shadow-warm">
+          <h2 className="font-serif font-bold text-chocolate text-lg border-b border-bakery-200/80 pb-3 flex items-center gap-2">
+            <UploadCloud className="w-5 h-5 text-amber-600" />
+            <span>Bakery Item Photos</span>
+          </h2>
 
           {/* Upload Dropzone */}
           <div className="border-2 border-dashed border-bakery-300 hover:border-amber-500 rounded-2xl p-6 text-center transition-colors bg-bakery-50/50">
@@ -399,68 +412,119 @@ const AddEditItem = () => {
             />
           </div>
 
-          {/* Image Previews */}
+          {/* Animated Image Previews */}
           {(previewUrls.length > 0 || existingImages.length > 0) && (
             <div className="pt-2">
               <span className="text-[11px] font-bold text-bakery-600 uppercase tracking-wider block mb-2">
                 Attached Images:
               </span>
               <div className="flex flex-wrap gap-3">
-                {/* Existing Images */}
-                {existingImages.map((img, idx) => (
-                  <div key={`existing-${idx}`} className="relative w-20 h-20 rounded-xl overflow-hidden border border-bakery-300 group">
-                    <img
-                      src={img.startsWith('/uploads') ? `http://localhost:5000${img}` : img}
-                      alt="Existing Preview"
-                      className="w-full h-full object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeExistingImage(idx)}
-                      className="absolute top-1 right-1 p-1 rounded-full bg-black/60 text-white hover:bg-red-600 transition-colors"
-                      title="Remove image"
+                <AnimatePresence>
+                  {/* Existing Images */}
+                  {existingImages.map((img, idx) => (
+                    <motion.div
+                      key={`existing-${idx}`}
+                      variants={scaleIn}
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                      className="relative w-20 h-20 rounded-xl overflow-hidden border border-bakery-300 group shadow-xs"
                     >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ))}
+                      <img
+                        src={img.startsWith('/uploads') ? `http://localhost:5000${img}` : img}
+                        alt="Existing Preview"
+                        className="w-full h-full object-cover"
+                      />
+                      <motion.button
+                        whileTap={buttonTap}
+                        type="button"
+                        onClick={() => removeExistingImage(idx)}
+                        className="absolute top-1 right-1 p-1 rounded-full bg-black/60 text-white hover:bg-red-600 transition-colors"
+                        title="Remove image"
+                      >
+                        <X className="w-3 h-3" />
+                      </motion.button>
+                    </motion.div>
+                  ))}
 
-                {/* Newly Selected File Previews */}
-                {previewUrls.map((url, idx) => (
-                  <div key={`new-${idx}`} className="relative w-20 h-20 rounded-xl overflow-hidden border-2 border-amber-500 group">
-                    <img src={url} alt="New Preview" className="w-full h-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => removeSelectedFile(idx)}
-                      className="absolute top-1 right-1 p-1 rounded-full bg-black/60 text-white hover:bg-red-600 transition-colors"
-                      title="Remove image"
+                  {/* Newly Selected File Previews */}
+                  {previewUrls.map((url, idx) => (
+                    <motion.div
+                      key={`new-${idx}`}
+                      variants={scaleIn}
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                      className="relative w-20 h-20 rounded-xl overflow-hidden border-2 border-amber-500 group shadow-xs"
                     >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ))}
+                      <img src={url} alt="New Preview" className="w-full h-full object-cover" />
+                      <motion.button
+                        whileTap={buttonTap}
+                        type="button"
+                        onClick={() => removeSelectedFile(idx)}
+                        className="absolute top-1 right-1 p-1 rounded-full bg-black/60 text-white hover:bg-red-600 transition-colors"
+                        title="Remove image"
+                      >
+                        <X className="w-3 h-3" />
+                      </motion.button>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
               </div>
             </div>
           )}
+
+          {/* Upload Progress Bar */}
+          <AnimatePresence>
+            {isSubmitting && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="space-y-1.5 pt-2"
+              >
+                <div className="flex justify-between text-xs font-semibold text-chocolate">
+                  <span>Uploading photos & saving recipe...</span>
+                  <span>{uploadProgress}%</span>
+                </div>
+                <div className="w-full h-2 rounded-full bg-bakery-200 overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${uploadProgress}%` }}
+                    transition={{ ease: 'easeOut', duration: 0.2 }}
+                    className="h-full bg-gradient-to-r from-amber-500 to-caramel rounded-full"
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
-        {/* Buttons */}
-        <div className="flex items-center justify-end gap-3 pt-6 border-t border-bakery-200">
-          <Link to="/seller/items" className="btn-secondary text-xs sm:text-sm py-2.5 px-5">
-            Cancel
-          </Link>
-          <button
+        {/* Submit Actions */}
+        <div className="flex items-center justify-end gap-3 pt-2">
+          <motion.div whileTap={buttonTap}>
+            <Link to="/seller/items" className="btn-secondary text-xs sm:text-sm py-2.5 px-5">
+              Cancel
+            </Link>
+          </motion.div>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={buttonTap}
             type="submit"
             disabled={isSubmitting}
-            className="btn-primary text-xs sm:text-sm py-2.5 px-6 shadow-warm"
+            className="btn-primary text-xs sm:text-sm py-2.5 px-6 shadow-md flex items-center gap-2"
           >
-            <Save className="w-4 h-4" />
-            <span>{isSubmitting ? 'Saving...' : isEditing ? 'Update Bakery Item' : 'Publish Item'}</span>
-          </button>
+            {isSubmitting ? (
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                <span>{isEditing ? 'Save Changes' : 'Publish to Marketplace'}</span>
+              </>
+            )}
+          </motion.button>
         </div>
-
-      </form>
-
+      </motion.form>
     </div>
   );
 };

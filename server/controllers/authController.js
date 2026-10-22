@@ -114,7 +114,8 @@ export const register = async (req, res) => {
       success: true,
       message: 'Registration initiated. If an account with this email exists, a 6-digit verification code has been sent. Please check your Inbox as well as your Spam / Junk folder.',
       email: normalizedEmail,
-      cooldownSeconds: otpResult.cooldownSeconds
+      cooldownSeconds: otpResult.cooldownSeconds,
+      devOtp: otpResult.devOtp
     });
   } catch (error) {
     console.error('[Register Error]:', error);
@@ -216,12 +217,14 @@ export const login = async (req, res) => {
     // Check account verification
     if (!user.isVerified) {
       // Re-send verification OTP
-      await otpService.createAndSendOtp(normalizedEmail, 'signup_verification');
+      const unverifiedOtp = await otpService.createAndSendOtp(normalizedEmail, 'signup_verification');
       return res.status(403).json({
         success: false,
         needsVerification: true,
         email: normalizedEmail,
-        message: 'Your account is not verified yet. A fresh verification OTP has been sent to your email.'
+        message: 'Your account is not verified yet. A fresh verification OTP has been sent to your email.',
+        cooldownSeconds: unverifiedOtp.cooldownSeconds,
+        devOtp: unverifiedOtp.devOtp
       });
     }
 
@@ -241,7 +244,8 @@ export const login = async (req, res) => {
       message: 'Credentials verified. A 6-digit login code has been sent to your email.',
       email: normalizedEmail,
       role: user.role,
-      cooldownSeconds: otpResult.cooldownSeconds
+      cooldownSeconds: otpResult.cooldownSeconds,
+      devOtp: otpResult.devOtp
     });
   } catch (error) {
     console.error('[Login Error]:', error);
@@ -331,7 +335,8 @@ export const resendOtp = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: 'A fresh OTP code has been sent to your email.',
-      cooldownSeconds: result.cooldownSeconds
+      cooldownSeconds: result.cooldownSeconds,
+      devOtp: result.devOtp
     });
   } catch (error) {
     return res.status(400).json({
@@ -376,7 +381,8 @@ export const forgotPassword = async (req, res) => {
       success: true,
       message: 'If an account exists with this email, a 6-digit verification code has been sent. Please check your Inbox as well as your Spam / Junk folder.',
       email: normalizedEmail,
-      cooldownSeconds: result.cooldownSeconds
+      cooldownSeconds: result.cooldownSeconds,
+      devOtp: result.devOtp
     });
   } catch (error) {
     return res.status(400).json({
