@@ -1,240 +1,159 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../services/api';
-import fallbackImg from '../../assets/fallback-item.jpg';
 import ItemCard from '../../components/items/ItemCard';
 import { useTranslation } from '../../context/LanguageContext';
-import { useToast } from '../../context/ToastContext';
-import { useCart } from '../../context/CartContext';
 import {
-  Store,
   Clock,
-  CheckCircle2,
-  Share2,
+  Store,
   ArrowLeft,
-  Heart,
   RefreshCw,
-  AlertCircle,
-  Info,
-  ShoppingBag,
-  Check
+  CheckCircle2,
+  ChevronRight
 } from 'lucide-react';
-import {
-  fadeUp,
-  slideInLeft,
-  staggerContainer,
-  staggerItem,
-  cardHover,
-  buttonTap,
-  TIMING,
-  EASING
-} from '../../animations/motion';
+import { staggerContainer, staggerItem, cardHover, buttonTap, TIMING, EASING } from '../../animations/motion';
 
 const ItemDetails = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   const { t, translateCategory, translateItemTitle, translateItemDescription } = useTranslation();
-  const toast = useToast();
-  const { addToCart } = useCart();
-
   const [item, setItem] = useState(null);
   const [relatedItems, setRelatedItems] = useState([]);
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [isWishlisted, setIsWishlisted] = useState(false);
-  const [isCopied, setIsCopied] = useState(false);
-  const [isAdding, setIsAdding] = useState(false);
-  const [addedSuccess, setAddedSuccess] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   useEffect(() => {
     const fetchItem = async () => {
       try {
-        setIsLoading(true);
+        setLoading(true);
         setError('');
         const res = await api.get(`/items/${id}`);
         if (res.data?.success) {
-          const itemData = res.data.item;
-          setItem(itemData);
-          if (itemData.images && itemData.images.length > 0) {
-            setSelectedImage(itemData.images[0]);
-          }
-
-          if (itemData.category?._id || itemData.category?.slug) {
-            const catSlug = itemData.category.slug || itemData.category._id;
-            try {
-              const relRes = await api.get(`/items?category=${catSlug}&limit=4`);
-              if (relRes.data?.success) {
-                setRelatedItems(relRes.data.items.filter((i) => i._id !== itemData._id));
-              }
-            } catch (rErr) {
-              console.warn('Related items:', rErr.message);
-            }
-          }
+          setItem(res.data.item);
+          setRelatedItems(res.data.relatedItems || []);
+          setActiveImageIndex(0);
         }
       } catch (err) {
-        console.error('Failed to load item:', err);
-        setError(err.message || 'Bakery item not found or unavailable.');
+        setError(err.message || 'Failed to load item details.');
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
-    fetchItem();
+    if (id) {
+      fetchItem();
+      window.scrollTo(0, 0);
+    }
   }, [id]);
 
-  const handleShare = () => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(window.location.href);
-      setIsCopied(true);
-      toast.success('Link copied to clipboard!');
-      setTimeout(() => setIsCopied(false), 2500);
-    }
-  };
-
-  const handleAddToCart = () => {
-    setIsAdding(true);
-    setTimeout(() => {
-      setIsAdding(false);
-      setAddedSuccess(true);
-      if (item) {
-        addToCart({
-          _id: item._id,
-          name: item.title,
-          nameUrdu: item.titleUrdu,
-          price: item.price,
-          weight: item.weight || '1 pc',
-          seller: item.seller,
-          image: (item.images && item.images[0]) || fallbackImg
-        }, quantity);
-      }
-      toast.success(`"${item?.title}" added to your cart!`);
-      setTimeout(() => setAddedSuccess(false), 2200);
-    }, 350);
-  };
-
-  const getFullImageUrl = (img) => {
-    if (!img) return fallbackImg;
-    if (img.startsWith('http')) return img;
-    if (img.startsWith('/uploads')) return `http://localhost:5000${img}`;
-    return img;
-  };
-
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="w-full max-w-5xl mx-auto px-4 py-16 text-center space-y-4">
-        <RefreshCw className="w-8 h-8 text-caramel animate-spin mx-auto" />
-        <p className="text-xs text-bakery-600">Loading fresh bakery details...</p>
+      <div className="page-container py-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="aspect-[4/3] rounded-2xl skeleton skeleton-shimmer" />
+          <div className="space-y-4">
+            <div className="h-6 w-1/3 skeleton rounded-lg" />
+            <div className="h-10 w-3/4 skeleton rounded-lg" />
+            <div className="h-20 w-full skeleton rounded-xl" />
+            <div className="h-12 w-full skeleton rounded-xl" />
+          </div>
+        </div>
       </div>
     );
   }
 
   if (error || !item) {
     return (
-      <div className="w-full max-w-md mx-auto px-4 py-16 text-center space-y-4">
-        <AlertCircle className="w-12 h-12 text-rose-500 mx-auto" />
-        <h2 className="font-serif font-bold text-chocolate text-xl">Item Unavailable</h2>
-        <p className="text-xs text-bakery-600">{error || 'This bakery item does not exist or was removed.'}</p>
-        <Link to="/items" className="btn-primary text-xs py-2 px-4 inline-flex shadow-xs">
+      <div className="page-container py-20 text-center space-y-4">
+        <div className="w-16 h-16 rounded-2xl bg-amber-100 text-amber-900 mx-auto flex items-center justify-center font-bold text-xl shadow-xs">
+          🍰
+        </div>
+        <h2 className="text-2xl font-serif font-bold text-chocolate">
+          {error || 'Bakery item not found'}
+        </h2>
+        <p className="text-xs sm:text-sm text-bakery-600 max-w-sm mx-auto">
+          This treat might have been unlisted by the home baker or does not exist.
+        </p>
+        <Link to="/items" className="btn-primary inline-flex items-center gap-2 text-xs py-2.5 px-5 shadow-xs">
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to marketplace</span>
+          <span>Browse other bakery items</span>
         </Link>
       </div>
     );
   }
 
   const { seller, category } = item;
+  const images = item.images && item.images.length > 0
+    ? item.images.map((img) => (img.startsWith('http') ? img : `http://localhost:5000${img}`))
+    : ['https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=600&auto=format&fit=crop'];
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 md:py-10 space-y-8">
-      {/* Top Back & Share Navigation */}
-      <motion.div
-        initial={{ opacity: 0, y: -8 }}
+    <div className="page-container py-8 space-y-10">
+      {/* Breadcrumb Navigation */}
+      <motion.nav
+        initial={{ opacity: 0, y: -6 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between text-xs"
+        className="flex items-center gap-1.5 text-xs text-bakery-600"
       >
-        <Link
-          to="/items"
-          className="inline-flex items-center gap-1.5 font-semibold text-bakery-600 hover:text-chocolate transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>{t('items.backToBrowse') || 'Back to catalog'}</span>
+        <Link to="/" className="hover:text-caramel transition-colors">
+          Home
         </Link>
+        <ChevronRight className="w-3.5 h-3.5 text-bakery-400" />
+        <Link to="/items" className="hover:text-caramel transition-colors">
+          Browse Items
+        </Link>
+        <ChevronRight className="w-3.5 h-3.5 text-bakery-400" />
+        <span className="text-chocolate font-semibold truncate max-w-[200px]">
+          {translateItemTitle(item)}
+        </span>
+      </motion.nav>
 
-        <div className="flex items-center gap-2">
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            type="button"
-            onClick={() => setIsWishlisted(!isWishlisted)}
-            className="p-2 rounded-lg border border-bakery-200 bg-white hover:bg-bakery-50 text-bakery-600 transition-colors shadow-xs"
-            aria-label="Wishlist"
-          >
-            <motion.div animate={isWishlisted ? { scale: [1, 1.4, 1] } : { scale: 1 }}>
-              <Heart
-                className={`w-4 h-4 ${
-                  isWishlisted ? 'fill-strawberry text-strawberry' : 'stroke-current'
-                }`}
-              />
-            </motion.div>
-          </motion.button>
-
-          <motion.button
-            whileTap={buttonTap}
-            type="button"
-            onClick={handleShare}
-            className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg border border-bakery-200 bg-white hover:bg-bakery-50 text-bakery-700 font-semibold shadow-xs"
-          >
-            <Share2 className="w-3.5 h-3.5 text-caramel" />
-            <span>{isCopied ? 'Link copied!' : t('items.share') || 'Share'}</span>
-          </motion.button>
-        </div>
-      </motion.div>
-
-      {/* Main Item Presentation */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        {/* Left: Image Gallery with Smooth Transition */}
-        <div className="space-y-3">
-          <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-bakery-100 border border-bakery-200 shadow-warm relative">
+      {/* Main Item Showcase Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-start">
+        {/* Left: Image Carousel & Gallery */}
+        <div className="space-y-3.5">
+          <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-bakery-100 border border-bakery-200 shadow-warm">
             <AnimatePresence mode="wait">
               <motion.img
-                key={selectedImage || 'fallback'}
-                src={getFullImageUrl(selectedImage)}
-                alt={translateItemTitle(item)}
-                initial={{ opacity: 0, scale: 1.02 }}
+                key={activeImageIndex}
+                initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.25, ease: EASING.out }}
-                onError={(e) => {
-                  e.target.src = fallbackImg;
-                }}
+                transition={{ duration: TIMING.normal, ease: EASING.out }}
+                src={images[activeImageIndex]}
+                alt={translateItemTitle(item)}
                 className="w-full h-full object-cover"
               />
             </AnimatePresence>
+
+            {item.stock <= 0 && (
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center">
+                <span className="px-3 py-1.5 rounded-lg bg-rose-600 text-white font-bold text-xs uppercase tracking-wider shadow-md">
+                  Currently Out of Stock
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Thumbnail list */}
-          {item.images && item.images.length > 1 && (
-            <div className="flex items-center gap-2.5 overflow-x-auto pb-1">
-              {item.images.map((img, idx) => (
+          {images.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {images.map((img, idx) => (
                 <motion.button
-                  key={idx}
-                  whileTap={buttonTap}
                   whileHover={{ scale: 1.05 }}
-                  type="button"
-                  onClick={() => setSelectedImage(img)}
-                  className={`w-16 h-16 rounded-xl overflow-hidden shrink-0 border transition-all ${
-                    selectedImage === img
-                      ? 'border-caramel ring-2 ring-caramel/40 shadow-sm'
-                      : 'border-bakery-200 opacity-70 hover:opacity-100'
+                  whileTap={buttonTap}
+                  key={idx}
+                  onClick={() => setActiveImageIndex(idx)}
+                  className={`w-16 h-16 rounded-xl overflow-hidden border-2 shrink-0 transition-all ${
+                    activeImageIndex === idx
+                      ? 'border-caramel shadow-xs ring-2 ring-caramel/20'
+                      : 'border-bakery-200 opacity-60 hover:opacity-100'
                   }`}
                 >
                   <img
-                    src={getFullImageUrl(img)}
+                    src={img}
                     alt={`Thumbnail ${idx + 1}`}
-                    onError={(e) => {
-                      e.target.src = fallbackImg;
-                    }}
                     className="w-full h-full object-cover"
                   />
                 </motion.button>
@@ -243,7 +162,7 @@ const ItemDetails = () => {
           )}
         </div>
 
-        {/* Right: Item Info & Action Panel */}
+        {/* Right: Item Info & Attributes */}
         <motion.div
           variants={staggerContainer(0.06)}
           initial="hidden"
@@ -278,12 +197,15 @@ const ItemDetails = () => {
             </Link>
           </motion.div>
 
-          {/* Price & Stock Card */}
+          {/* Price & Availability Card */}
           <motion.div
             variants={staggerItem}
             className="p-4 card-bakery flex items-center justify-between"
           >
             <div>
+              <span className="text-[10px] uppercase font-bold text-bakery-500 tracking-wider block">
+                Price (PKR)
+              </span>
               <div className="price-sticker text-2xl sm:text-3xl font-serif font-bold text-chocolate">
                 Rs. {item.price?.toLocaleString()}
               </div>
@@ -291,50 +213,21 @@ const ItemDetails = () => {
 
             <div>
               {item.stock > 0 ? (
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold shadow-2xs">
+                <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold shadow-2xs">
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   <span>
                     {t('items.inStock') || 'In stock'} ({item.stock} {t('items.available') || 'available'})
                   </span>
                 </span>
               ) : (
-                <span className="px-3 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold shadow-2xs">
+                <span className="px-3 py-1.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold shadow-2xs">
                   {t('items.outOfStock') || 'Out of stock'}
                 </span>
               )}
             </div>
           </motion.div>
 
-          {/* Add to Cart CTA with checkmark morph */}
-          <motion.div variants={staggerItem} className="flex gap-3">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={buttonTap}
-              onClick={handleAddToCart}
-              disabled={item.stock <= 0 || isAdding}
-              className={`btn-primary flex-1 py-3 text-sm font-bold shadow-md flex items-center justify-center gap-2 transition-all ${
-                addedSuccess ? 'bg-emerald-600 hover:bg-emerald-600' : ''
-              }`}
-            >
-              {isAdding ? (
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : addedSuccess ? (
-                <>
-                  <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
-                    <Check className="w-4 h-4 text-white" />
-                  </motion.div>
-                  <span>Added to Cart!</span>
-                </>
-              ) : (
-                <>
-                  <ShoppingBag className="w-4 h-4" />
-                  <span>{item.stock > 0 ? 'Add to Cart' : 'Currently Unavailable'}</span>
-                </>
-              )}
-            </motion.button>
-          </motion.div>
-
-          {/* Preparation Time Banner */}
+          {/* Preparation Time Notice */}
           <motion.div
             variants={staggerItem}
             className="p-3.5 rounded-xl bg-bakery-50 border border-bakery-200 text-bakery-900 flex items-start gap-3 shadow-2xs"
@@ -342,20 +235,20 @@ const ItemDetails = () => {
             <Clock className="w-4 h-4 text-caramel shrink-0 mt-0.5" />
             <div className="text-xs">
               <h4 className="font-semibold text-chocolate">
-                {t('items.prepTime') || 'Preparation time'}
+                {t('items.prepTime') || 'Preparation Time'}
               </h4>
               <p className="text-bakery-700 mt-0.5 leading-relaxed">
-                {t('items.prepNoticePrefix') || 'This item typically requires'}{' '}
-                <strong>{item.preparationTimeHours || 24}</strong>{' '}
-                {t('items.prepNoticeSuffix') || 'hours notice before dispatch.'}
+                {t('items.prepNoticePrefix') || 'This artisan item requires'}{' '}
+                <strong>{item.preparationTimeHours || 24} hours</strong>{' '}
+                {t('items.prepNoticeSuffix') || 'notice to bake fresh from scratch.'}
               </p>
             </div>
           </motion.div>
 
-          {/* Description */}
+          {/* Item Description */}
           <motion.div variants={staggerItem} className="space-y-1.5">
             <h3 className="font-serif font-bold text-chocolate text-base">
-              {t('items.aboutItem') || 'About this item'}
+              {t('items.aboutItem') || 'About this treat'}
             </h3>
             <p className="text-xs sm:text-sm text-bakery-700 leading-relaxed whitespace-pre-line">
               {translateItemDescription(item)}
@@ -364,7 +257,7 @@ const ItemDetails = () => {
         </motion.div>
       </div>
 
-      {/* Baker Storefront Card */}
+      {/* Baker Storefront Summary Card */}
       {seller && (
         <motion.div
           whileHover={cardHover}
@@ -385,6 +278,11 @@ const ItemDetails = () => {
                 <p className="text-xs text-bakery-600 mt-0.5 max-w-lg">
                   {seller.bio || 'Independent home baker on MeethaCart.'}
                 </p>
+                {seller.address && (
+                  <p className="text-[11px] text-bakery-500 mt-0.5">
+                    Location: {seller.address}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -394,7 +292,7 @@ const ItemDetails = () => {
                 className="btn-secondary text-xs py-2 px-4 self-start sm:self-auto inline-flex items-center gap-1.5 shadow-xs"
               >
                 <Store className="w-3.5 h-3.5" />
-                <span>{t('items.viewSeller') || 'View seller profile'}</span>
+                <span>{t('items.viewSeller') || 'View seller storefront'}</span>
               </Link>
             </motion.div>
           </div>

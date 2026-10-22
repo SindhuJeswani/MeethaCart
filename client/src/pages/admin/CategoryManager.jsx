@@ -104,8 +104,13 @@ const CategoryManager = () => {
   };
 
   const handleDelete = async (cat) => {
+    if (cat.itemCount > 0) {
+      alert(`⚠️ Warning: Category "${cat.name}" has ${cat.itemCount} active bakery item(s) attached to it.\n\nYou cannot delete this category until those items are reassigned or deleted from the catalog.`);
+      return;
+    }
+
     const confirmDelete = window.confirm(
-      `Are you sure you want to delete "${cat.name}"? Categories with attached items cannot be removed.`
+      `Are you sure you want to permanently delete category "${cat.name}"?`
     );
     if (!confirmDelete) return;
 

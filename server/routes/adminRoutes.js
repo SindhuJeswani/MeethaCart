@@ -1,3 +1,4 @@
+import { FEATURES } from '../config/features.js';
 import express from 'express';
 import {
   getMetrics,
@@ -29,7 +30,9 @@ router.get('/users', getUsers);
 router.delete('/users/:id', deleteUser);
 router.patch('/users/:id/role', updateUserRole);
 
-// Orders monitoring
-router.get('/orders', getAdminOrders);
+// Orders monitoring (Milestone 4 feature - locked behind feature flag)
+if (FEATURES.ORDERS_API) {
+  router.get('/orders', getAdminOrders);
+}
 
 export default router;

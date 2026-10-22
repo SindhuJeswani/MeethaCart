@@ -3,18 +3,18 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../services/api';
 import AdminSidebar from '../../components/admin/AdminSidebar';
-import AnimatedCounter from '../../components/common/AnimatedCounter';
 import { useToast } from '../../context/ToastContext';
 import {
   Users,
   Store,
   Clock,
   FolderTree,
-  ShoppingBag,
+  Cake,
   ArrowRight,
   CheckCircle2,
-  AlertCircle,
-  RefreshCw
+  XCircle,
+  RefreshCw,
+  ExternalLink
 } from 'lucide-react';
 import {
   fadeUp,
@@ -26,6 +26,34 @@ import {
   EASING
 } from '../../animations/motion';
 
+// Animated Counter for KPI metrics
+const AnimatedCounter = ({ value }) => {
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    let start = 0;
+    const end = parseInt(value, 10) || 0;
+    if (start === end) {
+      setDisplayValue(end);
+      return;
+    }
+    const duration = 600;
+    const stepTime = Math.abs(Math.floor(duration / (end || 1)));
+    const timer = setInterval(() => {
+      start += 1;
+      setDisplayValue(start);
+      if (start >= end) {
+        clearInterval(timer);
+        setDisplayValue(end);
+      }
+    }, Math.max(stepTime, 20));
+
+    return () => clearInterval(timer);
+  }, [value]);
+
+  return <span>{displayValue.toLocaleString()}</span>;
+};
+
 const AdminDashboard = () => {
   const [metrics, setMetrics] = useState(null);
   const [pendingSellers, setPendingSellers] = useState([]);
@@ -33,7 +61,7 @@ const AdminDashboard = () => {
   const [error, setError] = useState('');
   const toast = useToast();
 
-  const fetchDashboardData = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
       setError('');
@@ -51,15 +79,14 @@ const AdminDashboard = () => {
         setPendingSellers(sellersRes.data.sellers || []);
       }
     } catch (err) {
-      console.error('Failed to load admin dashboard:', err);
-      setError(err.message || 'Failed to load system dashboard.');
+      setError(err.message || 'Failed to load admin metrics.');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchDashboardData();
+    fetchData();
   }, []);
 
   const handleUpdateStatus = async (sellerId, newStatus) => {
@@ -71,81 +98,72 @@ const AdminDashboard = () => {
       if (res.data?.success) {
         toast.success(
           newStatus === 'approved'
-            ? 'Home baker approved! They can now list bakery items.'
-            : 'Baker status updated to blocked.'
+            ? 'Home baker has been approved!'
+            : 'Home baker account has been suspended.'
         );
-        // Animate row removal smoothly
+        // Instant optimistic update
         setPendingSellers((prev) => prev.filter((s) => s._id !== sellerId));
-        // Refresh live KPI counts
-        if (metrics) {
-          setMetrics((prev) => ({
-            ...prev,
-            pendingSellers: Math.max(0, (prev?.pendingSellers || 1) - 1),
-            approvedSellers:
-              newStatus === 'approved'
-                ? (prev?.approvedSellers || 0) + 1
-                : prev?.approvedSellers
-          }));
-        }
+        fetchData();
       }
     } catch (err) {
-      toast.error(err.message || 'Failed to update baker status.');
+      toast.error(err.message || 'Failed to update seller status.');
     }
   };
 
   return (
-    <div className="flex-1 flex flex-col md:flex-row bg-bakery-50 min-h-[calc(100vh-64px)]">
-      <AdminSidebar pendingCount={metrics?.pendingSellers || pendingSellers.length} />
+    <div className="flex flex-col md:flex-row min-h-[calc(100vh-80px)]">
+      <AdminSidebar pendingCount={pendingSellers.length} />
 
-      <main className="flex-1 p-6 md:p-10 max-w-6xl space-y-8 overflow-y-auto">
+      <main className="flex-1 p-6 sm:p-8 space-y-8 bg-bakery-50/50 overflow-y-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: TIMING.normal, ease: EASING.out }}
-          className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-bakery-200/80 pb-5"
+          className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
         >
           <div>
-            <span className="section-eyebrow">Platform Overview</span>
-            <h1 className="text-2xl sm:text-3xl font-serif font-bold text-chocolate mt-0.5">
-              MeethaCart Admin Console
+            <h1 className="text-2xl sm:text-3xl font-serif font-bold text-chocolate">
+              Marketplace Administration
             </h1>
+            <p className="text-xs sm:text-sm text-bakery-600 mt-1">
+              Platform health, seller verification queue, catalog categories, and member directory.
+            </p>
           </div>
 
           <motion.button
-            whileHover={{ scale: 1.03 }}
             whileTap={buttonTap}
-            onClick={fetchDashboardData}
+            whileHover={{ scale: 1.04 }}
+            onClick={fetchData}
             disabled={loading}
-            className="btn-secondary text-xs font-semibold py-2 px-3 self-start sm:self-auto flex items-center gap-1.5 shadow-xs"
+            className="btn-secondary self-start sm:self-auto text-xs py-2 px-3.5 flex items-center gap-2 shadow-xs"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            <span>Refresh Live Data</span>
+            <span>Refresh Data</span>
           </motion.button>
         </motion.div>
 
         {error && (
           <div className="alert-error">
-            <AlertCircle className="w-5 h-5 text-rose-500 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
-        {/* 4 Animated KPI Stat Cards */}
+        {/* Milestone 3 KPI Grid: Total Users, Active Bakers, Pending Approvals, Total Items, Categories */}
         <motion.div
-          variants={staggerContainer(0.08)}
+          variants={staggerContainer(0.06)}
           initial="hidden"
           animate="visible"
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"
+          className="grid grid-cols-2 lg:grid-cols-5 gap-4"
         >
-          {/* Card 1: Total Users */}
+          {/* 1. Total Registered Members */}
           <motion.div
             variants={staggerItem}
             whileHover={cardHover}
-            className="card-bakery p-5 flex items-center gap-4 transition-shadow"
+            className="card-bakery p-5 flex items-center gap-3.5 border-bakery-200"
           >
-            <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 shadow-xs">
-              <Users className="w-6 h-6" />
+            <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center font-bold shadow-xs shrink-0">
+              <Users className="w-6 h-6 text-blue-700" />
             </div>
             <div>
               <span className="text-[11px] uppercase font-bold text-bakery-500 tracking-wider">
@@ -161,14 +179,14 @@ const AdminDashboard = () => {
             </div>
           </motion.div>
 
-          {/* Card 2: Active Bakers */}
+          {/* 2. Active Approved Bakers */}
           <motion.div
             variants={staggerItem}
             whileHover={cardHover}
-            className="card-bakery p-5 flex items-center gap-4 transition-shadow"
+            className="card-bakery p-5 flex items-center gap-3.5 border-bakery-200"
           >
-            <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0 shadow-xs">
-              <Store className="w-6 h-6" />
+            <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold shadow-xs shrink-0">
+              <Store className="w-6 h-6 text-emerald-700" />
             </div>
             <div>
               <span className="text-[11px] uppercase font-bold text-bakery-500 tracking-wider">
@@ -184,20 +202,20 @@ const AdminDashboard = () => {
             </div>
           </motion.div>
 
-          {/* Card 3: Pending Approvals */}
+          {/* 3. Pending Approvals */}
           <motion.div
             variants={staggerItem}
             whileHover={cardHover}
-            className="card-bakery p-5 flex items-center gap-4 border-amber-300 bg-gradient-to-br from-amber-50 to-orange-50 shadow-xs"
+            className="card-bakery p-5 flex items-center gap-3.5 border-bakery-200"
           >
-            <div className="w-12 h-12 rounded-2xl bg-amber-200 text-amber-900 flex items-center justify-center shrink-0 shadow-xs">
-              <Clock className="w-6 h-6 animate-gentle-pulse" />
+            <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-900 flex items-center justify-center font-bold shadow-xs shrink-0">
+              <Clock className="w-6 h-6 text-amber-700" />
             </div>
             <div>
-              <span className="text-[11px] uppercase font-bold text-amber-900 tracking-wider">
-                Pending Approvals
+              <span className="text-[11px] uppercase font-bold text-bakery-500 tracking-wider">
+                Pending Reviews
               </span>
-              <p className="text-2xl font-serif font-bold text-amber-950">
+              <p className="text-2xl font-serif font-bold text-chocolate">
                 {loading ? (
                   <span className="inline-block w-12 h-6 rounded skeleton skeleton-shimmer" />
                 ) : (
@@ -207,14 +225,37 @@ const AdminDashboard = () => {
             </div>
           </motion.div>
 
-          {/* Card 4: Categories */}
+          {/* 4. Total Bakery Items Listed */}
           <motion.div
             variants={staggerItem}
             whileHover={cardHover}
-            className="card-bakery p-5 flex items-center gap-4 transition-shadow"
+            className="card-bakery p-5 flex items-center gap-3.5 border-bakery-200"
           >
-            <div className="w-12 h-12 rounded-2xl bg-orange-100 text-orange-800 flex items-center justify-center shrink-0 shadow-xs">
-              <FolderTree className="w-6 h-6" />
+            <div className="w-12 h-12 rounded-xl bg-rose-100 text-rose-800 flex items-center justify-center font-bold shadow-xs shrink-0">
+              <Cake className="w-6 h-6 text-rose-700" />
+            </div>
+            <div>
+              <span className="text-[11px] uppercase font-bold text-bakery-500 tracking-wider">
+                Bakery Items
+              </span>
+              <p className="text-2xl font-serif font-bold text-chocolate">
+                {loading ? (
+                  <span className="inline-block w-12 h-6 rounded skeleton skeleton-shimmer" />
+                ) : (
+                  <AnimatedCounter value={metrics?.totalItems || 0} />
+                )}
+              </p>
+            </div>
+          </motion.div>
+
+          {/* 5. Categories */}
+          <motion.div
+            variants={staggerItem}
+            whileHover={cardHover}
+            className="card-bakery p-5 flex items-center gap-3.5 border-bakery-200"
+          >
+            <div className="w-12 h-12 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center font-bold shadow-xs shrink-0">
+              <FolderTree className="w-6 h-6 text-purple-700" />
             </div>
             <div>
               <span className="text-[11px] uppercase font-bold text-bakery-500 tracking-wider">
@@ -231,7 +272,7 @@ const AdminDashboard = () => {
           </motion.div>
         </motion.div>
 
-        {/* Pending Seller Approvals Queue with Animated Table Rows */}
+        {/* Pending Seller Approvals Queue */}
         <motion.div
           variants={fadeUp}
           initial="hidden"
@@ -337,7 +378,7 @@ const AdminDashboard = () => {
           )}
         </motion.div>
 
-        {/* Quick Management Shortcuts with Micro-interactions */}
+        {/* Quick Management Shortcuts (Milestone 3 Modules Only) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <motion.div whileHover={cardHover} className="rounded-xl">
             <Link
@@ -359,20 +400,18 @@ const AdminDashboard = () => {
 
           <motion.div whileHover={cardHover} className="rounded-xl">
             <Link
-              to="/admin/orders"
+              to="/admin/users"
               className="card-bakery p-6 block transition-all group border-bakery-200 h-full"
             >
               <div className="flex items-center justify-between mb-2">
-                <div className="w-10 h-10 rounded-xl bg-orange-100 text-orange-800 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <ShoppingBag className="w-5 h-5" />
+                <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Users className="w-5 h-5 text-blue-700" />
                 </div>
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-bakery-100 text-caramel">
-                  Live Stream
-                </span>
+                <ArrowRight className="w-4 h-4 text-bakery-400 group-hover:text-amber-700 group-hover:translate-x-1 transition-all" />
               </div>
-              <h3 className="font-serif font-bold text-chocolate text-lg">Orders Monitor</h3>
+              <h3 className="font-serif font-bold text-chocolate text-lg">User Directory</h3>
               <p className="text-xs text-bakery-600 mt-1">
-                View customer baking orders and custom requests across all home bakeries.
+                Browse registered buyers, home bakers, and administrative accounts with search and filtering.
               </p>
             </Link>
           </motion.div>

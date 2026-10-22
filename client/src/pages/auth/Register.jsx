@@ -94,7 +94,7 @@ const Register = () => {
   const buyerBenefits = [
     'Freshly made bakes from verified local home bakers',
     'Request custom designs, weights, and dates',
-    'Bilingual interface supporting English and ????'
+    'Bilingual interface supporting English and اردو'
   ];
 
   return (
@@ -283,7 +283,7 @@ const Register = () => {
                 className="input-bakery pl-10 transition-all duration-150 focus:ring-2 focus:ring-caramel/20"
               >
                 <option value="en">English</option>
-                <option value="ur">???? (Urdu)</option>
+                <option value="ur">اردو (Urdu)</option>
               </select>
             </div>
           </div>

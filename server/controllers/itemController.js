@@ -1,3 +1,4 @@
+import { User } from '../models/User.js';
 import { Item } from '../models/Item.js';
 import { Category } from '../models/Category.js';
 
@@ -54,9 +55,26 @@ export const getItems = async (req, res) => {
       }
     }
 
-    // 4. Specific seller storefront filter
+    // Filter: Milestone 3 only displays items from verified, approved home bakers
+    const approvedSellers = await User.find({
+      role: 'seller',
+      sellerStatus: 'approved'
+    }).distinct('_id');
+
     if (seller && seller.match(/^[0-9a-fA-F]{24}$/)) {
+      if (!approvedSellers.some(id => id.toString() === seller)) {
+        return res.status(200).json({
+          success: true,
+          total: 0,
+          count: 0,
+          page: 1,
+          pages: 1,
+          items: []
+        });
+      }
       query.seller = seller;
+    } else {
+      query.seller = { $in: approvedSellers };
     }
 
     // 5. Dietary filter (Eggless)
@@ -177,6 +195,15 @@ export const getMyItems = async (req, res) => {
  */
 export const createItem = async (req, res) => {
   try {
+    // Milestone 3 Guard: Blocked or pending sellers cannot publish items
+    if (req.user.role === 'seller' && req.user.sellerStatus !== 'approved') {
+      return res.status(403).json({
+        success: false,
+        message: req.user.sellerStatus === 'blocked'
+          ? 'Your seller account has been suspended by the Admin. You cannot publish items.'
+          : 'Your seller account is pending admin review. You can list items once your profile is approved.'
+      });
+    }
     const {
       title,
       description,
@@ -276,6 +303,15 @@ export const createItem = async (req, res) => {
  */
 export const updateItem = async (req, res) => {
   try {
+    // Milestone 3 Guard: Blocked sellers cannot edit items
+    if (req.user.role === 'seller' && req.user.sellerStatus !== 'approved') {
+      return res.status(403).json({
+        success: false,
+        message: req.user.sellerStatus === 'blocked'
+          ? 'Your seller account has been suspended by the Admin. You cannot modify items.'
+          : 'Your seller account is pending admin review.'
+      });
+    }
     const { id } = req.params;
     const item = await Item.findById(id);
 

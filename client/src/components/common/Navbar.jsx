@@ -1,9 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from '../../context/LanguageContext';
-import { useCart } from '../../context/CartContext';
 import { useTheme } from '../../context/ThemeContext';
 import Container from './Container';
 import Logo from './Logo';
@@ -13,65 +12,19 @@ import {
   LogOut,
   Menu,
   X,
-  Globe,
-  ShoppingBag,
-  Bell,
-  Sparkles
+  Globe
 } from 'lucide-react';
 import { buttonTap, TIMING, EASING } from '../../animations/motion';
-
-const SAMPLE_NAV_NOTIFS = [
-  {
-    id: 'n-1',
-    title: 'Order Status Update',
-    desc: "Grandma's Oven Delight is preparing your cake!",
-    time: '10m ago',
-    unread: true,
-    link: '/orders'
-  },
-  {
-    id: 'n-2',
-    title: 'New Bid Received',
-    desc: 'Sweet Crust Kitchen bid Rs. 3,800 on your request.',
-    time: '45m ago',
-    unread: true,
-    link: '/custom-requests'
-  },
-  {
-    id: 'n-3',
-    title: 'Store Credit Added',
-    desc: 'Rs. 2,000 added to your MeethaCart Wallet.',
-    time: '1h ago',
-    unread: false,
-    link: '/wallet'
-  }
-];
 
 const Navbar = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const { lang, toggleLanguage, t } = useTranslation();
-  const { cartCount, badgeBump } = useCart();
   const { isAjrak, isStreet } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [notifOpen, setNotifOpen] = useState(false);
-  const [notifications, setNotifications] = useState(SAMPLE_NAV_NOTIFS);
-  const notifRef = useRef(null);
-
-  const unreadCount = notifications.filter((n) => n.unread).length;
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (notifRef.current && !notifRef.current.contains(e.target)) {
-        setNotifOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -94,21 +47,14 @@ const Navbar = () => {
     return '/buyer/dashboard';
   };
 
-  const markAllNotifsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
-  };
-
   const isActive = (path) => {
     if (path === '/') return location.pathname === '/';
     return location.pathname.startsWith(path);
   };
 
-  // Nav links strictly without any "Soon" badges
+  // Milestone 3 Scope Navigation Links
   const navLinks = [
-    { to: '/items', label: t('nav.browseItems') || 'Browse Items' },
-    { to: '/custom-requests', label: t('nav.customOrders') || 'Custom Bakes' },
-    { to: '/orders', label: 'Orders & Tracking' },
-    { to: '/wallet', label: 'Wallet' }
+    { to: '/items', label: t('nav.browseItems') || 'Browse Items' }
   ];
 
   const roleLabel = (() => {
@@ -184,123 +130,11 @@ const Navbar = () => {
             })}
           </nav>
 
-          {/* Right Action Icons */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Right Action Controls */}
+          <div className="flex items-center gap-2">
             
             {/* Theme Picker Component */}
             <ThemePicker />
-
-            {/* Notification Bell */}
-            <div className="relative" ref={notifRef}>
-              <motion.button
-                whileHover={{ scale: 1.08 }}
-                whileTap={buttonTap}
-                onClick={() => setNotifOpen(!notifOpen)}
-                className="relative p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-md transition-colors"
-                title="Notifications"
-                aria-label="Notifications"
-              >
-                <motion.div
-                  animate={unreadCount > 0 ? { rotate: [0, -12, 12, -8, 8, 0] } : {}}
-                  transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 4 }}
-                >
-                  <Bell className="w-4 h-4" />
-                </motion.div>
-
-                {unreadCount > 0 && (
-                  <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-caramel ring-2 ring-[#4A2C1A]"
-                  />
-                )}
-              </motion.button>
-
-              {/* Notification Dropdown Panel */}
-              <AnimatePresence>
-                {notifOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    transition={{ duration: TIMING.normal, ease: EASING.out }}
-                    className="absolute right-0 mt-2 w-80 bg-white rounded-2xl border border-bakery-200 shadow-2xl overflow-hidden z-50 text-chocolate"
-                  >
-                    <div className="p-3 bg-bakery-50 border-b border-bakery-100 flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <Bell className="w-3.5 h-3.5 text-caramel" />
-                        <span className="text-xs font-bold">Notifications</span>
-                        {unreadCount > 0 && (
-                          <span className="text-[10px] bg-amber-100 text-amber-900 font-bold px-1.5 py-0.2 rounded-full">
-                            {unreadCount}
-                          </span>
-                        )}
-                      </div>
-                      {unreadCount > 0 && (
-                        <button
-                          onClick={markAllNotifsRead}
-                          className="text-[10px] text-caramel hover:underline font-semibold"
-                        >
-                          Mark read
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="divide-y divide-bakery-100 max-h-72 overflow-y-auto">
-                      {notifications.map((n) => (
-                        <Link
-                          key={n.id}
-                          to={n.link}
-                          onClick={() => setNotifOpen(false)}
-                          className={`p-3 block transition-colors text-left ${
-                            n.unread ? 'bg-amber-50/60 hover:bg-amber-50' : 'hover:bg-bakery-50'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between text-[11px] mb-0.5">
-                            <strong className="font-bold text-chocolate">{n.title}</strong>
-                            <span className="text-[10px] text-bakery-400">{n.time}</span>
-                          </div>
-                          <p className="text-[11px] text-bakery-600 line-clamp-2 leading-relaxed">
-                            {n.desc}
-                          </p>
-                        </Link>
-                      ))}
-                    </div>
-
-                    <div className="p-2.5 bg-bakery-50 border-t border-bakery-100 text-center">
-                      <Link
-                        to="/notifications"
-                        onClick={() => setNotifOpen(false)}
-                        className="text-xs text-caramel hover:text-caramel-dark font-semibold block"
-                      >
-                        View all alerts →
-                      </Link>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Shopping Cart Button */}
-            <Link
-              to="/cart"
-              className="relative p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-md transition-colors shrink-0"
-              title="Cart"
-              aria-label="Shopping Cart"
-            >
-              <ShoppingBag className="w-4 h-4" />
-              {cartCount > 0 && (
-                <motion.span
-                  key={cartCount}
-                  initial={{ scale: 0.5 }}
-                  animate={badgeBump ? { scale: [1, 1.45, 1] } : { scale: 1 }}
-                  transition={{ duration: 0.25 }}
-                  className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-caramel text-white font-bold text-[10px] flex items-center justify-center ring-2 ring-[#4A2C1A] shadow-xs"
-                >
-                  {cartCount}
-                </motion.span>
-              )}
-            </Link>
 
             {/* Language toggle: Displays clean 'اردو' or 'English' */}
             <motion.button
@@ -310,21 +144,23 @@ const Navbar = () => {
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-white/20 text-xs font-semibold text-amber-100 hover:text-white hover:bg-white/10 transition-all shrink-0"
               title={lang === 'en' ? 'اردو میں تبدیل کریں' : 'Switch to English'}
             >
-              <Globe className="w-3.5 h-3.5 text-caramel-light" />
-              <span>{lang === 'en' ? 'اردو' : 'English'}</span>
+              <Globe className="w-3.5 h-3.5 text-caramel-light shrink-0" />
+              <span style={{ fontFamily: "'Noto Nastaliq Urdu', 'Noto Naskh Arabic', sans-serif" }}>
+                {lang === 'en' ? 'اردو' : 'English'}
+              </span>
             </motion.button>
 
             {/* Authentication state */}
             {isAuthenticated ? (
-              <div className="hidden sm:flex items-center gap-1.5 shrink-0">
+              <div className="hidden sm:flex items-center gap-2 shrink-0">
                 <Link
                   to={getDashboardLink()}
-                  className="flex items-center gap-1.5 px-2 py-1.5 rounded-md bg-white/10 border border-white/15 hover:bg-white/15 transition-all text-xs font-medium text-white shrink-0"
+                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-white/10 border border-white/15 hover:bg-white/15 transition-all text-xs font-medium text-white shrink-0"
                 >
                   <div className="w-5 h-5 rounded-full bg-caramel text-white flex items-center justify-center font-bold text-[11px] uppercase shrink-0">
                     {user?.name?.charAt(0) || 'U'}
                   </div>
-                  <span className="hidden xl:inline-block max-w-[90px] truncate text-white/90">{user?.name}</span>
+                  <span className="hidden xl:inline-block max-w-[120px] truncate text-white/90">{user?.name}</span>
                   <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-caramel/30 text-amber-200 border border-caramel/40 whitespace-nowrap">
                     {roleLabel}
                   </span>
@@ -373,11 +209,11 @@ const Navbar = () => {
         <div className="ajrak-pattern-band" />
       </motion.header>
 
-      {/* Bold Street Market Marquee Strip (loud & joyful) */}
+      {/* Bold Street Market Marquee Strip */}
       <div className="street-marquee-strip">
         <div className="animate-marquee inline-block whitespace-nowrap font-bold text-xs">
-          FRESH HOMEMADE BAKES • KARACHI • LAHORE • ISLAMABAD • ARTISAN CHEF RECIPES • CUSTOM FONDANT CAKES • DIRECT HOME DELIVERY • ZERO PRESERVATIVES •&nbsp;
-          FRESH HOMEMADE BAKES • KARACHI • LAHORE • ISLAMABAD • ARTISAN CHEF RECIPES • CUSTOM FONDANT CAKES • DIRECT HOME DELIVERY • ZERO PRESERVATIVES •&nbsp;
+          FRESH HOMEMADE BAKES • KARACHI ARTISAN CHEFS • CUSTOM CAKES • LOCAL HOME BAKERS • 100% PURE DESI GHEE MITHAI •&nbsp;
+          FRESH HOMEMADE BAKES • KARACHI ARTISAN CHEFS • CUSTOM CAKES • LOCAL HOME BAKERS • 100% PURE DESI GHEE MITHAI •&nbsp;
         </div>
       </div>
 
@@ -431,36 +267,34 @@ const Navbar = () => {
                   </Link>
                 ))}
 
-                <Link
-                  to="/cart"
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center justify-between px-3 py-2.5 rounded-md text-sm font-medium text-amber-100/80 hover:text-white hover:bg-white/10"
-                >
-                  <span>Shopping Cart</span>
-                  {cartCount > 0 && (
-                    <span className="text-xs bg-caramel text-white font-bold px-2 py-0.5 rounded-full">
-                      {cartCount} items
-                    </span>
-                  )}
-                </Link>
-
                 <div className="pt-3 border-t border-white/10 flex items-center justify-between mt-2">
                   <button
                     onClick={toggleLanguage}
                     className="flex items-center gap-1.5 px-3 py-2 rounded-md border border-white/20 text-xs font-semibold text-amber-100 hover:text-white hover:bg-white/10 transition-all"
                   >
                     <Globe className="w-3.5 h-3.5 text-caramel-light" />
-                    <span>{lang === 'en' ? 'اردو' : 'English'}</span>
+                    <span style={{ fontFamily: "'Noto Nastaliq Urdu', 'Noto Naskh Arabic', sans-serif" }}>
+                      {lang === 'en' ? 'اردو' : 'English'}
+                    </span>
                   </button>
 
                   {isAuthenticated ? (
-                    <button
-                      onClick={handleLogout}
-                      className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-red-300 hover:bg-red-500/10 transition-all"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      {t('nav.logout') || 'Sign out'}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        to={getDashboardLink()}
+                        onClick={() => setMobileOpen(false)}
+                        className="px-3 py-1.5 text-sm font-medium text-amber-100 hover:text-white rounded-md hover:bg-white/10 transition-all"
+                      >
+                        {user?.name} ({roleLabel})
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium text-red-300 hover:bg-red-500/10 transition-all"
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                        {t('nav.logout') || 'Sign out'}
+                      </button>
+                    </div>
                   ) : (
                     <div className="flex items-center gap-2">
                       <Link

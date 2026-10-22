@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Heart, Store, Clock } from 'lucide-react';
+import { Store } from 'lucide-react';
 import fallbackImg from '../../assets/fallback-item.jpg';
 import { useTranslation } from '../../context/LanguageContext';
 import { cardHover, buttonTap, TIMING, EASING } from '../../animations/motion';
@@ -20,7 +20,6 @@ const isFreshToday = (item) => {
 
 const ItemCard = ({ item }) => {
   const { t, translateCategory, translateItemTitle, lang } = useTranslation();
-  const [isWishlisted, setIsWishlisted] = useState(false);
 
   const imageUrl = (() => {
     if (!item?.images || item.images.length === 0) return null;
@@ -31,26 +30,20 @@ const ItemCard = ({ item }) => {
   })();
 
   const sellerName = item?.seller?.bakeryName || item?.seller?.name || (lang === 'ur' ? 'ہوم بیکر' : 'Home Baker');
-  const rawCity = item?.seller?.city || item?.seller?.location || '';
+  const rawCity = item?.seller?.city || item?.seller?.location || item?.seller?.address || '';
   const sellerCity = (() => {
-    if (!rawCity || lang !== 'ur') return rawCity;
+    if (!rawCity) return '';
     let c = rawCity;
-    c = c.replace(/Lahore/gi, 'لاہور');
-    c = c.replace(/Karachi/gi, 'کراچی');
-    c = c.replace(/Islamabad/gi, 'اسلام آباد');
-    c = c.replace(/Rawalpindi/gi, 'راولپنڈی');
+    if (c.toLowerCase().includes('karachi')) return lang === 'ur' ? 'کراچی' : 'Karachi';
+    if (c.toLowerCase().includes('lahore')) return lang === 'ur' ? 'لاہور' : 'Lahore';
+    if (c.toLowerCase().includes('islamabad')) return lang === 'ur' ? 'اسلام آباد' : 'Islamabad';
     return c;
   })();
+
   const categoryName = item?.category?.name || '';
   const freshToday = isFreshToday(item);
   const outOfStock = item?.stock !== undefined && item.stock <= 0;
   const showEggless = Boolean(item?.isEggless);
-
-  const toggleWishlist = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsWishlisted(!isWishlisted);
-  };
 
   return (
     <motion.article
@@ -78,27 +71,6 @@ const ItemCard = ({ item }) => {
             }}
           />
         </Link>
-
-        {/* Wishlist button */}
-        <motion.button
-          whileHover={{ scale: 1.15 }}
-          whileTap={{ scale: 0.85 }}
-          type="button"
-          onClick={toggleWishlist}
-          aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-          className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm border border-bakery-200/80 flex items-center justify-center text-bakery-600 hover:text-strawberry hover:bg-white transition-colors shadow-sm"
-        >
-          <motion.div
-            animate={isWishlisted ? { scale: [1, 1.4, 1] } : { scale: 1 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Heart
-              className={`w-4 h-4 transition-colors ${
-                isWishlisted ? 'fill-strawberry text-strawberry' : 'stroke-current'
-              }`}
-            />
-          </motion.div>
-        </motion.button>
 
         {/* Out of stock overlay */}
         {outOfStock && (
@@ -150,7 +122,7 @@ const ItemCard = ({ item }) => {
           </Link>
         </div>
 
-        {/* Pricing & CTA */}
+        {/* Pricing & Details Link */}
         <div className="pt-2 border-t border-bakery-100 flex items-center justify-between gap-2 mt-auto">
           <div>
             <div className="price-sticker text-sm font-bold text-chocolate leading-tight">

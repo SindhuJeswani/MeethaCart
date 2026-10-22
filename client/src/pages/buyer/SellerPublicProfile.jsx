@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import api from '../../services/api';
 import ItemCard from '../../components/items/ItemCard';
 import { useToast } from '../../context/ToastContext';
-import { Store, Calendar, CheckCircle2, Copy, ShoppingBag, ArrowLeft, RefreshCw, Heart } from 'lucide-react';
-import { fadeUp, staggerContainer, buttonTap, TIMING, EASING } from '../../animations/motion';
+import { Store, Calendar, CheckCircle2, Copy, ShoppingBag, ArrowLeft, RefreshCw } from 'lucide-react';
+import { staggerContainer, buttonTap, TIMING, EASING } from '../../animations/motion';
 
 const SellerPublicProfile = () => {
   const { id } = useParams();
@@ -14,7 +14,6 @@ const SellerPublicProfile = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
-  const [isFollowing, setIsFollowing] = useState(false);
   const toast = useToast();
 
   useEffect(() => {
@@ -44,16 +43,6 @@ const SellerPublicProfile = () => {
       setCopied(true);
       toast.success('Storefront link copied to clipboard!');
       setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
-  const handleToggleFollow = () => {
-    const nextState = !isFollowing;
-    setIsFollowing(nextState);
-    if (nextState) {
-      toast.success(`Now following ${seller?.bakeryName || seller?.name || 'Baker'}!`);
-    } else {
-      toast.info(`Unfollowed ${seller?.bakeryName || seller?.name || 'Baker'}`);
     }
   };
 
@@ -114,44 +103,18 @@ const SellerPublicProfile = () => {
               </h1>
               <p className="text-white/70 text-xs mt-0.5">
                 Owner: <strong className="text-white font-medium">{seller.name}</strong>
-                {seller.city && <span> · {seller.city}</span>}
+                {seller.address && <span> · {seller.address}</span>}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2.5 self-start sm:self-auto">
-            {/* Animated Follow Button with bounce and color transition */}
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={buttonTap}
-              type="button"
-              onClick={handleToggleFollow}
-              className={`text-xs py-2 px-4 rounded-lg flex items-center gap-1.5 transition-all shadow-xs font-semibold ${
-                isFollowing
-                  ? 'bg-amber-400 text-chocolate border border-amber-300'
-                  : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'
-              }`}
-            >
-              <motion.div
-                key={isFollowing ? 'following-heart' : 'follow-heart'}
-                animate={{ scale: [1, 1.35, 1] }}
-                transition={{ duration: 0.3 }}
-              >
-                <Heart
-                  className={`w-3.5 h-3.5 ${
-                    isFollowing ? 'fill-chocolate text-chocolate' : 'text-white'
-                  }`}
-                />
-              </motion.div>
-              <span>{isFollowing ? 'Following' : 'Follow Baker'}</span>
-            </motion.button>
-
             <motion.button
               whileHover={{ scale: 1.04 }}
               whileTap={buttonTap}
               type="button"
               onClick={handleCopyLink}
-              className="btn-secondary text-xs py-2 px-3.5 bg-white/10 hover:bg-white/20 text-white border-white/20 shadow-xs"
+              className="btn-secondary text-xs py-2 px-3.5 bg-white/10 hover:bg-white/20 text-white border-white/20 shadow-xs inline-flex items-center gap-1.5"
             >
               <Copy className="w-3.5 h-3.5" />
               <span>{copied ? 'Link copied' : 'Share storefront'}</span>
