@@ -405,7 +405,7 @@ const CartPage = () => {
                   <div className="space-y-4">
                     <div>
                       <label className="block text-xs font-semibold uppercase tracking-wider text-bakery-700 mb-1.5">
-                        Complete Delivery Address
+                        Complete Delivery Address <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
@@ -419,7 +419,7 @@ const CartPage = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-semibold uppercase tracking-wider text-bakery-700 mb-1.5">
-                          Recipient Contact Phone
+                          Recipient Contact Phone <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="tel"
@@ -431,7 +431,7 @@ const CartPage = () => {
                       </div>
                       <div>
                         <label className="block text-xs font-semibold uppercase tracking-wider text-bakery-700 mb-1.5">
-                          Delivery Speed
+                          Delivery Speed <span className="text-red-500">*</span>
                         </label>
                         <div className="grid grid-cols-2 gap-2">
                           <button

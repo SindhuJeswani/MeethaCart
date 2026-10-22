@@ -300,7 +300,7 @@ const CategoryManager = () => {
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
                     <label className="block text-xs font-semibold uppercase tracking-wider text-bakery-700 mb-1.5">
-                      Category Name *
+                      Category Name <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -314,7 +314,7 @@ const CategoryManager = () => {
 
                   <div>
                     <label className="block text-xs font-semibold uppercase tracking-wider text-bakery-700 mb-1.5">
-                      Description
+                      Description <span className="text-xs text-bakery-400 font-normal lowercase">(optional)</span>
                     </label>
                     <textarea
                       rows={3}
@@ -334,7 +334,7 @@ const CategoryManager = () => {
                       className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 border-bakery-300"
                     />
                     <label htmlFor="isActiveToggle" className="text-xs font-medium text-bakery-800 cursor-pointer">
-                      Visible in public bakery catalog
+                      Visible in public bakery catalog <span className="text-xs text-bakery-400 font-normal lowercase">(optional)</span>
                     </label>
                   </div>
 

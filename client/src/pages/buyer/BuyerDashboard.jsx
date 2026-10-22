@@ -156,7 +156,7 @@ const BuyerDashboard = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-bakery-700 mb-1.5">
-                  Full Name
+                  Full Name <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <User className="w-4 h-4 text-bakery-400 absolute left-3.5 top-3.5" />
@@ -189,7 +189,7 @@ const BuyerDashboard = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-bakery-700 mb-1.5">
-                  Contact Phone
+                  Contact Phone <span className="text-xs text-bakery-400 font-normal lowercase">(optional)</span>
                 </label>
                 <div className="relative">
                   <Phone className="w-4 h-4 text-bakery-400 absolute left-3.5 top-3.5" />
@@ -205,7 +205,7 @@ const BuyerDashboard = () => {
 
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-bakery-700 mb-1.5">
-                  Preferred Language
+                  Preferred Language <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <Globe className="w-4 h-4 text-bakery-400 absolute left-3.5 top-3.5" />
@@ -223,7 +223,7 @@ const BuyerDashboard = () => {
 
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-bakery-700 mb-1.5">
-                Saved Delivery Address
+                Saved Delivery Address <span className="text-xs text-bakery-400 font-normal lowercase">(optional)</span>
               </label>
               <div className="relative">
                 <MapPin className="w-4 h-4 text-bakery-400 absolute left-3.5 top-3.5" />

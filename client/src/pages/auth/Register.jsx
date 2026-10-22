@@ -191,7 +191,7 @@ const Register = () => {
         {/* Full Name */}
         <div>
           <label className="block text-xs font-semibold text-bakery-700 mb-1">
-            Full name
+            Full name <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <User className="w-4 h-4 text-bakery-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -217,7 +217,7 @@ const Register = () => {
               className="overflow-hidden"
             >
               <label className="block text-xs font-semibold text-bakery-700 mb-1">
-                Bakery or brand name
+                Bakery or brand name <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <Store className="w-4 h-4 text-bakery-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -237,7 +237,7 @@ const Register = () => {
         {/* Email */}
         <div>
           <label className="block text-xs font-semibold text-bakery-700 mb-1">
-            Email address
+            Email address <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <Mail className="w-4 h-4 text-bakery-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -257,7 +257,7 @@ const Register = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-semibold text-bakery-700 mb-1">
-              Phone number
+              Phone number <span className="text-xs text-bakery-400 font-normal lowercase">(optional)</span>
             </label>
             <div className="relative">
               <Phone className="w-4 h-4 text-bakery-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -273,7 +273,7 @@ const Register = () => {
 
           <div>
             <label className="block text-xs font-semibold text-bakery-700 mb-1">
-              Language
+              Language <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <Globe className="w-4 h-4 text-bakery-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -293,7 +293,7 @@ const Register = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-semibold text-bakery-700 mb-1">
-              Password
+              Password <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <Lock className="w-4 h-4 text-bakery-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -311,7 +311,7 @@ const Register = () => {
 
           <div>
             <label className="block text-xs font-semibold text-bakery-700 mb-1">
-              Confirm password
+              Confirm password <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <Lock className="w-4 h-4 text-bakery-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />

@@ -256,7 +256,7 @@ const AddEditItem = () => {
 
           <div>
             <label className="block text-xs font-semibold text-bakery-700 mb-1.5 uppercase tracking-wider">
-              Item Title *
+              Item Title <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -271,7 +271,7 @@ const AddEditItem = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-bakery-700 mb-1.5 uppercase tracking-wider">
-                Category *
+                Category <span className="text-red-500">*</span>
               </label>
               <select
                 value={formData.category}
@@ -289,7 +289,7 @@ const AddEditItem = () => {
 
             <div>
               <label className="block text-xs font-semibold text-bakery-700 mb-1.5 uppercase tracking-wider">
-                Price (PKR) *
+                Price (PKR) <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -305,7 +305,7 @@ const AddEditItem = () => {
 
           <div>
             <label className="block text-xs font-semibold text-bakery-700 mb-1.5 uppercase tracking-wider">
-              Description & Ingredients *
+              Description & Ingredients <span className="text-red-500">*</span>
             </label>
             <textarea
               rows={4}
@@ -328,7 +328,7 @@ const AddEditItem = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-bakery-700 mb-1.5 uppercase tracking-wider">
-                Available Stock Units *
+                Available Stock Units <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -343,7 +343,7 @@ const AddEditItem = () => {
 
             <div>
               <label className="block text-xs font-semibold text-bakery-700 mb-1.5 uppercase tracking-wider">
-                Preparation Time (Hours Notice) *
+                Preparation Time (Hours Notice) <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -366,7 +366,7 @@ const AddEditItem = () => {
                 className="w-4 h-4 rounded text-caramel focus:ring-caramel border-bakery-300"
               />
               <div>
-                <span className="block text-xs font-bold text-chocolate">Eggless Recipe</span>
+                <span className="block text-xs font-bold text-chocolate">Eggless Recipe <span className="text-xs text-bakery-400 font-normal lowercase">(optional)</span></span>
                 <span className="text-[11px] text-bakery-600">
                   Highlight this item in the catalog for customers with egg allergies or vegetarian preferences.
                 </span>
@@ -379,7 +379,7 @@ const AddEditItem = () => {
         <div className="card-bakery p-6 space-y-4 shadow-warm">
           <h2 className="font-serif font-bold text-chocolate text-lg border-b border-bakery-200/80 pb-3 flex items-center gap-2">
             <UploadCloud className="w-5 h-5 text-amber-600" />
-            <span>Bakery Item Photos</span>
+            <span>Bakery Item Photos <span className="text-xs text-bakery-400 font-normal lowercase">(optional)</span></span>
           </h2>
 
           {/* Upload Dropzone */}
@@ -407,7 +407,7 @@ const AddEditItem = () => {
               type="url"
               value={formData.imageUrl}
               onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-              placeholder="Or paste an image web URL (https://...)"
+              placeholder="Or paste an image web URL (optional)"
               className="input-bakery text-xs py-2"
             />
           </div>
