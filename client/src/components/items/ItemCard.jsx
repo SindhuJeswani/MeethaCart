@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Heart, Store, Clock } from 'lucide-react';
 import fallbackImg from '../../assets/fallback-item.jpg';
 import { useTranslation } from '../../context/LanguageContext';
+import { cardHover, buttonTap, TIMING, EASING } from '../../animations/motion';
 
 const isFreshToday = (item) => {
   const ref = item.updatedAt || item.createdAt;
@@ -51,14 +53,24 @@ const ItemCard = ({ item }) => {
   };
 
   return (
-    <article className="group bg-white rounded-lg border border-bakery-200 overflow-hidden hover:border-bakery-300 hover:shadow-md transition-all duration-200 flex flex-col h-full">
-      {/* Image container */}
+    <motion.article
+      layout
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.94 }}
+      whileHover={cardHover}
+      transition={{ duration: TIMING.normal, ease: EASING.out }}
+      className="group card-bakery overflow-hidden flex flex-col h-full transition-shadow duration-200"
+    >
+      {/* Image container with smooth zoom on hover */}
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-bakery-100">
-        <Link to={`/items/${item?._id}`} className="block w-full h-full">
-          <img
+        <Link to={`/items/${item?._id}`} className="block w-full h-full overflow-hidden">
+          <motion.img
+            whileHover={{ scale: 1.06 }}
+            transition={{ duration: 0.35, ease: EASING.out }}
             src={imageUrl || fallbackImg}
             alt={translateItemTitle(item) || 'Bakery item'}
-            className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
+            className="w-full h-full object-cover transition-transform"
             loading="lazy"
             onError={(e) => {
               e.target.onerror = null;
@@ -68,18 +80,25 @@ const ItemCard = ({ item }) => {
         </Link>
 
         {/* Wishlist button */}
-        <button
+        <motion.button
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.85 }}
           type="button"
           onClick={toggleWishlist}
           aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
           className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm border border-bakery-200/80 flex items-center justify-center text-bakery-600 hover:text-strawberry hover:bg-white transition-colors shadow-sm"
         >
-          <Heart
-            className={`w-4 h-4 transition-colors ${
-              isWishlisted ? 'fill-strawberry text-strawberry' : 'stroke-current'
-            }`}
-          />
-        </button>
+          <motion.div
+            animate={isWishlisted ? { scale: [1, 1.4, 1] } : { scale: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Heart
+              className={`w-4 h-4 transition-colors ${
+                isWishlisted ? 'fill-strawberry text-strawberry' : 'stroke-current'
+              }`}
+            />
+          </motion.div>
+        </motion.button>
 
         {/* Out of stock overlay */}
         {outOfStock && (
@@ -111,7 +130,7 @@ const ItemCard = ({ item }) => {
       </div>
 
       {/* Card Body */}
-      <div className="p-3.5 flex-1 flex flex-col justify-between gap-3">
+      <div className="p-4 flex-1 flex flex-col justify-between gap-3">
         <div>
           {/* Seller / Location */}
           <Link
@@ -125,7 +144,7 @@ const ItemCard = ({ item }) => {
 
           {/* Item title */}
           <Link to={`/items/${item?._id}`} className="block mt-1">
-            <h3 className="font-medium text-chocolate text-sm leading-snug line-clamp-2 group-hover:text-caramel transition-colors">
+            <h3 className="font-semibold text-chocolate text-sm leading-snug line-clamp-2 group-hover:text-caramel transition-colors">
               {translateItemTitle(item)}
             </h3>
           </Link>
@@ -134,25 +153,27 @@ const ItemCard = ({ item }) => {
         {/* Pricing & CTA */}
         <div className="pt-2 border-t border-bakery-100 flex items-center justify-between gap-2 mt-auto">
           <div>
-            <div className="text-base font-bold text-chocolate leading-tight">
+            <div className="price-sticker text-sm font-bold text-chocolate leading-tight">
               {lang === 'ur' ? 'روپے ' : 'Rs. '}{item?.price ? item.price.toLocaleString() : '0'}
             </div>
             {item?.preparationTimeHours ? (
-              <span className="text-[10px] text-bakery-500 font-normal">
-                {item.preparationTimeHours} {t('items.prepTimeHours') || 'h prep time'}
+              <span className="text-[10px] text-bakery-500 font-normal block mt-0.5">
+                {item.preparationTimeHours} {t('items.prepTimeHours') || 'h prep'}
               </span>
             ) : null}
           </div>
 
-          <Link
-            to={`/items/${item?._id}`}
-            className="btn-primary text-xs py-1.5 px-3 font-medium rounded-md whitespace-nowrap"
-          >
-            {t('items.viewItem') || 'View item'}
-          </Link>
+          <motion.div whileHover={{ scale: 1.04 }} whileTap={buttonTap}>
+            <Link
+              to={`/items/${item?._id}`}
+              className="btn-primary text-xs py-1.5 px-3.5 font-semibold rounded-lg whitespace-nowrap shadow-xs"
+            >
+              {t('items.viewItem') || 'View item'}
+            </Link>
+          </motion.div>
         </div>
       </div>
-    </article>
+    </motion.article>
   );
 };
 

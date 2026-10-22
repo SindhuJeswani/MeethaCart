@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../services/api';
 import AdminSidebar from '../../components/admin/AdminSidebar';
 import {
@@ -12,6 +13,7 @@ import {
   RefreshCw,
   Globe
 } from 'lucide-react';
+import { fadeUp, staggerContainer, staggerItem, buttonTap, TIMING, EASING } from '../../animations/motion';
 
 const UserList = () => {
   const [users, setUsers] = useState([]);
@@ -62,10 +64,14 @@ const UserList = () => {
     <div className="flex flex-col md:flex-row min-h-[calc(100vh-80px)]">
       <AdminSidebar />
 
-      <main className="flex-1 p-6 sm:p-8 space-y-6 bg-bakery-50/50">
-        
+      <main className="flex-1 p-6 sm:p-8 space-y-6 bg-bakery-50/50 overflow-y-auto">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: TIMING.normal, ease: EASING.out }}
+          className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+        >
           <div>
             <h1 className="text-2xl sm:text-3xl font-serif font-bold text-chocolate flex items-center gap-2.5">
               <Users className="w-7 h-7 text-amber-600" />
@@ -75,48 +81,53 @@ const UserList = () => {
               Browse registered buyers, home bakers, and administrative staff.
             </p>
           </div>
-        </div>
+        </motion.div>
 
         {error && (
-          <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm">
-            {error}
+          <div className="alert-error">
+            <span>{error}</span>
           </div>
         )}
 
         {/* Filter and Search Bar */}
         <div className="card-bakery p-4 space-y-4 sm:space-y-0 sm:flex sm:items-center sm:justify-between gap-4">
-          
           <div className="flex items-center gap-1.5 p-1 bg-bakery-100 rounded-xl border border-bakery-200 overflow-x-auto">
             {['all', 'buyer', 'seller', 'admin'].map((r) => (
               <button
                 key={r}
                 onClick={() => setRoleFilter(r)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition-all whitespace-nowrap ${
+                className={`relative px-3.5 py-1.5 rounded-lg text-xs font-bold capitalize transition-all whitespace-nowrap ${
                   roleFilter === r
-                    ? 'bg-white text-chocolate shadow-xs'
+                    ? 'text-chocolate'
                     : 'text-bakery-600 hover:text-chocolate'
                 }`}
               >
-                {r === 'all' ? 'All Roles' : `${r}s`}
+                {roleFilter === r && (
+                  <motion.div
+                    layoutId="user-role-tab"
+                    className="absolute inset-0 bg-white rounded-lg shadow-xs border border-bakery-200/80"
+                    transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+                  />
+                )}
+                <span className="relative z-10">{r === 'all' ? 'All Roles' : `${r}s`}</span>
               </button>
             ))}
           </div>
 
           <form onSubmit={handleSearchSubmit} className="relative flex-1 sm:max-w-xs">
-            <Search className="w-4 h-4 text-bakery-400 absolute left-3 top-3" />
+            <Search className="w-4 h-4 text-bakery-400 absolute left-3 top-2.5" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by name or email..."
-              className="input-bakery pl-9 text-xs py-2"
+              className="input-bakery pl-9 text-xs py-2 focus:ring-2 focus:ring-caramel/20"
             />
           </form>
-
         </div>
 
-        {/* Users Table */}
-        <div className="card-bakery p-0 overflow-hidden">
+        {/* Users Table with Staggered Entrance */}
+        <div className="card-bakery p-0 overflow-hidden shadow-warm">
           {isLoading ? (
             <div className="p-12 text-center text-sm text-bakery-600 flex items-center justify-center gap-2">
               <RefreshCw className="w-4 h-4 animate-spin text-amber-600" />
@@ -137,67 +148,74 @@ const UserList = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-bakery-200/70">
-                  {users.map((u) => (
-                    <tr key={u._id} className="hover:bg-bakery-50/70 transition-colors">
-                      <td className="py-3.5 px-4">
-                        <div className="font-bold text-chocolate">{u.name}</div>
-                        <div className="text-xs text-bakery-600">{u.email}</div>
-                        {u.bakeryName && (
-                          <div className="text-[11px] text-amber-800 font-medium">
-                            Bakery: {u.bakeryName}
+                  <AnimatePresence>
+                    {users.map((u) => (
+                      <motion.tr
+                        key={u._id}
+                        layout
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="hover:bg-amber-50/40 transition-colors"
+                      >
+                        <td className="py-3.5 px-4">
+                          <div className="font-bold text-chocolate">{u.name}</div>
+                          <div className="text-xs text-bakery-600">{u.email}</div>
+                          {u.bakeryName && (
+                            <div className="text-[11px] text-amber-800 font-medium">
+                              Bakery: {u.bakeryName}
+                            </div>
+                          )}
+                        </td>
+
+                        <td className="py-3.5 px-4">
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold capitalize ${
+                              u.role === 'admin'
+                                ? 'bg-purple-100 text-purple-900 border border-purple-200'
+                                : u.role === 'seller'
+                                ? 'bg-amber-100 text-amber-900 border border-amber-200'
+                                : 'bg-blue-100 text-blue-900 border border-blue-200'
+                            }`}
+                          >
+                            {u.role === 'admin' && <Shield className="w-3 h-3 text-purple-700" />}
+                            {u.role === 'seller' && <Store className="w-3 h-3 text-amber-700" />}
+                            {u.role === 'buyer' && <User className="w-3 h-3 text-blue-700" />}
+                            <span>{u.role}</span>
+                          </span>
+                        </td>
+
+                        <td className="py-3.5 px-4">
+                          {u.isVerified ? (
+                            <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold text-xs">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>Verified</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-stone-500 font-medium text-xs">
+                              <XCircle className="w-3.5 h-3.5 text-stone-400" />
+                              <span>Unverified</span>
+                            </span>
+                          )}
+                        </td>
+
+                        <td className="py-3.5 px-4">
+                          <div className="inline-flex items-center gap-1 text-xs text-bakery-700 font-medium uppercase">
+                            <Globe className="w-3 h-3 text-amber-600" />
+                            <span>{u.preferredLanguage || 'en'}</span>
                           </div>
-                        )}
-                      </td>
+                        </td>
 
-                      <td className="py-3.5 px-4">
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold capitalize ${
-                            u.role === 'admin'
-                              ? 'bg-purple-100 text-purple-900 border border-purple-200'
-                              : u.role === 'seller'
-                              ? 'bg-amber-100 text-amber-900 border border-amber-200'
-                              : 'bg-blue-100 text-blue-900 border border-blue-200'
-                          }`}
-                        >
-                          {u.role === 'admin' && <Shield className="w-3 h-3 text-purple-700" />}
-                          {u.role === 'seller' && <Store className="w-3 h-3 text-amber-700" />}
-                          {u.role === 'buyer' && <User className="w-3 h-3 text-blue-700" />}
-                          <span>{u.role}</span>
-                        </span>
-                      </td>
-
-                      <td className="py-3.5 px-4">
-                        {u.isVerified ? (
-                          <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold text-xs">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                            <span>Verified</span>
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-stone-500 font-medium text-xs">
-                            <XCircle className="w-3.5 h-3.5 text-stone-400" />
-                            <span>Unverified</span>
-                          </span>
-                        )}
-                      </td>
-
-                      <td className="py-3.5 px-4">
-                        <div className="inline-flex items-center gap-1 text-xs text-bakery-700 font-medium uppercase">
-                          <Globe className="w-3 h-3 text-amber-600" />
-                          <span>{u.preferredLanguage || 'en'}</span>
-                        </div>
-                      </td>
-
-                      <td className="py-3.5 px-4 text-xs text-bakery-600">
-                        {new Date(u.createdAt).toLocaleDateString()}
-                      </td>
-                    </tr>
-                  ))}
+                        <td className="py-3.5 px-4 text-xs text-bakery-600">
+                          {new Date(u.createdAt).toLocaleDateString()}
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </AnimatePresence>
                 </tbody>
               </table>
             </div>
           )}
         </div>
-
       </main>
     </div>
   );

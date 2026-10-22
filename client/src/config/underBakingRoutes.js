@@ -7,14 +7,6 @@
 export const UNDER_BAKING_ROUTES = [
   // ── 1. Commerce & Orders ──
   {
-    path: '/cart',
-    title: 'Shopping Cart',
-    titleUrdu: 'خریداری کی ٹوکری',
-    description: 'Save and review your selected cakes and bakery treats before checkout.',
-    descUrdu: 'چیک آؤٹ سے قبل اپنی منتخب کردہ بیکری اشیاء کا جائزہ لیں۔',
-    allowedRoles: null // public / all
-  },
-  {
     path: '/wishlist',
     title: 'Wishlist & Saved Items',
     titleUrdu: 'پسندیدہ اشیاء',
@@ -22,48 +14,8 @@ export const UNDER_BAKING_ROUTES = [
     descUrdu: 'اپنی پسندیدہ بیکری اشیاء کو بعد میں آرڈر کرنے کے لیے محفوظ رکھیں۔',
     allowedRoles: null
   },
-  {
-    path: '/checkout',
-    title: 'Secure Checkout',
-    titleUrdu: 'ادائیگی کا محفوظ عمل',
-    description: 'Direct order placement with delivery scheduling and payment methods.',
-    descUrdu: 'ڈیلیوری وقت کے تعین اور ادائیگی کے محفوظ طریقے کے ساتھ آرڈر مکمل کریں۔',
-    allowedRoles: ['buyer', 'seller', 'admin']
-  },
-  {
-    path: '/orders',
-    title: 'Orders & Order Tracking',
-    titleUrdu: 'آرڈرز اور ٹریکنگ',
-    description: 'Track ongoing bakery orders, delivery status, and your full order history.',
-    descUrdu: 'اپنے جاری آرڈرز، ڈیلیوری کی صورتحال اور آرڈرز کی تاریخ دیکھیں۔',
-    allowedRoles: ['buyer', 'seller', 'admin']
-  },
-  {
-    path: '/wallet',
-    title: 'Wallet & Payments',
-    titleUrdu: 'والٹ اور ادائیگیاں',
-    description: 'Manage store credits, payment methods, and instant refunds.',
-    descUrdu: 'اسٹور بیلنس، ادائیگی کے طریقے اور فوری ریفنڈز کا انتظام کریں۔',
-    allowedRoles: ['buyer', 'seller', 'admin']
-  },
 
   // ── 2. Communication & Requests ──
-  {
-    path: '/notifications',
-    title: 'Notifications & Alerts',
-    titleUrdu: 'اطلاعات اور پیغامات',
-    description: 'Real-time updates on orders, custom bake status, and baker messages.',
-    descUrdu: 'آرڈرز کی صورتحال اور بیکرز کے پیغامات کی فوری اطلاعات۔',
-    allowedRoles: null
-  },
-  {
-    path: '/custom-requests',
-    title: 'Custom Requests & Bidding',
-    titleUrdu: 'خصوصی کیک آرڈرز اور بولیاں',
-    description: 'Post custom event requests, specify flavors and budget, and get bids from bakers.',
-    descUrdu: 'اپنے من پسند ڈیزائن اور وزن کے کیک کی فرمائش پوسٹ کریں اور بیکرز سے آفرز حاصل کریں۔',
-    allowedRoles: null
-  },
   {
     path: '/messages',
     title: 'Baker Chat & Messages',

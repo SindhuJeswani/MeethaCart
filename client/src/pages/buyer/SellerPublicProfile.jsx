@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../services/api';
 import ItemCard from '../../components/items/ItemCard';
-import { Store, Calendar, CheckCircle2, Copy, ShoppingBag, ArrowLeft } from 'lucide-react';
+import { useToast } from '../../context/ToastContext';
+import { Store, Calendar, CheckCircle2, Copy, ShoppingBag, ArrowLeft, RefreshCw, Heart } from 'lucide-react';
+import { fadeUp, staggerContainer, buttonTap, TIMING, EASING } from '../../animations/motion';
 
 const SellerPublicProfile = () => {
   const { id } = useParams();
@@ -11,6 +14,8 @@ const SellerPublicProfile = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     const fetchSeller = async () => {
@@ -34,16 +39,29 @@ const SellerPublicProfile = () => {
   }, [id]);
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(window.location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      toast.success('Storefront link copied to clipboard!');
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleToggleFollow = () => {
+    const nextState = !isFollowing;
+    setIsFollowing(nextState);
+    if (nextState) {
+      toast.success(`Now following ${seller?.bakeryName || seller?.name || 'Baker'}!`);
+    } else {
+      toast.info(`Unfollowed ${seller?.bakeryName || seller?.name || 'Baker'}`);
+    }
   };
 
   if (isLoading) {
     return (
       <div className="min-h-[50vh] flex flex-col items-center justify-center gap-2">
-        <div className="w-8 h-8 border-3 border-caramel/20 border-t-caramel rounded-full animate-spin"></div>
-        <p className="text-xs text-bakery-600">Loading seller profile...</p>
+        <RefreshCw className="w-8 h-8 text-caramel animate-spin" />
+        <p className="text-xs text-bakery-600">Loading baker storefront...</p>
       </div>
     );
   }
@@ -51,12 +69,12 @@ const SellerPublicProfile = () => {
   if (error || !seller) {
     return (
       <div className="max-w-md mx-auto px-4 py-20 text-center space-y-3">
-        <div className="w-12 h-12 rounded-lg bg-bakery-100 text-chocolate mx-auto flex items-center justify-center">
+        <div className="w-12 h-12 rounded-xl bg-bakery-100 text-chocolate mx-auto flex items-center justify-center shadow-xs">
           <Store className="w-6 h-6 text-caramel" />
         </div>
         <h2 className="text-xl font-serif font-bold text-chocolate">Seller not found</h2>
         <p className="text-xs text-bakery-600">{error || 'The requested seller profile does not exist.'}</p>
-        <Link to="/" className="btn-primary inline-flex text-xs py-2 px-4">
+        <Link to="/" className="btn-primary inline-flex text-xs py-2 px-4 shadow-xs">
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Back to home</span>
         </Link>
@@ -70,12 +88,16 @@ const SellerPublicProfile = () => {
 
   return (
     <div className="page-container py-8 space-y-8">
-      
       {/* Storefront Hero Banner */}
-      <div className="rounded-xl bg-chocolate text-white overflow-hidden p-6 sm:p-8">
+      <motion.div
+        initial={{ opacity: 0, y: -12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: TIMING.normal, ease: EASING.out }}
+        className="rounded-2xl bg-chocolate text-white overflow-hidden p-6 sm:p-8 shadow-warm"
+      >
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-lg bg-caramel/20 text-caramel-light font-serif font-bold text-2xl flex items-center justify-center border border-caramel/40">
+            <div className="w-16 h-16 rounded-2xl bg-caramel/20 text-caramel-light font-serif font-bold text-2xl flex items-center justify-center border border-caramel/40 shadow-xs">
               {seller.bakeryName?.charAt(0) || seller.name?.charAt(0) || 'B'}
             </div>
             <div>
@@ -97,14 +119,44 @@ const SellerPublicProfile = () => {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={handleCopyLink}
-            className="btn-secondary text-xs py-2 px-3.5 bg-white/10 hover:bg-white/20 text-white border-white/20 self-start sm:self-auto"
-          >
-            <Copy className="w-3.5 h-3.5" />
-            <span>{copied ? 'Link copied' : 'Share storefront'}</span>
-          </button>
+          <div className="flex items-center gap-2.5 self-start sm:self-auto">
+            {/* Animated Follow Button with bounce and color transition */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={buttonTap}
+              type="button"
+              onClick={handleToggleFollow}
+              className={`text-xs py-2 px-4 rounded-lg flex items-center gap-1.5 transition-all shadow-xs font-semibold ${
+                isFollowing
+                  ? 'bg-amber-400 text-chocolate border border-amber-300'
+                  : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'
+              }`}
+            >
+              <motion.div
+                key={isFollowing ? 'following-heart' : 'follow-heart'}
+                animate={{ scale: [1, 1.35, 1] }}
+                transition={{ duration: 0.3 }}
+              >
+                <Heart
+                  className={`w-3.5 h-3.5 ${
+                    isFollowing ? 'fill-chocolate text-chocolate' : 'text-white'
+                  }`}
+                />
+              </motion.div>
+              <span>{isFollowing ? 'Following' : 'Follow Baker'}</span>
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.04 }}
+              whileTap={buttonTap}
+              type="button"
+              onClick={handleCopyLink}
+              className="btn-secondary text-xs py-2 px-3.5 bg-white/10 hover:bg-white/20 text-white border-white/20 shadow-xs"
+            >
+              <Copy className="w-3.5 h-3.5" />
+              <span>{copied ? 'Link copied' : 'Share storefront'}</span>
+            </motion.button>
+          </div>
         </div>
 
         {/* Bio & Details Bar */}
@@ -117,7 +169,7 @@ const SellerPublicProfile = () => {
             <span>Selling since {joinedFormatted}</span>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Bakery Items Section */}
       <div className="space-y-4">
@@ -131,7 +183,7 @@ const SellerPublicProfile = () => {
         </div>
 
         {items.length === 0 ? (
-          <div className="bg-white rounded-lg border border-bakery-200 text-center py-14 px-4">
+          <div className="bg-white rounded-xl border border-bakery-200 text-center py-14 px-4 shadow-xs">
             <ShoppingBag className="w-8 h-8 text-bakery-300 mx-auto mb-2" />
             <h3 className="text-sm font-semibold text-chocolate">
               No items listed yet
@@ -141,14 +193,18 @@ const SellerPublicProfile = () => {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          <motion.div
+            variants={staggerContainer(0.04)}
+            initial="hidden"
+            animate="visible"
+            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"
+          >
             {items.map((item) => (
               <ItemCard key={item._id} item={item} />
             ))}
-          </div>
+          </motion.div>
         )}
       </div>
-
     </div>
   );
 };

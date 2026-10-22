@@ -87,7 +87,8 @@ export const AuthProvider = ({ children }) => {
         email: res.data.email,
         purpose: 'login_2fa',
         role: res.data.role,
-        cooldownSeconds: res.data.cooldownSeconds || 60
+        cooldownSeconds: res.data.cooldownSeconds || 60,
+        devOtp: res.data.devOtp
       };
       setPendingAuth(authState);
       return res.data;
@@ -113,7 +114,8 @@ export const AuthProvider = ({ children }) => {
         email: res.data.email,
         purpose: 'signup_verification',
         role: formData.role,
-        cooldownSeconds: res.data.cooldownSeconds || 60
+        cooldownSeconds: res.data.cooldownSeconds || 60,
+        devOtp: res.data.devOtp
       };
       setPendingAuth(authState);
       return res.data;

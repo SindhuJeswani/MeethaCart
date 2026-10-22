@@ -16,7 +16,7 @@ const ItemFilterSidebar = ({
 
   return (
     <aside className="w-full lg:w-60 space-y-5 shrink-0">
-      <div className="bg-white rounded-lg border border-bakery-200 p-4 space-y-5">
+      <div className="card-bakery p-4 space-y-5">
         
         {/* Title & Reset */}
         <div className="flex items-center justify-between pb-3 border-b border-bakery-200">
