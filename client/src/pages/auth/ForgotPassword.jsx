@@ -109,7 +109,7 @@ const ForgotPassword = () => {
       >
         <div>
           <label className="block text-xs font-semibold text-bakery-700 mb-1.5">
-            {t('auth.emailLabel') || 'Email address'}
+            {t('auth.emailLabel') || 'Email address'} <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <Mail className="w-4 h-4 text-bakery-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />

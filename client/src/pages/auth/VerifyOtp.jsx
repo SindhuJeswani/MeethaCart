@@ -339,7 +339,7 @@ const VerifyOtp = () => {
             {/* 6 Individual Staggered OTP Input Boxes */}
             <div>
               <label className="block text-xs font-semibold text-bakery-700 mb-2 text-center">
-                {t('auth.enterOtp') || 'Enter 6-Digit Verification Code'}
+                {t('auth.enterOtp') || 'Enter 6-Digit Verification Code'} <span className="text-red-500">*</span>
               </label>
 
               <motion.div

@@ -208,7 +208,7 @@ const WalletPage = () => {
         {/* Quick Amount Pills */}
         <div className="space-y-1.5">
           <label className="block text-xs font-semibold uppercase tracking-wider text-bakery-700">
-            Select or Type Amount (PKR)
+            Select or Type Amount (PKR) <span className="text-red-500">*</span>
           </label>
           <div className="flex flex-wrap gap-2">
             {[1000, 2000, 5000, 10000].map((amt) => (

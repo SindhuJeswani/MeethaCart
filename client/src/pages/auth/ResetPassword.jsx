@@ -131,7 +131,7 @@ const ResetPassword = () => {
         {/* OTP Code Input */}
         <div>
           <label className="block text-xs font-semibold text-bakery-700 mb-1.5">
-            6-Digit Verification Code
+            6-Digit Verification Code <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -147,7 +147,7 @@ const ResetPassword = () => {
         {/* New Password */}
         <div>
           <label className="block text-xs font-semibold text-bakery-700 mb-1.5">
-            New password
+            New password <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <Lock className="w-4 h-4 text-bakery-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -166,7 +166,7 @@ const ResetPassword = () => {
         {/* Confirm Password */}
         <div>
           <label className="block text-xs font-semibold text-bakery-700 mb-1.5">
-            Confirm new password
+            Confirm new password <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <Lock className="w-4 h-4 text-bakery-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />

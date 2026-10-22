@@ -188,7 +188,7 @@ const SellerDashboard = () => {
           <form onSubmit={handleSave} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-bakery-700 mb-1.5">
-                Bakery Brand Name
+                Bakery Brand Name <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <Store className="w-4 h-4 text-bakery-400 absolute left-3.5 top-3.5" />
@@ -204,7 +204,7 @@ const SellerDashboard = () => {
 
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-bakery-700 mb-1.5">
-                Bakery Story & Specialties (Public)
+                Bakery Story & Specialties <span className="text-xs text-bakery-400 font-normal lowercase">(optional)</span>
               </label>
               <div className="relative">
                 <FileText className="w-4 h-4 text-bakery-400 absolute left-3.5 top-3.5" />
@@ -221,7 +221,7 @@ const SellerDashboard = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-bakery-700 mb-1.5">
-                  Baker Contact Phone
+                  Baker Contact Phone <span className="text-xs text-bakery-400 font-normal lowercase">(optional)</span>
                 </label>
                 <div className="relative">
                   <Phone className="w-4 h-4 text-bakery-400 absolute left-3.5 top-3.5" />
@@ -237,7 +237,7 @@ const SellerDashboard = () => {
 
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-bakery-700 mb-1.5">
-                  Preferred Language
+                  Preferred Language <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <Globe className="w-4 h-4 text-bakery-400 absolute left-3.5 top-3.5" />
@@ -255,7 +255,7 @@ const SellerDashboard = () => {
 
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-bakery-700 mb-1.5">
-                Kitchen Address / Pickup Point (Karachi)
+                Kitchen Address / Pickup Point <span className="text-xs text-bakery-400 font-normal lowercase">(optional)</span>
               </label>
               <div className="relative">
                 <MapPin className="w-4 h-4 text-bakery-400 absolute left-3.5 top-3.5" />
