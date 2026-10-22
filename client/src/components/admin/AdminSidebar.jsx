@@ -55,7 +55,7 @@ const AdminSidebar = ({ pendingCount = 0 }) => {
         {/* Brand Header */}
         <div className="px-2 pb-4 border-b" style={{ borderColor: 'var(--color-border)' }}>
           <div className="flex items-center justify-between">
-            <Logo variant="dark" size="sm" to="/" />
+            <Logo variant="dark" size={32} wordmarkText="Admin" to="/admin/dashboard" />
             <ThemePicker />
           </div>
           <div className="flex items-center gap-1.5 mt-2 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-primary)' }}>

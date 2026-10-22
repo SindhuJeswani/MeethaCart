@@ -80,11 +80,9 @@ const Navbar = () => {
       >
         <Container className="flex items-center justify-between h-16 gap-3">
           
-          {/* Logo */}
-          <div className="flex items-center gap-3 shrink-0">
-            <Link to="/" className="flex items-center gap-2 group">
-              <Logo variant="light" />
-            </Link>
+          {/* Logo with SL monogram */}
+          <div className="flex items-center shrink-0">
+            <Logo variant="light" size={36} />
           </div>
 
           {/* Search bar */}

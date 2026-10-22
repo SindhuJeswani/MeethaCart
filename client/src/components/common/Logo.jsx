@@ -1,108 +1,170 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
 
+/**
+ * MeethaCart Official "SL" Monogram Logo
+ * 
+ * Exact SVG geometry:
+ * A squared 'S' whose left side is half drawn in an accent color.
+ * That accent bar, together with the S's top-left stroke and bottom bar,
+ * forms a hidden 'L' monogram.
+ */
 const Logo = ({
-  variant = 'dark',
-  size = 'md',
-  to = '/',
+  size = 40,
+  showWordmark = true,
+  variant = 'default',
+  to,
+  wordmarkText,
   showSubtitle = false,
   className = ''
 }) => {
   const { lang } = useTranslation();
   const isUr = lang === 'ur';
 
-  const sizeConfig = {
-    sm: {
-      emblem: 'w-8 h-8 rounded-lg',
-      iconSvg: 'w-5 h-5',
-      titleText: 'text-lg sm:text-xl',
-      subtitleText: 'text-[9px] tracking-wider'
-    },
-    md: {
-      emblem: 'w-9 h-9 sm:w-10 sm:h-10 rounded-xl',
-      iconSvg: 'w-5 h-5 sm:w-6 sm:h-6',
-      titleText: 'text-xl sm:text-2xl',
-      subtitleText: 'text-[10px] tracking-widest'
-    },
-    lg: {
-      emblem: 'w-12 h-12 sm:w-14 sm:h-14 rounded-2xl',
-      iconSvg: 'w-7 h-7 sm:w-8 sm:h-8',
-      titleText: 'text-2xl sm:text-3xl',
-      subtitleText: 'text-xs tracking-widest'
-    }
-  };
+  // Safely resolve user for role-aware home linking
+  let authContext = null;
+  try {
+    authContext = useAuth();
+  } catch (e) {
+    // Outside AuthProvider fallback
+  }
+  const user = authContext?.user;
 
-  const currentSize = sizeConfig[size] || sizeConfig.md;
+  // Resolve numerical pixel size
+  const numSize = (() => {
+    if (typeof size === 'number') return size;
+    if (size === 'sm') return 28;
+    if (size === 'md') return 36;
+    if (size === 'lg') return 48;
+    const parsed = parseInt(size, 10);
+    return isNaN(parsed) ? 40 : parsed;
+  })();
 
+  // Thicken stroke slightly at small sizes (<= 24px) for crisp readability
+  const strokeWidth = numSize <= 24 ? 14 : 12;
+
+  // Variant styling resolution
+  const isLightVariant = variant === 'light';
   const isDarkVariant = variant === 'dark';
-  const textColor = isDarkVariant ? 'text-chocolate' : 'text-white';
-  const accentColor = isDarkVariant ? 'text-caramel-dark' : 'text-amber-300';
-  const subtextColor = isDarkVariant ? 'text-bakery-600' : 'text-amber-200/80';
+  const isMarkOnly = variant === 'mark-only' || !showWordmark;
+
+  // Text colors
+  const textColor = isLightVariant ? 'text-[#F7F2EA]' : isDarkVariant ? 'text-[#1A1A1A]' : 'text-chocolate';
+  const accentColorClass = isLightVariant ? 'text-[#E0604F]' : 'text-caramel-dark';
+  const subtextColor = isLightVariant ? 'text-[#F7F2EA]/75' : 'text-bakery-600';
+
+  // Accent stroke for SVG: Light variant uses #E0604F, dark/default uses --logo-accent with #B5372A fallback
+  const accentStroke = isLightVariant
+    ? 'var(--logo-accent-light, #E0604F)'
+    : 'var(--logo-accent, #B5372A)';
+
+  // Main stroke uses currentColor so it inherits from parent text color
+  const mainStrokeColor = isLightVariant ? '#F7F2EA' : isDarkVariant ? '#1A1A1A' : 'currentColor';
+
+  // Dynamic destination link:
+  // Visitors -> "/"
+  // Logged-in buyer -> "/"
+  // Logged-in seller -> "/seller/dashboard"
+  // Logged-in admin -> "/admin/dashboard"
+  const defaultTo = (() => {
+    if (!user) return '/';
+    if (user.role === 'admin') return '/admin/dashboard';
+    if (user.role === 'seller') return '/seller/dashboard';
+    return '/';
+  })();
+
+  const targetLink = to !== undefined ? to : defaultTo;
+
+  // Font size scaling corresponding to mark size
+  const titleClass = numSize <= 30
+    ? 'text-lg sm:text-xl'
+    : numSize <= 40
+    ? 'text-xl sm:text-2xl'
+    : 'text-2xl sm:text-3xl';
+
+  const subtitleClass = numSize <= 30
+    ? 'text-[9px] tracking-wider'
+    : 'text-[10px] tracking-widest';
 
   const logoContent = (
-    <div className={`inline-flex items-center gap-2 sm:gap-2.5 group select-none ${className}`}>
-      {/* Crest Emblem */}
+    <div
+      className={`inline-flex items-center gap-2.5 sm:gap-3 group select-none ${className}`}
+      style={{ color: isLightVariant ? '#F7F2EA' : isDarkVariant ? '#1A1A1A' : undefined }}
+    >
+      {/* ── Monogram Mark (Always LTR to prevent geometric inversion in RTL) ── */}
       <div
-        className={`${currentSize.emblem} shrink-0 bg-gradient-to-br from-amber-400 via-caramel to-amber-700 p-[2px] shadow-sm flex items-center justify-center transition-transform duration-200 group-hover:scale-105`}
-        style={{ borderRadius: 'var(--radius-sm)' }}
+        dir="ltr"
+        className="shrink-0 flex items-center justify-center transition-transform duration-250 ease-out group-hover:scale-105"
+        style={{ width: numSize, height: numSize }}
       >
-        <div
-          className="w-full h-full bg-gradient-to-br from-chocolate to-[#2A150A] flex items-center justify-center relative overflow-hidden"
-          style={{ borderRadius: 'var(--radius-sm)' }}
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 120 120"
+          width={numSize}
+          height={numSize}
+          role="img"
+          aria-label="MeethaCart logo"
+          className="overflow-visible"
         >
-          <svg
-            viewBox="0 0 48 48"
+          {/* Base 'S' stroke in currentColor */}
+          <path
+            d="M100 14 L14 14 L14 60 L100 60 L100 106 L14 106"
             fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className={`${currentSize.iconSvg} text-amber-300 relative z-10`}
-            aria-hidden="true"
-          >
-            <path
-              d="M24 8C25.5 8 26.8 9.2 26.8 10.7C27.6 10.3 28.5 10.1 29.5 10.1C32 10.1 34 12.1 34 14.6C34 15.3 33.8 16 33.5 16.6C35.5 17.5 37 19.6 37 22C37 24.8 35 27 32.2 27.4C32.4 28 32.5 28.6 32.5 29.3C32.5 31.9 30.4 34 27.8 34H20.2C17.6 34 15.5 31.9 15.5 29.3C15.5 28.6 15.6 28 15.8 27.4C13 27 11 24.8 11 22C11 19.6 12.5 17.5 14.5 16.6C14.2 16 14 15.3 14 14.6C14 12.1 16 10.1 18.5 10.1C19.5 10.1 20.4 10.3 21.2 10.7C21.2 9.2 22.5 8 24 8Z"
-              fill="#FFFBF3"
-            />
-            <path
-              d="M17 28L18.8 38.5C19 39.4 19.8 40 20.7 40H27.3C28.2 40 29 39.4 29.2 38.5L31 28"
-              fill="#FBBF24"
-              stroke="#F59E0B"
-              strokeWidth="1.5"
-              strokeLinejoin="round"
-            />
-            <path d="M21 28.5L22 39" stroke="#92400E" strokeWidth="1.2" strokeLinecap="round" opacity="0.7" />
-            <path d="M24 28.5V39.5" stroke="#92400E" strokeWidth="1.2" strokeLinecap="round" opacity="0.7" />
-            <path d="M27 28.5L26 39" stroke="#92400E" strokeWidth="1.2" strokeLinecap="round" opacity="0.7" />
-            <path
-              d="M24 4L24.8 6.5L27.3 7.3L24.8 8.1L24 10.6L23.2 8.1L20.7 7.3L23.2 6.5L24 4Z"
-              fill="#FDE68A"
-            />
-          </svg>
-        </div>
+            stroke={mainStrokeColor}
+            strokeWidth={strokeWidth}
+            strokeLinejoin="miter"
+          />
+
+          {/* Accent vertical bar forming the 'L' */}
+          <path
+            d="M14 60 L14 106"
+            fill="none"
+            stroke={accentStroke}
+            strokeWidth={strokeWidth}
+            className="transition-all duration-250 ease-out group-hover:opacity-90 group-hover:stroke-[14px]"
+            style={{
+              transition: 'stroke 250ms cubic-bezier(0.16, 1, 0.3, 1), opacity 250ms ease-out, stroke-width 250ms ease-out'
+            }}
+          />
+        </svg>
       </div>
 
-      {/* Brand Wordmark */}
-      <div className="flex flex-col leading-none">
-        {isUr ? (
-          <span className={`font-serif ${currentSize.titleText} font-bold tracking-tight ${textColor} whitespace-nowrap`}>
-            میٹھا <span className={`${accentColor} font-serif font-extrabold`}>کارٹ</span>
-          </span>
-        ) : (
-          <span className={`font-serif ${currentSize.titleText} font-bold tracking-tight ${textColor} whitespace-nowrap`}>
-            Meetha<span className={`${accentColor} font-serif font-extrabold`}>Cart</span>
-          </span>
-        )}
-        {showSubtitle && (
-          <span className={`block ${currentSize.subtitleText} uppercase font-semibold mt-1 ${subtextColor}`}>
-            {isUr ? 'گھریلو اور روایتی بیکری · پاکستان' : 'Homemade Bakery · Pakistan'}
-          </span>
-        )}
-      </div>
+      {/* ── Brand Wordmark ── */}
+      {!isMarkOnly && (
+        <div className="flex flex-col leading-none">
+          {wordmarkText ? (
+            <span className={`font-serif ${titleClass} font-bold tracking-tight ${textColor} whitespace-nowrap`}>
+              {wordmarkText}
+            </span>
+          ) : isUr ? (
+            <span className={`font-serif ${titleClass} font-bold tracking-tight ${textColor} whitespace-nowrap`}>
+              میٹھا <span className={`${accentColorClass} font-serif font-extrabold`}>کارٹ</span>
+            </span>
+          ) : (
+            <span className={`font-serif ${titleClass} font-bold tracking-tight ${textColor} whitespace-nowrap`}>
+              Meetha<span className={`${accentColorClass} font-serif font-extrabold`}>Cart</span>
+            </span>
+          )}
+
+          {showSubtitle && (
+            <span className={`block ${subtitleClass} uppercase font-semibold mt-1 ${subtextColor}`}>
+              {isUr ? 'گھریلو اور روایتی بیکری · پاکستان' : 'Homemade Bakery · Pakistan'}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 
-  if (to) {
+  if (targetLink) {
     return (
-      <Link to={to} aria-label="MeethaCart - Home" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-caramel rounded-lg">
+      <Link
+        to={targetLink}
+        aria-label="MeethaCart - Home"
+        className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-caramel rounded-lg transition-opacity hover:opacity-95"
+      >
         {logoContent}
       </Link>
     );

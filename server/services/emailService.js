@@ -1,3 +1,5 @@
+import path from 'path';
+import { fileURLToPath } from 'url';
 import nodemailer from 'nodemailer';
 
 /**
@@ -5,6 +7,9 @@ import nodemailer from 'nodemailer';
  * Supports development console logging (instant & reliable without external creds)
  * and production Nodemailer SMTP transport.
  */
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 class EmailService {
   constructor() {
     this.transporter = null;
@@ -60,8 +65,11 @@ class EmailService {
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px; border: 1px solid #E5E7EB; border-radius: 12px; background-color: #FDFBF7;">
         <div style="text-align: center; margin-bottom: 20px;">
-          <h1 style="color: #B45309; margin: 0; font-size: 26px;">MeethaCart 🍰</h1>
-          <p style="color: #78350F; margin: 4px 0 0 0; font-size: 14px;">Homemade & Artisanal Bakery Marketplace</p>
+          <img src="cid:meethacart-logo" alt="MeethaCart Monogram" width="48" height="48" style="display: block; margin: 0 auto 10px auto; border: 0;" />
+          <h1 style="color: #4A2C1A; margin: 0; font-size: 24px; font-weight: bold; font-family: Georgia, serif;">
+            Meetha<span style="color: #B5372A;">Cart</span>
+          </h1>
+          <p style="color: #78350F; margin: 4px 0 0 0; font-size: 13px;">Homemade & Artisanal Bakery Marketplace</p>
         </div>
         <div style="background-color: #FFFFFF; padding: 24px; border-radius: 8px; border: 1px solid #F3EDE4;">
           <h2 style="color: #1F2937; margin-top: 0; font-size: 18px;">${title}</h2>
@@ -78,11 +86,17 @@ class EmailService {
 
     try {
       const transporter = this.getTransporter();
+      const logoPath = path.join(__dirname, '../uploads/logo-mark.png');
+      const attachments = fs.existsSync(logoPath)
+        ? [{ filename: 'logo-mark.png', path: logoPath, cid: 'meethacart-logo' }]
+        : [];
+
       const info = await transporter.sendMail({
         from: process.env.EMAIL_FROM || '"MeethaCart Bakery" <sindhukumeri44@gmail.com>',
         to,
         subject: `${title} - MeethaCart`,
-        html
+        html,
+        attachments
       });
       return { success: true, messageId: info.messageId };
     } catch (error) {
