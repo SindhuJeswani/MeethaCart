@@ -1,144 +1,128 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from '../../context/LanguageContext';
-import { useToast } from '../../context/ToastContext';
 import api from '../../services/api';
+import ThemePicker from '../../components/common/ThemePicker';
 import {
   User,
   Mail,
   Phone,
   MapPin,
-  Clock,
-  Heart,
   Globe,
   Save,
   CheckCircle2,
   AlertCircle,
   ShoppingBag,
+  Store,
   Sparkles,
-  CreditCard
+  Heart
 } from 'lucide-react';
-import {
-  fadeUp,
-  staggerContainer,
-  staggerItem,
-  buttonTap,
-  TIMING,
-  EASING
-} from '../../animations/motion';
+import { fadeUp, buttonTap, TIMING, EASING } from '../../animations/motion';
 
 const BuyerDashboard = () => {
   const { user, updateUser } = useAuth();
-  const { isUrdu } = useTranslation();
-  const toast = useToast();
+  const { setLang } = useTranslation();
 
   const [name, setName] = useState(user?.name || '');
   const [phone, setPhone] = useState(user?.phone || '');
   const [address, setAddress] = useState(user?.address || '');
-  const [preferredLanguage, setPreferredLanguage] = useState(user?.preferredLanguage || 'en');
+  const [preferredLanguage, setPreferredLanguage] = useState(
+    user?.preferredLanguage || 'en'
+  );
+
   const [isSaving, setIsSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (user) {
-      setName(user.name || '');
-      setPhone(user.phone || '');
-      setAddress(user.address || '');
-      setPreferredLanguage(user.preferredLanguage || 'en');
-    }
-  }, [user]);
-
   const handleSave = async (e) => {
     e.preventDefault();
-    setError('');
-    setSavedSuccess(false);
     setIsSaving(true);
+    setSavedSuccess(false);
+    setError('');
 
     try {
       const res = await api.put('/users/profile', {
-        name,
-        phone,
-        address,
+        name: name.trim(),
+        phone: phone.trim(),
+        address: address.trim(),
         preferredLanguage
       });
 
-      if (res.data?.success && res.data?.user) {
-        if (updateUser) {
-          updateUser(res.data.user);
-        }
+      if (res.data?.success) {
+        updateUser(res.data.user);
+        setLang(preferredLanguage);
         setSavedSuccess(true);
-        toast.success(isUrdu ? 'پروفائل کامیابی سے محفوظ ہو گیا!' : 'Profile updated successfully!');
         setTimeout(() => setSavedSuccess(false), 3000);
       }
     } catch (err) {
-      const msg = err.response?.data?.message || err.message || 'Failed to update profile';
-      setError(msg);
-      toast.error(msg);
+      setError(err.message || 'Failed to update profile settings.');
     } finally {
       setIsSaving(false);
     }
   };
 
   return (
-    <div className="page-container py-8 space-y-8 max-w-5xl mx-auto">
-      {/* Profile Header Hero Card */}
+    <div className="page-container py-8 space-y-8">
+      {/* Buyer Welcome Banner */}
       <motion.div
         initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: TIMING.normal, ease: EASING.out }}
-        className="rounded-2xl bg-chocolate text-white p-6 sm:p-8 shadow-warm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5"
+        className="rounded-2xl bg-[#4A2C1A] text-white p-6 sm:p-8 shadow-warm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+        style={{ backgroundColor: 'var(--nav-bg)' }}
       >
         <div className="flex items-center gap-4">
-          <motion.div
-            initial={{ scale: 0.7, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-            className="w-16 h-16 rounded-2xl bg-caramel/20 text-caramel-light font-serif font-bold text-2xl flex items-center justify-center border border-caramel/40 shadow-xs"
-          >
-            {user?.name?.charAt(0) || 'U'}
-          </motion.div>
+          <div className="w-16 h-16 rounded-2xl bg-caramel/20 text-caramel-light font-serif font-bold text-2xl flex items-center justify-center border border-caramel/40 shadow-xs uppercase">
+            {user?.name?.charAt(0) || 'B'}
+          </div>
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-[11px] uppercase tracking-wider text-caramel font-semibold">
-                MeethaCart Buyer Account
+              <span className="text-[11px] uppercase tracking-wider text-caramel-light font-bold">
+                Customer Profile
               </span>
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              {user?.isVerified && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-300">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Verified
+                </span>
+              )}
             </div>
             <h1 className="text-2xl sm:text-3xl font-serif font-bold text-white">
-              {user?.name || 'Customer Profile'}
+              {user?.name}
             </h1>
             <p className="text-white/70 text-xs mt-0.5">
-              {user?.email} · Member since {new Date(user?.createdAt || Date.now()).getFullYear()}
+              Email: <strong className="text-white font-medium">{user?.email}</strong>
             </p>
           </div>
         </div>
 
         <Link
           to="/items"
-          className="btn-primary text-xs py-2 px-4 inline-flex items-center gap-1.5 self-start sm:self-auto shadow-xs"
+          className="btn-primary text-xs py-2 px-4 shadow-xs self-start sm:self-auto inline-flex items-center gap-1.5"
         >
           <ShoppingBag className="w-3.5 h-3.5" />
           <span>Browse Fresh Bakes</span>
         </Link>
       </motion.div>
 
+      {/* Main Grid: Profile Form + Quick Links */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left: Edit Profile Form */}
+        {/* Left: Profile Edit Form */}
         <motion.div
           variants={fadeUp}
           initial="hidden"
           animate="visible"
-          className="lg:col-span-8 bg-white rounded-2xl border border-bakery-200 p-6 sm:p-8 shadow-xs space-y-6"
+          className="lg:col-span-8 bg-white rounded-2xl border border-bakery-200 p-6 sm:p-8 shadow-warm space-y-6"
         >
-          <div className="border-b border-bakery-100 pb-3">
-            <h2 className="font-serif font-bold text-chocolate text-xl">
-              Account Details & Preferences
+          <div className="border-b border-bakery-200/80 pb-4">
+            <h2 className="font-serif font-bold text-chocolate text-xl flex items-center gap-2">
+              <User className="w-5 h-5 text-caramel" />
+              <span>Personal Details & Preferences</span>
             </h2>
-            <p className="text-xs text-bakery-600 mt-0.5">
-              Update your delivery coordinates and platform settings.
+            <p className="text-xs text-bakery-600 mt-1">
+              Update your delivery address, contact details, and preferred display language.
             </p>
           </div>
 
@@ -228,7 +212,7 @@ const BuyerDashboard = () => {
                   <select
                     value={preferredLanguage}
                     onChange={(e) => setPreferredLanguage(e.target.value)}
-                    className="input-bakery pl-10 appearance-none bg-white"
+                    className="input-bakery pl-10 appearance-none bg-white font-medium"
                   >
                     <option value="en">English (Default)</option>
                     <option value="ur">اردو (Urdu)</option>
@@ -247,7 +231,7 @@ const BuyerDashboard = () => {
                   type="text"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  placeholder="House, street, sector, city"
+                  placeholder="House, street, sector, city (e.g. PECHS Block 2, Karachi)"
                   className="input-bakery pl-10"
                 />
               </div>
@@ -268,11 +252,12 @@ const BuyerDashboard = () => {
           </form>
         </motion.div>
 
-        {/* Right: Quick Services Links */}
+        {/* Right: Theme Picker & Milestone 3 Shortcuts */}
         <div className="lg:col-span-4 space-y-4">
           <div className="bg-white rounded-2xl border border-bakery-200 p-5 shadow-xs">
             <ThemePicker variant="settings" />
           </div>
+
           <motion.div
             variants={fadeUp}
             initial="hidden"
@@ -280,24 +265,29 @@ const BuyerDashboard = () => {
             className="bg-white rounded-2xl border border-bakery-200 p-5 shadow-xs space-y-3"
           >
             <h3 className="font-serif font-bold text-chocolate text-sm">
-              Quick Shortcuts
+              Marketplace Exploration
             </h3>
-            <div className="space-y-1.5 text-xs">
-              <Link to="/orders" className="flex items-center justify-between p-2 rounded-lg hover:bg-bakery-100 transition-colors">
-                <span className="font-medium text-bakery-800">Live Order Tracking</span>
-                <span className="text-[10px] bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full font-bold">Active</span>
+            <div className="space-y-2 text-xs">
+              <Link
+                to="/items"
+                className="flex items-center justify-between p-2.5 rounded-lg bg-bakery-50 hover:bg-bakery-100 transition-colors border border-bakery-200/60"
+              >
+                <div className="flex items-center gap-2 font-semibold text-chocolate">
+                  <ShoppingBag className="w-4 h-4 text-caramel" />
+                  <span>Browse Bakery Items</span>
+                </div>
+                <span className="text-[10px] bg-amber-100 text-amber-900 border border-amber-200 px-2 py-0.5 rounded-full font-bold">Catalog</span>
               </Link>
-              <Link to="/wallet" className="flex items-center justify-between p-2 rounded-lg hover:bg-bakery-100 transition-colors">
-                <span className="font-medium text-bakery-800">Demo Wallet & Credits</span>
-                <span className="text-[10px] bg-amber-100 text-amber-900 border border-amber-200 px-2 py-0.5 rounded-full font-bold">Rs. 8,500</span>
-              </Link>
-              <Link to="/custom-requests" className="flex items-center justify-between p-2 rounded-lg hover:bg-bakery-100 transition-colors">
-                <span className="font-medium text-bakery-800">Custom Requests & Bids</span>
-                <span className="text-[10px] bg-amber-100 text-amber-900 border border-amber-200 px-2 py-0.5 rounded-full font-bold">3 Bids</span>
-              </Link>
-              <Link to="/notifications" className="flex items-center justify-between p-2 rounded-lg hover:bg-bakery-100 transition-colors">
-                <span className="font-medium text-bakery-800">Notifications & Alerts</span>
-                <span className="text-[10px] bg-amber-100 text-amber-900 border border-amber-200 px-2 py-0.5 rounded-full font-bold">2 New</span>
+
+              <Link
+                to="/register?role=seller"
+                className="flex items-center justify-between p-2.5 rounded-lg bg-bakery-50 hover:bg-bakery-100 transition-colors border border-bakery-200/60"
+              >
+                <div className="flex items-center gap-2 font-semibold text-chocolate">
+                  <Store className="w-4 h-4 text-caramel" />
+                  <span>Become a Baker / Seller</span>
+                </div>
+                <span className="text-[10px] bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full font-bold">Apply</span>
               </Link>
             </div>
           </motion.div>

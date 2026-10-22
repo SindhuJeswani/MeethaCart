@@ -106,14 +106,7 @@ const Footer = () => {
                   </Link>
                 </li>
               ))}
-              <li>
-                <Link
-                  to="/custom-requests"
-                  className="text-white/70 hover:text-white transition-colors inline-flex items-center gap-1.5"
-                >
-                  <span>{t('footer.customRequests') || 'Custom requests'}</span>
-                </Link>
-              </li>
+
             </ul>
           </div>
 
@@ -133,11 +126,7 @@ const Footer = () => {
                   {t('footer.sellerSignIn') || 'Seller sign in'}
                 </Link>
               </li>
-              <li>
-                <Link to="/custom-requests" className="text-white/70 hover:text-white transition-colors block">
-                  <span>Custom Cake Bidding</span>
-                </Link>
-              </li>
+
             </ul>
           </div>
 

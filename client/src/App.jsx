@@ -1,19 +1,24 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { ThemeProvider, useTheme } from './context/ThemeContext';
+import { AnimatePresence, motion } from 'framer-motion';
+
+// Context Providers
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { ToastProvider } from './context/ToastContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { CartProvider } from './context/CartContext';
+import { FEATURES } from './config/features';
+
+// Common Components
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
+import ProtectedRoute from './components/guards/ProtectedRoute';
 import SplashScreen from './components/common/SplashScreen';
 import TopProgressBar from './components/common/TopProgressBar';
 import ThemePicker from './components/common/ThemePicker';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ProtectedRoute } from './components/guards/ProtectedRoute';
 
-// Pages
+// Public Pages (Milestone 3)
 import Welcome from './pages/Welcome';
 import Home from './pages/Home';
 import Login from './pages/auth/Login';
@@ -21,26 +26,33 @@ import Register from './pages/auth/Register';
 import VerifyOtp from './pages/auth/VerifyOtp';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
-import BuyerDashboard from './pages/buyer/BuyerDashboard';
-import SellerDashboard from './pages/seller/SellerDashboard';
-import SellerPublicProfile from './pages/buyer/SellerPublicProfile';
 import BrowseItems from './pages/buyer/BrowseItems';
 import ItemDetails from './pages/buyer/ItemDetails';
+import SellerPublicProfile from './pages/buyer/SellerPublicProfile';
+
+// Protected Buyer Pages (Milestone 3)
+import BuyerDashboard from './pages/buyer/BuyerDashboard';
+
+// Protected Seller Pages (Milestone 3)
+import SellerDashboard from './pages/seller/SellerDashboard';
 import SellerItems from './pages/seller/SellerItems';
 import AddEditItem from './pages/seller/AddEditItem';
+
+// Protected Admin Pages (Milestone 3)
 import AdminDashboard from './pages/admin/AdminDashboard';
 import SellerApprovals from './pages/admin/SellerApprovals';
 import CategoryManager from './pages/admin/CategoryManager';
 import UserList from './pages/admin/UserList';
-import OrdersPlaceholder from './pages/admin/OrdersPlaceholder';
+
+// 404 Not Found Page
+import NotFound from './pages/NotFound';
+
+// Future Pages (Loaded conditionally behind FEATURES flags)
 import CartPage from './pages/buyer/CartPage';
 import OrderTrackingPage from './pages/buyer/OrderTrackingPage';
 import WalletPage from './pages/buyer/WalletPage';
 import NotificationsPage from './pages/buyer/NotificationsPage';
 import CustomRequestsPage from './pages/buyer/CustomRequestsPage';
-import UnderBaking from './pages/UnderBaking';
-import NotFound from './pages/NotFound';
-import { UNDER_BAKING_ROUTES } from './config/underBakingRoutes';
 
 // Visitor Entry point: handles first-time vs returning guest vs logged-in user
 const IndexRoute = () => {
@@ -97,7 +109,7 @@ function AppContent() {
               className="flex-1 flex flex-col"
             >
               <Routes location={location}>
-                {/* Public Routes */}
+                {/* ── Public Milestone 3 Routes ── */}
                 <Route path="/" element={<IndexRoute />} />
                 <Route path="/welcome" element={<Welcome />} />
                 <Route path="/login" element={<Login />} />
@@ -109,15 +121,37 @@ function AppContent() {
                 <Route path="/items" element={<BrowseItems />} />
                 <Route path="/items/:id" element={<ItemDetails />} />
 
-                {/* Animated Commerce & User Flows */}
-                <Route path="/cart" element={<CartPage />} />
-                <Route path="/checkout" element={<CartPage />} />
-                <Route path="/orders" element={<OrderTrackingPage />} />
-                <Route path="/wallet" element={<WalletPage />} />
-                <Route path="/notifications" element={<NotificationsPage />} />
-                <Route path="/custom-requests" element={<CustomRequestsPage />} />
+                {/* ── Post-Milestone 3 Routes (Locked behind Feature Flags -> 404) ── */}
+                <Route
+                  path="/cart"
+                  element={FEATURES.CART_AND_CHECKOUT ? <CartPage /> : <NotFound />}
+                />
+                <Route
+                  path="/checkout"
+                  element={FEATURES.CART_AND_CHECKOUT ? <CartPage /> : <NotFound />}
+                />
+                <Route
+                  path="/orders"
+                  element={FEATURES.ORDERS_AND_TRACKING ? <OrderTrackingPage /> : <NotFound />}
+                />
+                <Route
+                  path="/orders/:id"
+                  element={FEATURES.ORDERS_AND_TRACKING ? <OrderTrackingPage /> : <NotFound />}
+                />
+                <Route
+                  path="/wallet"
+                  element={FEATURES.WALLET_AND_PAYMENTS ? <WalletPage /> : <NotFound />}
+                />
+                <Route
+                  path="/notifications"
+                  element={FEATURES.NOTIFICATIONS ? <NotificationsPage /> : <NotFound />}
+                />
+                <Route
+                  path="/custom-requests"
+                  element={FEATURES.CUSTOM_REQUESTS_BIDDING ? <CustomRequestsPage /> : <NotFound />}
+                />
 
-                {/* Protected Buyer Routes */}
+                {/* ── Protected Buyer Routes (Milestone 3) ── */}
                 <Route
                   path="/buyer/dashboard"
                   element={
@@ -127,7 +161,7 @@ function AppContent() {
                   }
                 />
 
-                {/* Protected Seller Routes */}
+                {/* ── Protected Seller Routes (Milestone 3) ── */}
                 <Route
                   path="/seller/dashboard"
                   element={
@@ -161,7 +195,7 @@ function AppContent() {
                   }
                 />
 
-                {/* Protected Admin Routes */}
+                {/* ── Protected Admin Routes (Milestone 3) ── */}
                 <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
                 <Route
                   path="/admin/dashboard"
@@ -197,43 +231,10 @@ function AppContent() {
                 />
                 <Route
                   path="/admin/orders"
-                  element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <OrdersPlaceholder />
-                    </ProtectedRoute>
-                  }
+                  element={<NotFound />}
                 />
 
-                {/* Dynamic Under-Baking Routes */}
-                {UNDER_BAKING_ROUTES.map((route) => {
-                  const element = (
-                    <UnderBaking
-                      key={route.path}
-                      title={route.title}
-                      titleUrdu={route.titleUrdu}
-                      description={route.description}
-                      descUrdu={route.descUrdu}
-                    />
-                  );
-
-                  return (
-                    <Route
-                      key={route.path}
-                      path={route.path}
-                      element={
-                        route.allowedRoles ? (
-                          <ProtectedRoute allowedRoles={route.allowedRoles}>
-                            {element}
-                          </ProtectedRoute>
-                        ) : (
-                          element
-                        )
-                      }
-                    />
-                  );
-                })}
-
-                {/* 404 Catch-All */}
+                {/* ── 404 Catch-All ── */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </motion.div>

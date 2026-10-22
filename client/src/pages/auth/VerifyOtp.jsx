@@ -236,7 +236,7 @@ const VerifyOtp = () => {
           >
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-xs font-bold uppercase tracking-wider text-amber-800 flex items-center gap-1.5">
-                <span>???</span> Dev Mode Helper
+                <span>⚡</span> Dev Mode Helper
               </span>
               <motion.button
                 whileHover={{ scale: 1.05 }}

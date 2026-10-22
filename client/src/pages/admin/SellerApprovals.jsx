@@ -219,7 +219,7 @@ const SellerApprovals = () => {
                           </div>
                           <div className="text-xs text-bakery-600 flex items-center gap-1.5 mt-0.5">
                             <span>By {seller.name}</span>
-                            <span>•</span>
+                            <span>ï¿½</span>
                             <Link
                               to={`/seller/${seller._id}`}
                               target="_blank"
