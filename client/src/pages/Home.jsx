@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight, ShoppingBag, Store, Search, PackageCheck, UtensilsCrossed, Sparkles } from 'lucide-react';
 import api from '../services/api';
 import ItemCard from '../components/items/ItemCard';
+import ProductShowcaseSlider from '../components/items/ProductShowcaseSlider';
 import heroImg from '../assets/hero.jpg';
 import { useTranslation } from '../context/LanguageContext';
 import {
@@ -149,6 +150,9 @@ const Home = () => {
 
         </div>
       </motion.section>
+
+      {/* CONTINUOUS AUTO-SCROLLING PRODUCT SHOWCASE (Daraz / Shein style) */}
+      <ProductShowcaseSlider />
 
       {/* 3. LATEST ITEMS GRID with Scroll Reveal */}
       <motion.section

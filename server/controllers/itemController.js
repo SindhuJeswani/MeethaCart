@@ -109,9 +109,11 @@ export const getItems = async (req, res) => {
     return res.status(200).json({
       success: true,
       total,
+      totalCount: total,
       count: items.length,
       page: parsedPage,
       pages: Math.ceil(total / parsedLimit) || 1,
+      totalPages: Math.ceil(total / parsedLimit) || 1,
       items
     });
   } catch (error) {
@@ -174,7 +176,13 @@ export const getItemById = async (req, res) => {
  */
 export const getMyItems = async (req, res) => {
   try {
-    const items = await Item.find({ seller: req.user._id })
+    // Admin bypass: allow admin to inspect any seller's inventory via query param
+    const targetSellerId =
+      req.user.role === 'admin' && req.query.sellerId
+        ? req.query.sellerId
+        : req.user._id;
+
+    const items = await Item.find({ seller: targetSellerId })
       .populate('category', 'name slug')
       .sort({ createdAt: -1 });
 
@@ -426,7 +434,7 @@ export const deleteItem = async (req, res) => {
 export const toggleAvailability = async (req, res) => {
   try {
     const { id } = req.params;
-    const item = await Item.findById(id);
+    const item = await Item.findById(id).populate('category', 'name slug');
 
     if (!item) {
       return res.status(404).json({ success: false, message: 'Item not found.' });
@@ -442,6 +450,7 @@ export const toggleAvailability = async (req, res) => {
     return res.status(200).json({
       success: true,
       isAvailable: item.isAvailable,
+      item,
       message: `Item is now ${item.isAvailable ? 'available for orders' : 'paused'}.`
     });
   } catch (error) {

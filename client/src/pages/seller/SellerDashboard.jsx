@@ -64,7 +64,7 @@ const SellerDashboard = () => {
         setTimeout(() => setSavedSuccess(false), 3000);
       }
     } catch (err) {
-      setError(err.message || 'Failed to update bakery profile.');
+      setError(err.response?.data?.message || err.message || 'Failed to update bakery profile.');
     } finally {
       setIsSaving(false);
     }

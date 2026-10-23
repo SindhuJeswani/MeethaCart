@@ -68,20 +68,20 @@ const Login = () => {
   };
 
   const benefits = [
-    'Browse hundreds of homemade cakes, mithai, and savory treats',
-    'Order directly from verified home bakers in your city',
-    'Custom requests for birthdays, events, and special celebrations'
+    'Browse hundreds of handcrafted cakes, fresh mithai, and savory treats',
+    'Order directly from verified artisanal home bakers in your city',
+    'Custom requests for birthdays, anniversaries, and party celebrations'
   ];
 
   return (
     <AuthLayout
-      headline="Fresh homemade bakes from local bakers"
+      headline="Handcrafted cakes and bakes from local artisans"
       benefits={benefits}
       footerNote="2-Step Email Verification"
       formTitle="Sign in to your account"
-      formSubtitle="Enter your email and password to continue"
-      footerLinkText="Don't have an account?"
-      footerLinkAction="Create one"
+      formSubtitle="Enter your verified email and password to access your bakery orders"
+      footerLinkText="Don't have an account yet?"
+      footerLinkAction="Create one here"
       footerLinkTo="/register"
     >
       {/* Animated Error Alert */}
@@ -91,10 +91,10 @@ const Login = () => {
             initial={{ opacity: 0, y: -8, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.98 }}
-            className="alert-error mb-4"
+            className="mb-5 p-3.5 rounded-xl bg-rose-50/90 border border-rose-200/80 text-rose-800 text-xs sm:text-sm flex items-start gap-2.5 shadow-xs"
           >
             <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
-            <span>{error}</span>
+            <span className="font-medium leading-relaxed">{error}</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -103,73 +103,72 @@ const Login = () => {
         variants={shakeVariant}
         animate={isShaking ? 'shake' : 'idle'}
         onSubmit={handleSubmit}
-        className="space-y-4"
+        className="space-y-5"
       >
-        {/* Email */}
+        {/* Email Address */}
         <div>
-          <label className="block text-xs font-semibold text-bakery-700 mb-1.5">
-            {t('auth.emailLabel') || 'Email address'} <span className="text-red-500">*</span>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-bakery-700/90 mb-2">
+            {t('auth.emailLabel') || 'Email address'} <span className="text-rose-500">*</span>
           </label>
-          <div className="relative">
-            <Mail className="w-4 h-4 text-bakery-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <div className="relative group">
+            <Mail className="w-4 h-4 text-bakery-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none group-focus-within:text-caramel transition-colors" />
             <input
               id="login-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@example.com"
+              placeholder="e.g. fatima@example.com"
               required
               autoComplete="email"
-              className="input-bakery pl-10 transition-all duration-150 focus:ring-2 focus:ring-caramel/20"
+              className="input-bakery pl-11"
             />
           </div>
         </div>
 
         {/* Password */}
         <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label className="block text-xs font-semibold text-bakery-700">
-              {t('auth.passwordLabel') || 'Password'} <span className="text-red-500">*</span>
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-bakery-700/90">
+              {t('auth.passwordLabel') || 'Password'} <span className="text-rose-500">*</span>
             </label>
             <Link
               to="/forgot-password"
-              className="text-xs font-medium text-caramel hover:text-caramel-dark transition-colors inline-block hover:scale-[1.02]"
+              className="text-xs font-semibold text-caramel hover:text-caramel-dark transition-colors inline-block hover:underline"
             >
               {t('auth.forgotPassword') || 'Forgot password?'}
             </Link>
           </div>
-          <div className="relative">
-            <Lock className="w-4 h-4 text-bakery-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <div className="relative group">
+            <Lock className="w-4 h-4 text-bakery-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none group-focus-within:text-caramel transition-colors" />
             <input
               id="login-password"
               type={showPass ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
+              placeholder="••••••••"
               required
               autoComplete="current-password"
-              className="input-bakery pl-10 pr-10 transition-all duration-150 focus:ring-2 focus:ring-caramel/20"
+              className="input-bakery pl-11 pr-11"
             />
-            <motion.button
-              whileTap={{ scale: 0.9 }}
+            <button
               type="button"
               onClick={() => setShowPass(!showPass)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-bakery-400 hover:text-bakery-600 transition-colors p-0.5"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-bakery-400 hover:text-bakery-700 transition-colors p-1.5 rounded-lg hover:bg-bakery-100"
               aria-label={showPass ? 'Hide password' : 'Show password'}
             >
               {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </motion.button>
+            </button>
           </div>
         </div>
 
-        {/* Submit with hover lift & press shrink */}
+        {/* Submit with hover lift & tactile press */}
         <motion.button
           whileHover={{ scale: 1.015, y: -1 }}
           whileTap={buttonTap}
           type="submit"
           id="login-submit-btn"
           disabled={isSubmitting}
-          className="btn-primary w-full py-2.5 text-sm font-semibold shadow-md transition-all duration-200 mt-2 flex items-center justify-center gap-2"
+          className="btn-primary w-full py-3.5 text-sm font-bold shadow-md transition-all duration-200 mt-2 flex items-center justify-center gap-2"
         >
           {isSubmitting ? (
             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -182,9 +181,10 @@ const Login = () => {
         </motion.button>
       </motion.form>
 
-      <div className="pt-3 border-t border-bakery-100 mt-4 flex items-center gap-1.5 text-xs text-bakery-500">
-        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-        <span>Secured with two-step email verification.</span>
+      {/* Security note */}
+      <div className="pt-4 border-t border-amber-950/[0.06] mt-6 flex items-center gap-2 text-xs text-bakery-600 bg-amber-50/40 p-3 rounded-xl border border-amber-950/[0.04]">
+        <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+        <span className="font-medium">Protected by secure two-step email verification.</span>
       </div>
     </AuthLayout>
   );

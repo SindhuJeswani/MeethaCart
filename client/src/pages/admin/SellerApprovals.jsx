@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../services/api';
 import AdminSidebar from '../../components/admin/AdminSidebar';
+import SellerDetailModal from '../../components/admin/SellerDetailModal';
 import { useToast } from '../../context/ToastContext';
 import {
   UserCheck,
@@ -13,7 +14,11 @@ import {
   ExternalLink,
   Store,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  Cake,
+  Eye,
+  DollarSign,
+  ShoppingBag
 } from 'lucide-react';
 import {
   fadeUp,
@@ -30,6 +35,7 @@ const SellerApprovals = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedSellerId, setSelectedSellerId] = useState(null);
   const toast = useToast();
 
   const fetchSellers = async () => {
@@ -57,7 +63,7 @@ const SellerApprovals = () => {
       }
     } catch (err) {
       console.error('Failed to load sellers:', err);
-      setError(err.message || 'Failed to retrieve bakers list.');
+      setError(err.message || 'Failed to retrieve sellers list.');
     } finally {
       setIsLoading(false);
     }
@@ -81,15 +87,17 @@ const SellerApprovals = () => {
       if (res.data?.success) {
         toast.success(
           newStatus === 'approved'
-            ? 'Baker approved successfully!'
-            : 'Baker suspended.'
+            ? 'Seller approved successfully.'
+            : newStatus === 'blocked'
+            ? 'Seller suspended.'
+            : 'Seller reset to pending review.'
         );
         setSellers((prev) =>
           prev.map((s) => (s._id === sellerId ? { ...s, sellerStatus: newStatus } : s))
         );
       }
     } catch (err) {
-      toast.error(err.message || 'Failed to update baker status.');
+      toast.error(err.message || 'Failed to update seller status.');
     }
   };
 
@@ -106,9 +114,9 @@ const SellerApprovals = () => {
           className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-bakery-200/80 pb-5"
         >
           <div>
-            <span className="section-eyebrow">Baker Governance</span>
+            <span className="section-eyebrow">Seller Management</span>
             <h1 className="text-2xl sm:text-3xl font-serif font-bold text-chocolate mt-0.5">
-              Seller Verification & Management
+              Sellers
             </h1>
           </div>
 
@@ -164,7 +172,7 @@ const SellerApprovals = () => {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search bakery name, baker..."
+              placeholder="Search by bakery or seller name..."
               className="input-bakery pl-9 text-xs py-2 transition-all focus:ring-2 focus:ring-caramel/20"
             />
           </form>
@@ -175,7 +183,7 @@ const SellerApprovals = () => {
           {isLoading ? (
             <div className="p-12 text-center text-sm text-bakery-600 flex items-center justify-center gap-2">
               <RefreshCw className="w-5 h-5 animate-spin text-amber-600" />
-              <span>Fetching sellers...</span>
+              <span>Loading sellers...</span>
             </div>
           ) : sellers.length === 0 ? (
             <motion.div
@@ -186,7 +194,7 @@ const SellerApprovals = () => {
               <Store className="w-10 h-10 text-bakery-300 mx-auto" />
               <h3 className="font-serif font-bold text-chocolate text-base">No Sellers Found</h3>
               <p className="text-xs max-w-sm mx-auto">
-                No home bakers matched the selected status and filter criteria.
+                No sellers matched the selected filter criteria.
               </p>
             </motion.div>
           ) : (
@@ -194,11 +202,12 @@ const SellerApprovals = () => {
               <table className="w-full text-left text-xs sm:text-sm">
                 <thead>
                   <tr className="bg-bakery-100/70 border-b border-bakery-200 text-bakery-600 uppercase text-[10px] tracking-wider font-bold">
-                    <th className="py-3 px-4">Bakery Storefront</th>
-                    <th className="py-3 px-4">Baker Contact</th>
+                    <th className="py-3 px-4">Bakery</th>
+                    <th className="py-3 px-4">Contact</th>
                     <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4">Items Listed</th>
-                    <th className="py-3 px-4">Joined Date</th>
+                    <th className="py-3 px-4">Listings</th>
+                    <th className="py-3 px-4">Sales & Orders</th>
+                    <th className="py-3 px-4">Date Joined</th>
                     <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -214,25 +223,25 @@ const SellerApprovals = () => {
                         className="hover:bg-amber-50/40 transition-colors"
                       >
                         <td className="py-4 px-4">
-                          <div className="font-bold text-chocolate text-sm">
+                          <div className="font-bold text-chocolate text-sm truncate max-w-[200px] sm:max-w-[260px]" title={seller.bakeryName || seller.name}>
                             {seller.bakeryName || `${seller.name}'s Bakery`}
                           </div>
                           <div className="text-xs text-bakery-600 flex items-center gap-1.5 mt-0.5">
                             <span>By {seller.name}</span>
-                            <span>�</span>
+                            <span>•</span>
                             <Link
                               to={`/seller/${seller._id}`}
                               target="_blank"
                               className="text-amber-700 hover:text-amber-800 font-semibold inline-flex items-center gap-0.5 text-[11px] hover:underline"
                             >
-                              <span>Preview</span>
+                              <span>Public View</span>
                               <ExternalLink className="w-3 h-3" />
                             </Link>
                           </div>
                         </td>
 
                         <td className="py-4 px-4 text-xs">
-                          <div className="text-bakery-900 font-medium">{seller.email}</div>
+                          <div className="text-bakery-900 font-medium truncate max-w-[170px] sm:max-w-[220px]" title={seller.email}>{seller.email}</div>
                           <div className="text-bakery-500 mt-0.5">{seller.phone || 'No phone'}</div>
                         </td>
 
@@ -274,8 +283,20 @@ const SellerApprovals = () => {
                           </AnimatePresence>
                         </td>
 
-                        <td className="py-4 px-4 font-semibold text-chocolate">
-                          {seller.itemCount || 0} items
+                        <td className="py-4 px-4">
+                          <div className="font-semibold text-chocolate flex items-center gap-1">
+                            <Cake className="w-3.5 h-3.5 text-amber-600" />
+                            <span>{seller.itemCount || 0} items</span>
+                          </div>
+                        </td>
+
+                        <td className="py-4 px-4 text-xs">
+                          <div className="font-bold text-chocolate">
+                            PKR {(seller.totalSales || 0).toLocaleString()}
+                          </div>
+                          <div className="text-bakery-500 text-[11px]">
+                            {seller.totalOrders || 0} orders
+                          </div>
                         </td>
 
                         <td className="py-4 px-4 text-xs text-bakery-600">
@@ -283,6 +304,18 @@ const SellerApprovals = () => {
                         </td>
 
                         <td className="py-4 px-4 text-right space-x-1.5 whitespace-nowrap">
+                          {/* View Details Button */}
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={buttonTap}
+                            onClick={() => setSelectedSellerId(seller._id)}
+                            className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs shadow-xs transition-colors inline-flex items-center gap-1"
+                            title="View seller details and listings"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>View Details</span>
+                          </motion.button>
+
                           {seller.sellerStatus === 'pending' && (
                             <>
                               <motion.button
@@ -322,7 +355,7 @@ const SellerApprovals = () => {
                               onClick={() => handleUpdateStatus(seller._id, 'approved')}
                               className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-xs transition-colors"
                             >
-                              Reinstate Baker
+                              Reactivate
                             </motion.button>
                           )}
                         </td>
@@ -335,6 +368,18 @@ const SellerApprovals = () => {
           )}
         </div>
       </main>
+
+      {/* Seller Details Modal */}
+      <SellerDetailModal
+        isOpen={!!selectedSellerId}
+        sellerId={selectedSellerId}
+        onClose={() => setSelectedSellerId(null)}
+        onStatusChange={(id, newStatus) => {
+          setSellers((prev) =>
+            prev.map((s) => (s._id === id ? { ...s, sellerStatus: newStatus } : s))
+          );
+        }}
+      />
     </div>
   );
 };

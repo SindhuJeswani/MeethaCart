@@ -338,8 +338,8 @@ const VerifyOtp = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* 6 Individual Staggered OTP Input Boxes */}
             <div>
-              <label className="block text-xs font-semibold text-bakery-700 mb-2 text-center">
-                {t('auth.enterOtp') || 'Enter 6-Digit Verification Code'} <span className="text-red-500">*</span>
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-bakery-700/90 mb-3 text-center">
+                {t('auth.enterOtp') || 'Enter 6-Digit Verification Code'} <span className="text-rose-500">*</span>
               </label>
 
               <motion.div
@@ -352,7 +352,7 @@ const VerifyOtp = () => {
                   variants={staggerContainer(0.05)}
                   initial="hidden"
                   animate="visible"
-                  className="flex items-center gap-2 sm:gap-3"
+                  className="flex items-center gap-2.5 sm:gap-3.5"
                 >
                   {digits.map((digit, index) => {
                     const isActive = activeIdx === index;
@@ -374,15 +374,15 @@ const VerifyOtp = () => {
                           onFocus={() => setActiveIdx(index)}
                           onChange={(e) => handleDigitChange(index, e.target.value)}
                           onKeyDown={(e) => handleKeyDown(index, e)}
-                          className={`w-11 h-14 sm:w-12 sm:h-16 text-center font-mono text-2xl font-bold rounded-xl border transition-all duration-200 outline-none select-none
+                          className={`w-11 h-14 sm:w-12 sm:h-16 text-center font-mono text-2xl font-bold rounded-2xl border transition-all duration-200 outline-none select-none
                             ${
                               isShaking
-                                ? 'border-rose-400 bg-rose-50 text-rose-800 ring-2 ring-rose-200'
+                                ? 'border-rose-400 bg-rose-50 text-rose-800 ring-4 ring-rose-200/50'
                                 : isActive
-                                ? 'border-caramel bg-white text-chocolate ring-4 ring-caramel/20 shadow-md scale-105'
+                                ? 'border-caramel bg-white text-chocolate ring-4 ring-caramel/20 shadow-[0_4px_16px_rgba(199,123,48,0.2)] scale-105'
                                 : hasValue
-                                ? 'border-caramel/50 bg-amber-50/40 text-chocolate'
-                                : 'border-bakery-300 bg-bakery-50/70 text-bakery-800 hover:border-bakery-400'
+                                ? 'border-caramel/50 bg-amber-50/50 text-chocolate shadow-2xs'
+                                : 'border-amber-950/[0.09] bg-bakery-50/50 text-bakery-800 hover:border-amber-950/[0.18]'
                             }`}
                         />
                       </motion.div>
@@ -393,7 +393,21 @@ const VerifyOtp = () => {
             </div>
 
             {/* Circular Progress Timer & Resend Section */}
-            <div className="pt-2 flex flex-col items-center justify-center">
+            <div className="pt-1 flex flex-col items-center justify-center">
+              <AnimatePresence>
+                {cooldown > 0 && (
+                  <motion.p
+                    key="resend-in-label"
+                    initial={{ opacity: 0, y: -2 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -2 }}
+                    className="text-xs font-medium text-bakery-500 mb-1.5"
+                  >
+                    Resend in
+                  </motion.p>
+                )}
+              </AnimatePresence>
+
               <div className="relative flex items-center justify-center w-20 h-20 mb-1">
                 {/* SVG Progress Ring */}
                 <svg className="w-20 h-20 -rotate-90 transform" viewBox="0 0 64 64">
@@ -458,7 +472,7 @@ const VerifyOtp = () => {
               {/* Resend OTP button */}
               <div className="h-9 flex items-center justify-center">
                 <AnimatePresence mode="wait">
-                  {cooldown <= 0 ? (
+                  {cooldown <= 0 && (
                     <motion.button
                       key="active-resend"
                       initial={{ opacity: 0, scale: 0.9, y: 4 }}
@@ -474,15 +488,6 @@ const VerifyOtp = () => {
                       <RefreshCw className={`w-3.5 h-3.5 ${isResending ? 'animate-spin' : ''}`} />
                       <span>{t('auth.resendOtp') || 'Resend verification code'}</span>
                     </motion.button>
-                  ) : (
-                    <motion.p
-                      key="waiting-text"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="text-xs text-bakery-500"
-                    >
-                      Resend available in <strong className="text-chocolate font-mono">{cooldown}s</strong>
-                    </motion.p>
                   )}
                 </AnimatePresence>
               </div>
@@ -495,7 +500,7 @@ const VerifyOtp = () => {
               type="submit"
               id="verify-otp-btn"
               disabled={isSubmitting || fullCodeLength !== 6}
-              className="btn-primary w-full py-2.5 text-sm font-semibold shadow-md transition-all duration-200 flex items-center justify-center gap-2"
+              className="btn-primary w-full py-3.5 text-sm font-bold shadow-md transition-all duration-200 mt-2 flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

@@ -26,11 +26,17 @@
 
   html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
   }
 
   body {
     @apply bg-bakery-50 text-bakery-900 font-sans antialiased;
     background-color: var(--color-bg);
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
   }
 
   h1, h2, h3, h4, h5 {
@@ -67,103 +73,126 @@
 /* ── Component Layer ─────────────────────────────────── */
 @layer components {
 
-  /* Primary CTA Button */
+  /* Primary CTA Button — Handcrafted artisanal button */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2
-           text-white font-semibold
-           px-5 py-2.5 rounded-lg
-           transition-all duration-150
-           active:scale-[0.97]
+           text-white font-bold tracking-wide
+           px-6 py-3 rounded-xl text-sm
+           transition-all duration-200 ease-out
+           active:scale-[0.98] active:translate-y-0
            disabled:opacity-50 disabled:pointer-events-none
            focus-visible:outline-none;
-    background-color: var(--color-cta);
+    background: linear-gradient(135deg, #E8647C 0%, #D04A65 100%);
+    box-shadow: 0 4px 16px -2px rgba(232, 100, 124, 0.4), 0 2px 6px -1px rgba(232, 100, 124, 0.2);
   }
-  .btn-primary:hover { background-color: var(--color-cta-hover); }
-  .btn-primary:focus-visible { box-shadow: 0 0 0 3px rgba(232,100,124,0.35); }
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #EF738A 0%, #D9546E 100%);
+    box-shadow: 0 8px 24px -4px rgba(232, 100, 124, 0.5), 0 4px 12px -2px rgba(232, 100, 124, 0.25);
+    transform: translateY(-1.5px);
+  }
+  .btn-primary:focus-visible { box-shadow: 0 0 0 4px rgba(232, 100, 124, 0.35); }
 
-  /* Secondary Button */
+  /* Secondary Button — Warm tactile stroke with ambient float */
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2
-           text-bakery-800 font-semibold
-           px-5 py-2.5 rounded-lg
-           border border-bakery-300 hover:border-bakery-400
-           transition-all duration-150
-           active:scale-[0.97]
+           text-chocolate font-semibold
+           px-5 py-3 rounded-xl text-sm
+           border border-amber-950/[0.08] hover:border-amber-950/[0.16]
+           bg-white hover:bg-amber-50/50
+           transition-all duration-200 ease-out
+           active:scale-[0.98] active:translate-y-0
            disabled:opacity-50 disabled:pointer-events-none
            focus-visible:outline-none;
-    background-color: var(--color-surface);
+    box-shadow: 0 2px 8px -2px rgba(74, 44, 26, 0.04), 0 1px 3px rgba(74, 44, 26, 0.02);
   }
-  .btn-secondary:hover { background-color: #EFE5D5; }
+  .btn-secondary:hover {
+    box-shadow: 0 6px 18px -4px rgba(74, 44, 26, 0.08), 0 2px 6px -1px rgba(74, 44, 26, 0.04);
+    transform: translateY(-1px);
+  }
 
   /* Outline Button */
   .btn-outline {
     @apply inline-flex items-center justify-center gap-2
            font-semibold text-sm
-           px-4 py-2 rounded-lg
-           transition-all duration-150
-           active:scale-[0.97]
+           px-5 py-2.5 rounded-xl
+           transition-all duration-200
+           active:scale-[0.98]
            focus-visible:outline-none;
     border: 1.5px solid var(--color-primary);
     color: var(--color-primary);
   }
-  .btn-outline:hover { background-color: var(--color-primary); color: #fff; }
+  .btn-outline:hover {
+    background-color: var(--color-primary);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(199, 123, 48, 0.3);
+    transform: translateY(-1px);
+  }
 
   /* Ghost Button */
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2
-           text-bakery-700 hover:bg-bakery-100
-           font-medium px-3 py-2 rounded-md
+           text-bakery-700 hover:bg-bakery-100/70 hover:text-chocolate
+           font-medium px-3.5 py-2 rounded-xl
            transition-all duration-150;
   }
-  .btn-ghost:hover { color: var(--color-primary); }
 
-  /* Panel card — sections, dashboards */
+  /* Panel card — Bespoke depth & diffused ambient layered shadows */
   .card-bakery {
-    @apply bg-white rounded-xl
-           border border-bakery-200
-           shadow-warm
-           transition-all duration-200;
+    @apply bg-white rounded-2xl
+           border border-amber-950/[0.06]
+           transition-all duration-300 ease-out;
+    box-shadow: 0 8px 30px -4px rgba(74, 44, 26, 0.05), 0 20px 48px -12px rgba(74, 44, 26, 0.07);
   }
   .card-bakery-hover {
-    @apply card-bakery hover:shadow-warm-lg hover:-translate-y-0.5 cursor-pointer;
+    @apply card-bakery cursor-pointer;
+  }
+  .card-bakery-hover:hover {
+    box-shadow: 0 16px 40px -6px rgba(74, 44, 26, 0.1), 0 28px 64px -12px rgba(74, 44, 26, 0.12);
+    transform: translateY(-3px);
   }
 
-  /* Product card — item listings */
+  /* Product card — item listings with diffused warm shadow */
   .card-item {
-    @apply bg-white rounded-lg border border-bakery-200
-           transition-all duration-150
-           hover:border-bakery-300 hover:shadow-warm;
+    @apply bg-white rounded-2xl border border-amber-950/[0.06]
+           transition-all duration-300 ease-out;
+    box-shadow: 0 6px 20px -3px rgba(74, 44, 26, 0.04), 0 2px 6px rgba(74, 44, 26, 0.02);
+  }
+  .card-item:hover {
+    border-color: rgba(199, 123, 48, 0.25);
+    box-shadow: 0 16px 36px -6px rgba(74, 44, 26, 0.09), 0 6px 16px -2px rgba(74, 44, 26, 0.05);
+    transform: translateY(-3px);
   }
 
   /* Category / filter chip */
   .chip {
-    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full
-           text-xs font-semibold border border-bakery-200
+    @apply inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full
+           text-xs font-semibold border border-amber-950/[0.08]
            bg-white text-bakery-700
            hover:border-caramel hover:text-caramel
-           transition-all duration-150 cursor-pointer whitespace-nowrap;
+           transition-all duration-200 cursor-pointer whitespace-nowrap shadow-sm;
   }
   .chip-active {
-    @apply chip bg-caramel/10 text-caramel border-caramel/40;
+    @apply chip bg-caramel/10 text-caramel border-caramel/40 shadow-xs;
   }
 
-  /* Input fields */
+  /* Tactile Input fields — elimination of generic template look */
   .input-bakery {
-    @apply w-full px-3 py-2.5 rounded-md
-           border border-bakery-300 bg-white
-           text-bakery-900 placeholder-bakery-400
+    @apply w-full px-4 py-3 rounded-xl
+           border border-amber-950/[0.1] bg-bakery-50/40 hover:bg-white focus:bg-white
+           text-chocolate placeholder-bakery-400/90
            focus:outline-none
-           transition-all duration-150
+           transition-all duration-200 ease-out
            text-sm;
+    box-shadow: 0 1px 2px rgba(74, 44, 26, 0.02);
   }
   .input-bakery:focus {
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(199, 123, 48, 0.2);
+    box-shadow: 0 0 0 4px rgba(199, 123, 48, 0.14), 0 2px 8px -1px rgba(74, 44, 26, 0.06);
   }
 
-  /* Label */
+  /* Human-centered Visual Hierarchy Labels */
   .label-bakery {
-    @apply block text-xs font-semibold text-bakery-700 mb-1.5;
+    @apply block text-[11px] font-bold uppercase tracking-wider text-bakery-700/90 mb-2;
   }
 
   /* Badge pill */
@@ -304,5 +333,33 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* ── Continuous Auto-Scrolling Showcase (Daraz / Shein infinite marquee) ── */
+@keyframes infiniteMarquee {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.animate-infinite-marquee {
+  display: flex;
+  width: max-content;
+  animation: infiniteMarquee 42s linear infinite;
+  will-change: transform;
+}
+
+.animate-infinite-marquee:hover,
+.animate-infinite-marquee.is-paused {
+  animation-play-state: paused !important;
+}
+
+@media (max-width: 640px) {
+  .animate-infinite-marquee {
+    animation-duration: 30s;
   }
 }

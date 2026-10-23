@@ -57,7 +57,7 @@ const ForgotPassword = () => {
   };
 
   const benefits = [
-    'Quick recovery via your verified email address',
+    'Quick password recovery via your verified email address',
     'Secure 6-digit one-time authorization code',
     'Set a new strong password and regain access instantly'
   ];
@@ -68,7 +68,7 @@ const ForgotPassword = () => {
       benefits={benefits}
       footerNote="Account Security & Recovery"
       formTitle={t('auth.forgotTitle') || 'Forgot password?'}
-      formSubtitle={t('auth.forgotSubtitle') || 'Enter your email address and we will send you a verification code.'}
+      formSubtitle={t('auth.forgotSubtitle') || 'Enter your registered email address and we will send you a verification code.'}
       footerLinkText="Remembered your password?"
       footerLinkAction="Back to sign in"
       footerLinkTo="/login"
@@ -79,10 +79,10 @@ const ForgotPassword = () => {
             initial={{ opacity: 0, y: -8, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.98 }}
-            className="alert-error mb-4"
+            className="mb-5 p-3.5 rounded-xl bg-rose-50/90 border border-rose-200/80 text-rose-800 text-xs sm:text-sm flex items-start gap-2.5 shadow-xs"
           >
             <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
-            <span>{error}</span>
+            <span className="font-medium leading-relaxed">{error}</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -93,10 +93,10 @@ const ForgotPassword = () => {
             initial={{ opacity: 0, y: -8, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.98 }}
-            className="alert-success mb-4"
+            className="mb-5 p-3.5 rounded-xl bg-emerald-50/90 border border-emerald-200/80 text-emerald-800 text-xs sm:text-sm flex items-start gap-2.5 shadow-xs"
           >
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-            <span>{success}</span>
+            <span className="font-medium leading-relaxed">{success}</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -105,22 +105,22 @@ const ForgotPassword = () => {
         variants={shakeVariant}
         animate={isShaking ? 'shake' : 'idle'}
         onSubmit={handleSubmit}
-        className="space-y-4"
+        className="space-y-5"
       >
         <div>
-          <label className="block text-xs font-semibold text-bakery-700 mb-1.5">
-            {t('auth.emailLabel') || 'Email address'} <span className="text-red-500">*</span>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-bakery-700/90 mb-2">
+            {t('auth.emailLabel') || 'Email address'} <span className="text-rose-500">*</span>
           </label>
-          <div className="relative">
-            <Mail className="w-4 h-4 text-bakery-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <div className="relative group">
+            <Mail className="w-4 h-4 text-bakery-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none group-focus-within:text-caramel transition-colors" />
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@example.com"
+              placeholder="e.g. name@example.com"
               required
               autoComplete="email"
-              className="input-bakery pl-10 transition-all duration-150 focus:ring-2 focus:ring-caramel/20"
+              className="input-bakery pl-11"
             />
           </div>
         </div>
@@ -130,7 +130,7 @@ const ForgotPassword = () => {
           whileTap={buttonTap}
           type="submit"
           disabled={isSubmitting}
-          className="btn-primary w-full py-2.5 text-sm font-semibold shadow-md transition-all duration-200 mt-2 flex items-center justify-center gap-2"
+          className="btn-primary w-full py-3.5 text-sm font-bold shadow-md transition-all duration-200 mt-3 flex items-center justify-center gap-2"
         >
           {isSubmitting ? (
             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

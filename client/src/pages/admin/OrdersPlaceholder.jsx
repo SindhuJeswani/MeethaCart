@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import api from '../../services/api';
 import AdminSidebar from '../../components/admin/AdminSidebar';
-import { ShoppingBag, Clock, Sparkles, Layers, ArrowRight } from 'lucide-react';
+import { ShoppingBag, Clock, Layers, ArrowRight } from 'lucide-react';
 import { fadeUp, buttonTap, TIMING, EASING } from '../../animations/motion';
 
 const OrdersPlaceholder = () => {
@@ -43,20 +43,15 @@ const OrdersPlaceholder = () => {
           <div>
             <h1 className="text-2xl sm:text-3xl font-serif font-bold text-chocolate flex items-center gap-2.5">
               <ShoppingBag className="w-7 h-7 text-amber-600" />
-              <span>Platform Orders Monitoring</span>
+              <span>Orders</span>
             </h1>
             <p className="text-xs sm:text-sm text-bakery-600 mt-1">
-              Centralized order surveillance across all registered home bakeries.
+              View and track customer orders across all sellers.
             </p>
-          </div>
-
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-bakery-100 border border-bakery-300 text-bakery-900 text-xs font-bold self-start sm:self-auto shadow-xs">
-            <Sparkles className="w-3.5 h-3.5 text-caramel animate-gentle-pulse" />
-            <span>Centralized Stream Active</span>
           </div>
         </motion.div>
 
-        {/* Designed Empty State Card with Floating Motion */}
+        {/* Empty State Card */}
         <motion.div
           variants={fadeUp}
           initial="hidden"
@@ -71,22 +66,18 @@ const OrdersPlaceholder = () => {
             <Clock className="w-10 h-10 text-caramel" />
           </motion.div>
 
-          <span className="text-xs font-bold uppercase tracking-widest text-caramel">
-            Live Order Monitor
-          </span>
-
-          <h2 className="text-2xl font-serif font-bold text-chocolate mt-2 mb-3">
-            No Active Bakery Orders in Stream
+          <h2 className="text-2xl font-serif font-bold text-chocolate mb-3">
+            No Orders Placed Yet
           </h2>
 
           <p className="text-sm text-bakery-600 max-w-lg mx-auto leading-relaxed mb-6">
-            All customer requests, bespoke cake inquiries, and direct bakery orders from registered buyers appear in this unified administrative view in real-time.
+            Customer orders placed through the marketplace will be listed here.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-3">
             <motion.div whileHover={{ scale: 1.03 }} whileTap={buttonTap}>
               <Link to="/admin/sellers" className="btn-primary text-xs py-2 px-4 inline-flex items-center gap-1.5 shadow-xs">
-                <span>Review Baker Approvals</span>
+                <span>View Sellers</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </motion.div>

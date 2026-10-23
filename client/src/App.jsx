@@ -41,8 +41,10 @@ import AddEditItem from './pages/seller/AddEditItem';
 // Protected Admin Pages (Milestone 3)
 import AdminDashboard from './pages/admin/AdminDashboard';
 import SellerApprovals from './pages/admin/SellerApprovals';
+import SellerDetail from './pages/admin/SellerDetail';
 import CategoryManager from './pages/admin/CategoryManager';
 import UserList from './pages/admin/UserList';
+import OrdersPlaceholder from './pages/admin/OrdersPlaceholder';
 
 // 404 Not Found Page
 import NotFound from './pages/NotFound';
@@ -96,7 +98,7 @@ function AppContent() {
     <>
       <TopProgressBar />
       {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
-      <div className="min-h-screen flex flex-col font-sans selection:bg-amber-200 selection:text-amber-900" style={{ backgroundColor: 'var(--color-bg)' }}>
+      <div className="min-h-screen w-full flex flex-col font-sans overflow-x-hidden selection:bg-amber-200 selection:text-amber-900" style={{ backgroundColor: 'var(--color-bg)' }}>
         {!isWelcomePage && <Navbar />}
         <main className="flex-1 flex flex-col overflow-x-hidden">
           <AnimatePresence mode="wait">
@@ -214,6 +216,14 @@ function AppContent() {
                   }
                 />
                 <Route
+                  path="/admin/sellers/:id"
+                  element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                      <SellerDetail />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/admin/categories"
                   element={
                     <ProtectedRoute allowedRoles={['admin']}>
@@ -231,7 +241,11 @@ function AppContent() {
                 />
                 <Route
                   path="/admin/orders"
-                  element={<NotFound />}
+                  element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                      <OrdersPlaceholder />
+                    </ProtectedRoute>
+                  }
                 />
 
                 {/* ── 404 Catch-All ── */}

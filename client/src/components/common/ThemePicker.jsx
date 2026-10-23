@@ -166,7 +166,7 @@ const ThemePicker = ({ variant = 'dropdown', className = '' }) => {
         whileTap={buttonTap}
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-md transition-colors relative"
+        className="p-2 text-amber-200/90 hover:text-white bg-white/[0.06] hover:bg-white/15 border border-white/15 rounded-full transition-colors relative cursor-pointer shadow-xs"
         title="Switch Theme"
         aria-label="Choose Theme"
       >

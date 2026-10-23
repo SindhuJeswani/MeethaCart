@@ -3,7 +3,7 @@ import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../services/api';
 import { useTranslation } from '../../context/LanguageContext';
-import { Lock, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Lock, ArrowRight, AlertCircle, CheckCircle2, KeyRound } from 'lucide-react';
 import AuthLayout from '../../components/auth/AuthLayout';
 import { shakeVariant, buttonTap } from '../../animations/motion';
 
@@ -100,10 +100,10 @@ const ResetPassword = () => {
             initial={{ opacity: 0, y: -8, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.98 }}
-            className="alert-error mb-4"
+            className="mb-5 p-3.5 rounded-xl bg-rose-50/90 border border-rose-200/80 text-rose-800 text-xs sm:text-sm flex items-start gap-2.5 shadow-xs"
           >
             <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
-            <span>{error}</span>
+            <span className="font-medium leading-relaxed">{error}</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -114,10 +114,10 @@ const ResetPassword = () => {
             initial={{ opacity: 0, y: -8, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.98 }}
-            className="alert-success mb-4"
+            className="mb-5 p-3.5 rounded-xl bg-emerald-50/90 border border-emerald-200/80 text-emerald-800 text-xs sm:text-sm flex items-start gap-2.5 shadow-xs"
           >
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-            <span>{success}</span>
+            <span className="font-medium leading-relaxed">{success}</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -130,27 +130,30 @@ const ResetPassword = () => {
       >
         {/* OTP Code Input */}
         <div>
-          <label className="block text-xs font-semibold text-bakery-700 mb-1.5">
-            6-Digit Verification Code <span className="text-red-500">*</span>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-bakery-700/90 mb-2">
+            6-Digit Verification Code <span className="text-rose-500">*</span>
           </label>
-          <input
-            type="text"
-            maxLength="6"
-            value={otp}
-            onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-            placeholder="123456"
-            required
-            className="input-bakery text-center font-mono font-bold tracking-widest text-lg py-2 transition-all duration-150 focus:ring-2 focus:ring-caramel/20"
-          />
+          <div className="relative group">
+            <KeyRound className="w-4 h-4 text-bakery-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none group-focus-within:text-caramel transition-colors" />
+            <input
+              type="text"
+              maxLength="6"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+              placeholder="123456"
+              required
+              className="input-bakery pl-11 text-center font-mono font-bold tracking-widest text-lg"
+            />
+          </div>
         </div>
 
         {/* New Password */}
         <div>
-          <label className="block text-xs font-semibold text-bakery-700 mb-1.5">
-            New password <span className="text-red-500">*</span>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-bakery-700/90 mb-2">
+            New password <span className="text-rose-500">*</span>
           </label>
-          <div className="relative">
-            <Lock className="w-4 h-4 text-bakery-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <div className="relative group">
+            <Lock className="w-4 h-4 text-bakery-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none group-focus-within:text-caramel transition-colors" />
             <input
               type="password"
               value={newPassword}
@@ -158,18 +161,18 @@ const ResetPassword = () => {
               placeholder="Min 8 characters"
               required
               autoComplete="new-password"
-              className="input-bakery pl-10 transition-all duration-150 focus:ring-2 focus:ring-caramel/20"
+              className="input-bakery pl-11"
             />
           </div>
         </div>
 
         {/* Confirm Password */}
         <div>
-          <label className="block text-xs font-semibold text-bakery-700 mb-1.5">
-            Confirm new password <span className="text-red-500">*</span>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-bakery-700/90 mb-2">
+            Confirm new password <span className="text-rose-500">*</span>
           </label>
-          <div className="relative">
-            <Lock className="w-4 h-4 text-bakery-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <div className="relative group">
+            <Lock className="w-4 h-4 text-bakery-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none group-focus-within:text-caramel transition-colors" />
             <input
               type="password"
               value={confirmPassword}
@@ -177,7 +180,7 @@ const ResetPassword = () => {
               placeholder="Re-enter new password"
               required
               autoComplete="new-password"
-              className="input-bakery pl-10 transition-all duration-150 focus:ring-2 focus:ring-caramel/20"
+              className="input-bakery pl-11"
             />
           </div>
         </div>
@@ -187,7 +190,7 @@ const ResetPassword = () => {
           whileTap={buttonTap}
           type="submit"
           disabled={isSubmitting}
-          className="btn-primary w-full py-2.5 text-sm font-semibold shadow-md transition-all duration-200 mt-2 flex items-center justify-center gap-2"
+          className="btn-primary w-full py-3.5 text-sm font-bold shadow-md transition-all duration-200 mt-3 flex items-center justify-center gap-2"
         >
           {isSubmitting ? (
             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

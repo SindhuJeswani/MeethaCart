@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Store } from 'lucide-react';
+import { Store, ArrowRight, Clock } from 'lucide-react';
 import fallbackImg from '../../assets/fallback-item.jpg';
 import { useTranslation } from '../../context/LanguageContext';
 import { cardHover, buttonTap, TIMING, EASING } from '../../animations/motion';
@@ -53,14 +53,14 @@ const ItemCard = ({ item }) => {
       exit={{ opacity: 0, scale: 0.94 }}
       whileHover={cardHover}
       transition={{ duration: TIMING.normal, ease: EASING.out }}
-      className="group card-bakery overflow-hidden flex flex-col h-full transition-shadow duration-200"
+      className="group card-bakery overflow-hidden flex flex-col h-full"
     >
       {/* Image container with smooth zoom on hover */}
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-bakery-100">
         <Link to={`/items/${item?._id}`} className="block w-full h-full overflow-hidden">
           <motion.img
-            whileHover={{ scale: 1.06 }}
-            transition={{ duration: 0.35, ease: EASING.out }}
+            whileHover={{ scale: 1.07 }}
+            transition={{ duration: 0.4, ease: EASING.out }}
             src={imageUrl || fallbackImg}
             alt={translateItemTitle(item) || 'Bakery item'}
             className="w-full h-full object-cover transition-transform"
@@ -74,27 +74,27 @@ const ItemCard = ({ item }) => {
 
         {/* Out of stock overlay */}
         {outOfStock && (
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] flex items-center justify-center">
-            <span className="px-2.5 py-1 rounded bg-rose-600 text-white font-semibold text-xs uppercase tracking-wider">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center">
+            <span className="px-3 py-1 rounded-lg bg-rose-600 text-white font-bold text-xs uppercase tracking-wider shadow-sm">
               {t('items.outOfStock') || 'Out of stock'}
             </span>
           </div>
         )}
 
         {/* Badges */}
-        <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1 pointer-events-none">
+        <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5 pointer-events-none">
           {categoryName && (
-            <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-white/95 text-chocolate shadow-sm border border-bakery-200">
+            <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-white/95 text-chocolate shadow-[0_2px_8px_rgba(74,44,26,0.06)] border border-amber-950/[0.08] backdrop-blur-xs">
               {translateCategory(categoryName)}
             </span>
           )}
           {showEggless && (
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-600 text-white shadow-sm">
+            <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-emerald-600 text-white shadow-2xs">
               {t('items.eggless') || 'Eggless'}
             </span>
           )}
           {freshToday && !outOfStock && (
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-caramel text-white shadow-sm">
+            <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-caramel text-white shadow-2xs">
               {t('items.freshToday') || 'Fresh today'}
             </span>
           )}
@@ -102,35 +102,36 @@ const ItemCard = ({ item }) => {
       </div>
 
       {/* Card Body */}
-      <div className="p-4 flex-1 flex flex-col justify-between gap-3">
+      <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between gap-3.5">
         <div>
           {/* Seller / Location */}
           <Link
             to={item?.seller?._id ? `/seller/${item.seller._id}` : '#'}
-            className="inline-flex items-center gap-1 text-[11px] font-medium text-bakery-600 hover:text-caramel transition-colors truncate max-w-full"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-bakery-600 hover:text-caramel transition-colors truncate max-w-full"
           >
-            <Store className="w-3 h-3 shrink-0 text-bakery-400" />
+            <Store className="w-3.5 h-3.5 shrink-0 text-caramel" />
             <span className="truncate">{sellerName}</span>
-            {sellerCity && <span className="text-bakery-400 shrink-0">· {sellerCity}</span>}
+            {sellerCity && <span className="text-bakery-400 font-normal shrink-0">· {sellerCity}</span>}
           </Link>
 
           {/* Item title */}
-          <Link to={`/items/${item?._id}`} className="block mt-1">
-            <h3 className="font-semibold text-chocolate text-sm leading-snug line-clamp-2 group-hover:text-caramel transition-colors">
+          <Link to={`/items/${item?._id}`} className="block mt-1.5">
+            <h3 className="font-serif font-bold text-chocolate text-sm sm:text-base leading-snug line-clamp-2 group-hover:text-caramel transition-colors">
               {translateItemTitle(item)}
             </h3>
           </Link>
         </div>
 
         {/* Pricing & Details Link */}
-        <div className="pt-2 border-t border-bakery-100 flex items-center justify-between gap-2 mt-auto">
+        <div className="pt-3 border-t border-amber-950/[0.06] flex items-center justify-between gap-2 mt-auto">
           <div>
-            <div className="price-sticker text-sm font-bold text-chocolate leading-tight">
+            <div className="text-sm sm:text-base font-serif font-bold text-chocolate leading-none">
               {lang === 'ur' ? 'روپے ' : 'Rs. '}{item?.price ? item.price.toLocaleString() : '0'}
             </div>
             {item?.preparationTimeHours ? (
-              <span className="text-[10px] text-bakery-500 font-normal block mt-0.5">
-                {item.preparationTimeHours} {t('items.prepTimeHours') || 'h prep'}
+              <span className="text-[10px] text-bakery-500 font-medium flex items-center gap-1 mt-1">
+                <Clock className="w-2.5 h-2.5 text-caramel" />
+                <span>{item.preparationTimeHours} {t('items.prepTimeHours') || 'h prep'}</span>
               </span>
             ) : null}
           </div>
@@ -138,9 +139,9 @@ const ItemCard = ({ item }) => {
           <motion.div whileHover={{ scale: 1.04 }} whileTap={buttonTap}>
             <Link
               to={`/items/${item?._id}`}
-              className="btn-primary text-xs py-1.5 px-3.5 font-semibold rounded-lg whitespace-nowrap shadow-xs"
+              className="btn-primary text-xs py-2 px-3.5 font-bold rounded-xl whitespace-nowrap shadow-xs hover:shadow-sm"
             >
-              {t('items.viewItem') || 'View item'}
+              <span>{t('items.viewItem') || 'View item'}</span>
             </Link>
           </motion.div>
         </div>

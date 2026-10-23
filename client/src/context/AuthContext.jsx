@@ -139,12 +139,19 @@ export const AuthProvider = ({ children }) => {
     return res.data;
   };
 
+  // Update user state and synchronize to localStorage
+  const updateUser = (updatedUser) => {
+    setUser(updatedUser);
+    if (updatedUser) {
+      localStorage.setItem('meethacart_user', JSON.stringify(updatedUser));
+    }
+  };
+
   // Update profile
   const updateProfile = async (profileData) => {
     const res = await api.put('/users/profile', profileData);
     if (res.data?.success && res.data.user) {
-      setUser(res.data.user);
-      localStorage.setItem('meethacart_user', JSON.stringify(res.data.user));
+      updateUser(res.data.user);
     }
     return res.data;
   };
@@ -153,6 +160,8 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider
       value={{
         user,
+        setUser,
+        updateUser,
         token,
         isAuthenticated: !!token && !!user,
         isLoading,

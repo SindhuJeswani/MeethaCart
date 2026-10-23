@@ -57,7 +57,7 @@ const BuyerDashboard = () => {
         setTimeout(() => setSavedSuccess(false), 3000);
       }
     } catch (err) {
-      setError(err.message || 'Failed to update profile settings.');
+      setError(err.response?.data?.message || err.message || 'Failed to update profile settings.');
     } finally {
       setIsSaving(false);
     }

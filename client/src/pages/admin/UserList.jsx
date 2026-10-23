@@ -7,13 +7,20 @@ import {
   Search,
   CheckCircle2,
   XCircle,
-  Shield,
+  Globe,
   Store,
   User,
-  RefreshCw,
-  Globe
+  Shield,
+  RefreshCw
 } from 'lucide-react';
-import { fadeUp, staggerContainer, staggerItem, buttonTap, TIMING, EASING } from '../../animations/motion';
+import {
+  fadeUp,
+  staggerContainer,
+  staggerItem,
+  buttonTap,
+  TIMING,
+  EASING
+} from '../../animations/motion';
 
 const UserList = () => {
   const [users, setUsers] = useState([]);
@@ -26,6 +33,7 @@ const UserList = () => {
     try {
       setIsLoading(true);
       setError('');
+
       let url = '/admin/users';
       const params = new URLSearchParams();
 
@@ -78,7 +86,7 @@ const UserList = () => {
               <span>User Directory</span>
             </h1>
             <p className="text-xs sm:text-sm text-bakery-600 mt-1">
-              Browse registered buyers, home bakers, and administrative staff.
+              Manage registered buyers, sellers, and administrators.
             </p>
           </div>
         </motion.div>
@@ -126,15 +134,25 @@ const UserList = () => {
           </form>
         </div>
 
-        {/* Users Table with Staggered Entrance */}
+        {/* Users Table */}
         <div className="card-bakery p-0 overflow-hidden shadow-warm">
           {isLoading ? (
             <div className="p-12 text-center text-sm text-bakery-600 flex items-center justify-center gap-2">
               <RefreshCw className="w-4 h-4 animate-spin text-amber-600" />
-              <span>Fetching users...</span>
+              <span>Loading users...</span>
             </div>
           ) : users.length === 0 ? (
-            <div className="p-12 text-center text-bakery-600">No users match your criteria.</div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="p-12 text-center text-bakery-600 space-y-2"
+            >
+              <Users className="w-10 h-10 text-bakery-300 mx-auto" />
+              <h3 className="font-serif font-bold text-chocolate text-base">No Users Found</h3>
+              <p className="text-xs max-w-sm mx-auto">
+                No user accounts matched your search keyword or selected role filter.
+              </p>
+            </motion.div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs sm:text-sm">
@@ -142,9 +160,9 @@ const UserList = () => {
                   <tr className="bg-bakery-100/70 border-b border-bakery-200 text-bakery-600 uppercase text-[10px] tracking-wider font-bold">
                     <th className="py-3 px-4">User</th>
                     <th className="py-3 px-4">Role</th>
-                    <th className="py-3 px-4">Verification</th>
+                    <th className="py-3 px-4">Email Status</th>
                     <th className="py-3 px-4">Language</th>
-                    <th className="py-3 px-4">Joined Date</th>
+                    <th className="py-3 px-4">Date Joined</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-bakery-200/70">
@@ -158,8 +176,8 @@ const UserList = () => {
                         className="hover:bg-amber-50/40 transition-colors"
                       >
                         <td className="py-3.5 px-4">
-                          <div className="font-bold text-chocolate">{u.name}</div>
-                          <div className="text-xs text-bakery-600">{u.email}</div>
+                          <div className="font-bold text-chocolate truncate max-w-[180px]" title={u.name}>{u.name}</div>
+                          <div className="text-xs text-bakery-600 truncate max-w-[180px]" title={u.email}>{u.email}</div>
                           {u.bakeryName && (
                             <div className="text-[11px] text-amber-800 font-medium">
                               Bakery: {u.bakeryName}

@@ -14,7 +14,6 @@ import ThemePicker from '../common/ThemePicker';
 import { slideInLeft, buttonTap } from '../../animations/motion';
 
 const AdminSidebar = ({ pendingCount = 0 }) => {
-  // Built features only; "Soon" placeholder routes removed from navigation as requested
   const navItems = [
     {
       to: '/admin/dashboard',
@@ -23,7 +22,7 @@ const AdminSidebar = ({ pendingCount = 0 }) => {
     },
     {
       to: '/admin/sellers',
-      label: 'Seller Approvals',
+      label: 'Sellers',
       icon: UserCheck,
       badge: pendingCount > 0 ? pendingCount : null
     },
@@ -34,7 +33,7 @@ const AdminSidebar = ({ pendingCount = 0 }) => {
     },
     {
       to: '/admin/users',
-      label: 'User Directory',
+      label: 'Users',
       icon: Users
     }
   ];
@@ -60,7 +59,7 @@ const AdminSidebar = ({ pendingCount = 0 }) => {
           </div>
           <div className="flex items-center gap-1.5 mt-2 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-primary)' }}>
             <Shield className="w-3.5 h-3.5" />
-            <span>Admin Control Center</span>
+            <span>Administration</span>
           </div>
         </div>
 

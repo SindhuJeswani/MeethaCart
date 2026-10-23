@@ -3,6 +3,7 @@ import express from 'express';
 import {
   getMetrics,
   getSellers,
+  getSellerDetails,
   updateSellerStatus,
   getUsers,
   getAdminOrders,
@@ -23,6 +24,7 @@ router.get('/metrics', getMetrics);
 
 // Seller approval and blocking
 router.get('/sellers', getSellers);
+router.get('/sellers/:id', getSellerDetails);
 router.patch('/sellers/:id/status', updateSellerStatus);
 
 // User management directory

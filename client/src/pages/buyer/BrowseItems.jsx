@@ -13,7 +13,9 @@ import {
   RefreshCw,
   ShoppingBag,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Sparkles,
+  CheckCircle2
 } from 'lucide-react';
 import {
   fadeUp,
@@ -60,6 +62,15 @@ const BrowseItems = () => {
     fetchCats();
   }, []);
 
+  // Sync search param from Navbar search into state
+  useEffect(() => {
+    const q = searchParams.get('search') || '';
+    if (q !== search) {
+      setSearch(q);
+      setPage(1);
+    }
+  }, [searchParams]);
+
   // Fetch items whenever filters or page change
   useEffect(() => {
     const fetchItems = async () => {
@@ -79,9 +90,11 @@ const BrowseItems = () => {
 
         const res = await api.get(`/items?${params.toString()}`);
         if (res.data?.success) {
+          const count = res.data.total ?? res.data.totalCount ?? res.data.count ?? (res.data.items?.length || 0);
+          const pagesCount = res.data.pages ?? res.data.totalPages ?? 1;
           setItems(res.data.items || []);
-          setTotalCount(res.data.totalCount || 0);
-          setTotalPages(res.data.totalPages || 1);
+          setTotalCount(count);
+          setTotalPages(pagesCount);
         }
       } catch (err) {
         console.error('Failed to load items:', err);
@@ -103,14 +116,9 @@ const BrowseItems = () => {
     setLimit('12');
   };
 
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    setPage(1);
-  };
-
   return (
     <div className="w-full max-w-[1240px] mx-auto px-4 sm:px-6 py-6 md:py-8 space-y-6">
-      {/* Page Title & Search Bar */}
+      {/* Page Title & Highlights Banner (Redundant Search Box Removed) */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -122,33 +130,40 @@ const BrowseItems = () => {
             {t('browse.eyebrow') || 'Artisanal Bakery Catalog'}
           </span>
           <h1 className="text-2xl md:text-3xl font-serif font-bold text-chocolate mt-0.5">
-            {t('browse.title') || 'Fresh Homemade Bakes'}
+            {t('browse.title') || 'All bakery items'}
           </h1>
           <p className="text-xs sm:text-sm text-bakery-600 mt-1">
-            {t('browse.subtitle') || 'Order directly from verified home bakers in your neighborhood.'}
+            {t('browse.subtitle') || 'Homemade treats prepared fresh by independent bakers across Pakistan.'}
           </p>
         </div>
 
-        {/* Global Catalog Search */}
-        <form onSubmit={handleSearchSubmit} className="relative w-full md:max-w-xs">
-          <Search className="w-4 h-4 text-bakery-400 absolute left-3 top-2.5" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t('browse.searchPlaceholder') || 'Search cakes, mithai, cookies...'}
-            className="input-bakery pl-9 text-xs py-2 w-full transition-all focus:ring-2 focus:ring-caramel/20 focus:md:w-80"
-          />
-          {search && (
-            <button
-              type="button"
-              onClick={() => setSearch('')}
-              className="absolute right-3 top-2.5 text-bakery-400 hover:text-bakery-600"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </form>
+        {/* Marketplace Trust & Freshness Highlights */}
+        <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-600/20 text-chocolate text-xs font-semibold shadow-xs">
+            <Sparkles className="w-3.5 h-3.5 text-caramel shrink-0" />
+            <span>{isLoading ? "..." : (totalCount || items.length)} Homemade Treats Available</span>
+          </div>
+
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={buttonTap}
+            type="button"
+            onClick={() => {
+              setIsEggless(!isEggless);
+              setPage(1);
+            }}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all border shadow-xs cursor-pointer ${
+              isEggless
+                ? 'bg-emerald-600 text-white border-emerald-700'
+                : 'bg-white hover:bg-emerald-50 text-emerald-800 border-emerald-200'
+            }`}
+            title="Toggle Eggless filter"
+          >
+            <span>🌿</span>
+            <span>{t('items.eggless') || 'Eggless Only'}</span>
+            {isEggless && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+          </motion.button>
+        </div>
       </motion.div>
 
       {/* Main Catalog Layout */}
@@ -232,7 +247,7 @@ const BrowseItems = () => {
           {/* Controls Bar */}
           <div className="bg-white rounded-xl border border-bakery-200 p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs shadow-xs">
             <span className="font-semibold text-chocolate">
-              {totalCount} {t('browse.itemsAvailable') || 'homemade treats found'}
+              {isLoading ? "..." : (totalCount || items.length)} {t('browse.itemsAvailable') || 'homemade treats found'}
             </span>
 
             <div className="flex items-center gap-3 ml-auto">
@@ -342,7 +357,7 @@ const BrowseItems = () => {
 
           {/* Item Grid with Layout Animations */}
           {isLoading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div key={i} className="card-bakery aspect-[4/5] rounded-xl skeleton skeleton-shimmer" />
               ))}
@@ -376,7 +391,7 @@ const BrowseItems = () => {
               variants={staggerContainer(0.04)}
               initial="hidden"
               animate="visible"
-              className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5"
+              className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5"
             >
               <AnimatePresence>
                 {items.map((item) => (
