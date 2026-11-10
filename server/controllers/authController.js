@@ -1,6 +1,11 @@
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js';
 import { otpService } from '../services/otpService.js';
+import {
+  isValidEmailFormat,
+  isDisposableDomain,
+  verifyDomainCanReceiveMail
+} from '../utils/emailValidator.js';
 
 // Helper to sign JWT
 const generateToken = (user) => {
@@ -19,7 +24,6 @@ const formatUserResponse = (user) => ({
   role: user.role,
   isVerified: user.isVerified,
   sellerStatus: user.sellerStatus,
-  preferredLanguage: user.preferredLanguage,
   phone: user.phone || '',
   bakeryName: user.bakeryName || '',
   bio: user.bio || '',
@@ -34,7 +38,7 @@ const formatUserResponse = (user) => ({
  */
 export const register = async (req, res) => {
   try {
-    const { name, email, password, role, preferredLanguage, bakeryName, phone } = req.body;
+    const { name, email, password, role, bakeryName, phone } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({
@@ -51,10 +55,50 @@ export const register = async (req, res) => {
       });
     }
 
-    if (role && !['buyer', 'seller'].includes(role)) {
+    if (!role || !['buyer', 'seller'].includes(role)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid role. Only buyer and seller roles are allowed.'
+        message: 'Role must be explicitly chosen as buyer or seller.'
+      });
+    }
+
+    // Step 1: Format & syntax check
+    const normalizedEmail = email.toLowerCase().trim();
+    if (!isValidEmailFormat(normalizedEmail)) {
+      return res.status(400).json({
+        success: false,
+        field: 'email',
+        message: 'Please enter a valid email address.'
+      });
+    }
+
+    // Step 2: Already registered check
+    const existingUser = await User.findOne({ email: normalizedEmail });
+    if (existingUser && existingUser.isVerified) {
+      return res.status(400).json({
+        success: false,
+        field: 'email',
+        message: 'An account with this email already exists. Please sign in.'
+      });
+    }
+
+    // Step 3: Domain check (DNS MX with A fallback, 5s timeout)
+    const domain = normalizedEmail.split('@')[1];
+    const domainCheck = await verifyDomainCanReceiveMail(domain, 5000);
+    if (!domainCheck.valid) {
+      return res.status(400).json({
+        success: false,
+        field: 'email',
+        message: 'This email domain does not exist or cannot receive emails. Please check your email address.'
+      });
+    }
+
+    // Step 4: Disposable domain check
+    if (isDisposableDomain(domain)) {
+      return res.status(400).json({
+        success: false,
+        field: 'email',
+        message: 'Temporary email addresses are not allowed.'
       });
     }
 
@@ -65,7 +109,7 @@ export const register = async (req, res) => {
       });
     }
 
-    const assignedRole = role === 'seller' ? 'seller' : 'buyer';
+    const assignedRole = role;
 
     if (assignedRole === 'seller' && (!bakeryName || !bakeryName.trim())) {
       return res.status(400).json({
@@ -74,22 +118,29 @@ export const register = async (req, res) => {
       });
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
-    let existingUser = await User.findOne({ email: normalizedEmail });
+    // Step 5: Send OTP FIRST before creating / updating any database record
+    let otpResult;
+    try {
+      otpResult = await otpService.createAndSendOtp(normalizedEmail, 'signup_verification');
+    } catch (mailErr) {
+      console.error('[Register Mail Error]:', mailErr.message);
+      const isOutage = mailErr.message?.includes('temporarily unavailable');
+      return res.status(400).json({
+        success: false,
+        field: 'email',
+        message: isOutage
+          ? 'Email service is temporarily unavailable. Please try again later.'
+          : (mailErr.message?.includes('Too many requests')
+            ? mailErr.message
+            : 'We could not send a verification code to this email. Please check that the email address is correct.')
+      });
+    }
 
+    // Step 6: Only persist unverified user AFTER OTP has successfully sent
     if (existingUser) {
-      if (existingUser.isVerified) {
-        return res.status(400).json({
-          success: false,
-          message: 'An account with this email address already exists. Please log in.'
-        });
-      }
-
-      // If user exists but is not verified, update unverified record
       existingUser.name = name.trim();
       existingUser.password = password;
       existingUser.role = assignedRole;
-      existingUser.preferredLanguage = preferredLanguage === 'ur' ? 'ur' : 'en';
       existingUser.bakeryName = bakeryName ? bakeryName.trim() : '';
       existingUser.phone = phone ? phone.trim() : '';
       await existingUser.save();
@@ -99,7 +150,6 @@ export const register = async (req, res) => {
         email: normalizedEmail,
         password,
         role: assignedRole,
-        preferredLanguage: preferredLanguage === 'ur' ? 'ur' : 'en',
         bakeryName: bakeryName ? bakeryName.trim() : '',
         phone: phone ? phone.trim() : '',
         isVerified: false,
@@ -107,12 +157,9 @@ export const register = async (req, res) => {
       });
     }
 
-    // Send 6-digit verification OTP
-    const otpResult = await otpService.createAndSendOtp(normalizedEmail, 'signup_verification');
-
     return res.status(201).json({
       success: true,
-      message: 'Registration initiated. If an account with this email exists, a 6-digit verification code has been sent. Please check your Inbox as well as your Spam / Junk folder.',
+      message: 'Registration initiated. A 6-digit verification code has been sent to your email. Please check your Inbox as well as your Spam / Junk folder.',
       email: normalizedEmail,
       cooldownSeconds: otpResult.cooldownSeconds,
       devOtp: otpResult.devOtp
@@ -201,7 +248,8 @@ export const login = async (req, res) => {
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password.'
+        field: 'email',
+        message: 'No account found with this email address.'
       });
     }
 
@@ -236,16 +284,14 @@ export const login = async (req, res) => {
       });
     }
 
-    // Send 2FA Login OTP
-    const otpResult = await otpService.createAndSendOtp(normalizedEmail, 'login_2fa');
+    // Direct Login without OTP: issue JWT token immediately
+    const token = generateToken(user);
 
     return res.status(200).json({
       success: true,
-      message: 'Credentials verified. A 6-digit login code has been sent to your email.',
-      email: normalizedEmail,
-      role: user.role,
-      cooldownSeconds: otpResult.cooldownSeconds,
-      devOtp: otpResult.devOtp
+      message: 'Login successful.',
+      token,
+      user: formatUserResponse(user)
     });
   } catch (error) {
     console.error('[Login Error]:', error);
@@ -358,20 +404,37 @@ export const forgotPassword = async (req, res) => {
     if (!email) {
       return res.status(400).json({
         success: false,
+        field: 'email',
         message: 'Email is required.'
       });
     }
 
     const normalizedEmail = email.toLowerCase().trim();
-    const user = await User.findOne({ email: normalizedEmail });
 
-    // For defense against email enumeration, respond with consistent message even if not found
+    // 1. Format check
+    if (!isValidEmailFormat(normalizedEmail)) {
+      return res.status(400).json({
+        success: false,
+        field: 'email',
+        message: 'Please enter a valid email address.'
+      });
+    }
+
+    // 2. Check if user exists
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
-      return res.status(200).json({
-        success: true,
-        message: 'If an account exists with this email, a 6-digit verification code has been sent. Please check your Inbox as well as your Spam / Junk folder.',
-        email: normalizedEmail,
-        cooldownSeconds: 60
+      return res.status(404).json({
+        success: false,
+        field: 'email',
+        message: 'No account found with this email address.'
+      });
+    }
+
+    // 3. Check if seller is blocked
+    if (user.role === 'seller' && user.sellerStatus === 'blocked') {
+      return res.status(403).json({
+        success: false,
+        message: 'Your seller account has been suspended by the Admin. Please contact support.'
       });
     }
 
@@ -379,15 +442,21 @@ export const forgotPassword = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: 'If an account exists with this email, a 6-digit verification code has been sent. Please check your Inbox as well as your Spam / Junk folder.',
+      message: 'A 6-digit verification code has been sent to your email. Please check your Inbox as well as your Spam / Junk folder.',
       email: normalizedEmail,
       cooldownSeconds: result.cooldownSeconds,
       devOtp: result.devOtp
     });
   } catch (error) {
+    const isOutage = error.message?.includes('temporarily unavailable');
     return res.status(400).json({
       success: false,
-      message: error.message
+      field: 'email',
+      message: isOutage
+        ? 'Email service is temporarily unavailable. Please try again later.'
+        : (error.message?.includes('Too many requests')
+          ? error.message
+          : 'We could not send a verification code to this email. Please check that the email address is correct.')
     });
   }
 };

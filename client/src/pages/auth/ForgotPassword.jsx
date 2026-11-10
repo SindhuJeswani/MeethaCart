@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../services/api';
-import { useTranslation } from '../../context/LanguageContext';
 import { Mail, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
 import AuthLayout from '../../components/auth/AuthLayout';
 import { shakeVariant, buttonTap } from '../../animations/motion';
@@ -14,7 +13,6 @@ const ForgotPassword = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
 
-  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const triggerShake = () => {
@@ -49,7 +47,8 @@ const ForgotPassword = () => {
         });
       }, 800);
     } catch (err) {
-      setError(err.message || 'Failed to request password reset.');
+      const msg = err.response?.data?.message || err.message || 'Failed to request password reset.';
+      setError(msg);
       triggerShake();
     } finally {
       setIsSubmitting(false);
@@ -67,8 +66,8 @@ const ForgotPassword = () => {
       headline="Reset your account password"
       benefits={benefits}
       footerNote="Account Security & Recovery"
-      formTitle={t('auth.forgotTitle') || 'Forgot password?'}
-      formSubtitle={t('auth.forgotSubtitle') || 'Enter your registered email address and we will send you a verification code.'}
+      formTitle="Forgot password?"
+      formSubtitle="Enter your registered email address and we will send you a verification code."
       footerLinkText="Remembered your password?"
       footerLinkAction="Back to sign in"
       footerLinkTo="/login"
@@ -109,20 +108,29 @@ const ForgotPassword = () => {
       >
         <div>
           <label className="block text-[11px] font-bold uppercase tracking-wider text-bakery-700/90 mb-2">
-            {t('auth.emailLabel') || 'Email address'} <span className="text-rose-500">*</span>
+            Email address <span className="text-rose-500">*</span>
           </label>
           <div className="relative group">
             <Mail className="w-4 h-4 text-bakery-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none group-focus-within:text-caramel transition-colors" />
             <input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (error) setError('');
+              }}
               placeholder="e.g. name@example.com"
               required
               autoComplete="email"
-              className="input-bakery pl-11"
+              className={`input-bakery pl-11 ${error ? 'border-rose-400 focus:border-rose-500' : ''}`}
             />
           </div>
+          {error && (
+            <p className="mt-1.5 text-xs text-rose-600 font-medium flex items-center gap-1">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+              <span>{error}</span>
+            </p>
+          )}
         </div>
 
         <motion.button
@@ -136,7 +144,7 @@ const ForgotPassword = () => {
             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
           ) : (
             <>
-              <span>{t('auth.sendCode') || 'Send verification code'}</span>
+              <span>Send verification code</span>
               <ArrowRight className="w-4 h-4" />
             </>
           )}

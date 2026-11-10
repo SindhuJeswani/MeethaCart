@@ -2,14 +2,11 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
-import { useTranslation } from '../../context/LanguageContext';
 import api from '../../services/api';
-import ThemePicker from '../../components/common/ThemePicker';
 import {
   Store,
   Phone,
   MapPin,
-  Globe,
   Save,
   CheckCircle2,
   AlertCircle,
@@ -24,15 +21,11 @@ import { fadeUp, buttonTap, TIMING, EASING } from '../../animations/motion';
 
 const SellerDashboard = () => {
   const { user, updateUser } = useAuth();
-  const { setLang } = useTranslation();
 
   const [bakeryName, setBakeryName] = useState(user?.bakeryName || '');
   const [bio, setBio] = useState(user?.bio || '');
   const [phone, setPhone] = useState(user?.phone || '');
   const [address, setAddress] = useState(user?.address || '');
-  const [preferredLanguage, setPreferredLanguage] = useState(
-    user?.preferredLanguage || 'en'
-  );
 
   const [isSaving, setIsSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -53,13 +46,11 @@ const SellerDashboard = () => {
         bakeryName: bakeryName.trim(),
         bio: bio.trim(),
         phone: phone.trim(),
-        address: address.trim(),
-        preferredLanguage
+        address: address.trim()
       });
 
       if (res.data?.success) {
         updateUser(res.data.user);
-        setLang(preferredLanguage);
         setSavedSuccess(true);
         setTimeout(() => setSavedSuccess(false), 3000);
       }
@@ -121,6 +112,15 @@ const SellerDashboard = () => {
         <div className="flex items-center gap-2 self-start sm:self-auto">
           {isApproved && (
             <Link
+              to="/seller/orders"
+              className="btn-primary text-xs py-2 px-3.5 shadow-xs inline-flex items-center gap-1.5"
+            >
+              <ShoppingBag className="w-3.5 h-3.5" />
+              <span>Orders</span>
+            </Link>
+          )}
+          {isApproved && (
+            <Link
               to={`/seller/${user?._id}`}
               className="btn-secondary text-xs py-2 px-3.5 bg-white/10 hover:bg-white/20 text-white border-white/20 shadow-xs inline-flex items-center gap-1.5"
             >
@@ -131,7 +131,7 @@ const SellerDashboard = () => {
           {isApproved && (
             <Link
               to="/seller/items/new"
-              className="btn-primary text-xs py-2 px-4 shadow-xs inline-flex items-center gap-1.5"
+              className="btn-secondary text-xs py-2 px-3.5 bg-white/10 hover:bg-white/20 text-white border-white/20 shadow-xs inline-flex items-center gap-1.5"
             >
               <PlusCircle className="w-3.5 h-3.5" />
               <span>Add Bakery Item</span>
@@ -218,38 +218,19 @@ const SellerDashboard = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-bakery-700 mb-1.5">
-                  Baker Contact Phone <span className="text-xs text-bakery-400 font-normal lowercase">(optional)</span>
-                </label>
-                <div className="relative">
-                  <Phone className="w-4 h-4 text-bakery-400 absolute left-3.5 top-3.5" />
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="0300 1234567"
-                    className="input-bakery pl-10"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-bakery-700 mb-1.5">
-                  Preferred Language <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <Globe className="w-4 h-4 text-bakery-400 absolute left-3.5 top-3.5" />
-                  <select
-                    value={preferredLanguage}
-                    onChange={(e) => setPreferredLanguage(e.target.value)}
-                    className="input-bakery pl-10 appearance-none bg-white font-medium"
-                  >
-                    <option value="en">English (Default)</option>
-                    <option value="ur">اردو (Urdu)</option>
-                  </select>
-                </div>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-bakery-700 mb-1.5">
+                Baker Contact Phone <span className="text-xs text-bakery-400 font-normal lowercase">(optional)</span>
+              </label>
+              <div className="relative">
+                <Phone className="w-4 h-4 text-bakery-400 absolute left-3.5 top-3.5" />
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="0300 1234567"
+                  className="input-bakery pl-10"
+                />
               </div>
             </div>
 
@@ -286,10 +267,6 @@ const SellerDashboard = () => {
 
         {/* Right: Catalog Management & Storefront Links */}
         <div className="lg:col-span-4 space-y-4">
-          <div className="bg-white rounded-2xl border border-bakery-200 p-5 shadow-xs">
-            <ThemePicker variant="settings" />
-          </div>
-
           <motion.div
             variants={fadeUp}
             initial="hidden"
@@ -336,6 +313,15 @@ const SellerDashboard = () => {
               Quick Shortcuts
             </h3>
             <div className="space-y-1.5 text-xs">
+              {isApproved && (
+                <Link
+                  to="/seller/orders"
+                  className="flex items-center justify-between p-2 rounded-lg hover:bg-bakery-100 transition-colors"
+                >
+                  <span className="font-medium text-bakery-800">Orders</span>
+                  <ShoppingBag className="w-3.5 h-3.5 text-caramel" />
+                </Link>
+              )}
               {isApproved && (
                 <Link
                   to={`/seller/${user?._id}`}

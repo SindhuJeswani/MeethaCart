@@ -1,3 +1,4 @@
+import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js';
 import { Item } from '../models/Item.js';
 import { Category } from '../models/Category.js';
@@ -18,10 +19,10 @@ export const getItems = async (req, res) => {
       isEggless,
       sort,
       page = 1,
-      limit = 24
+      limit = 12
     } = req.query;
 
-    const query = { isAvailable: true };
+    const query = { isAvailable: true, approvalStatus: 'Approved', stock: { $gt: 0 } };
 
     // 1. Keyword search (matches title or description)
     if (search && search.trim()) {
@@ -92,19 +93,26 @@ export const getItems = async (req, res) => {
       sortOption = { createdAt: -1 };
     }
 
-    const parsedLimit = limit === 'all' ? 100 : Math.min(Number(limit) || 24, 100);
-    const parsedPage = Math.max(Number(page) || 1, 1);
-    const skip = (parsedPage - 1) * parsedLimit;
+    let parsedLimit;
+    if (limit === 'all') {
+      parsedLimit = null;
+    } else {
+      const numLimit = parseInt(limit, 10);
+      parsedLimit = (!isNaN(numLimit) && numLimit > 0) ? Math.min(numLimit, 100) : 12;
+    }
 
-    const [items, total] = await Promise.all([
-      Item.find(query)
-        .populate('seller', 'name bakeryName avatar phone address sellerStatus')
-        .populate('category', 'name slug')
-        .sort(sortOption)
-        .skip(skip)
-        .limit(parsedLimit),
-      Item.countDocuments(query)
-    ]);
+    const parsedPage = Math.max(parseInt(page, 10) || 1, 1);
+    const total = await Item.countDocuments(query);
+    const pageSize = parsedLimit || Math.max(total, 1);
+    const skip = parsedLimit ? (parsedPage - 1) * parsedLimit : 0;
+    const totalPages = parsedLimit ? (Math.ceil(total / parsedLimit) || 1) : 1;
+
+    const items = await Item.find(query)
+      .populate('seller', 'name bakeryName avatar phone address sellerStatus')
+      .populate('category', 'name slug')
+      .sort(sortOption)
+      .skip(skip)
+      .limit(pageSize);
 
     return res.status(200).json({
       success: true,
@@ -112,8 +120,9 @@ export const getItems = async (req, res) => {
       totalCount: total,
       count: items.length,
       page: parsedPage,
-      pages: Math.ceil(total / parsedLimit) || 1,
-      totalPages: Math.ceil(total / parsedLimit) || 1,
+      pages: totalPages,
+      totalPages,
+      limit: parsedLimit || 'all',
       items
     });
   } catch (error) {
@@ -149,15 +158,54 @@ export const getItemById = async (req, res) => {
       });
     }
 
-    // Related items from same category
+    // Check permissions if item is not Approved or seller is not approved
+    const isApprovedItemAndSeller =
+      item.approvalStatus === 'Approved' && item.seller?.sellerStatus === 'approved';
+
+    if (!isApprovedItemAndSeller) {
+      // Check if viewing user is the owner seller or an admin
+      let isAuthorized = false;
+      if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        try {
+          const token = req.headers.authorization.split(' ')[1];
+          const decoded = jwt.verify(token, process.env.JWT_SECRET || 'meethacart_jwt_secret');
+          const user = await User.findById(decoded.id);
+          if (user) {
+            if (user.role === 'admin' || user._id.toString() === item.seller?._id?.toString()) {
+              isAuthorized = true;
+            }
+          }
+        } catch (e) {
+          // Token invalid or expired
+        }
+      }
+
+      if (!isAuthorized) {
+        return res.status(404).json({
+          success: false,
+          message: 'Bakery item not found.'
+        });
+      }
+    }
+
+    // Related items from same category (must be Approved and from approved sellers)
+    const approvedSellers = await User.find({
+      role: 'seller',
+      sellerStatus: 'approved'
+    }).distinct('_id');
+
     const relatedItems = await Item.find({
       category: item.category?._id,
       _id: { $ne: item._id },
-      isAvailable: true
+      isAvailable: true,
+      approvalStatus: 'Approved',
+      stock: { $gt: 0 },
+      seller: { $in: approvedSellers }
     })
       .limit(4)
+      .populate('seller', 'name bakeryName avatar sellerStatus')
       .populate('category', 'name slug')
-      .select('title price images isEggless preparationTimeHours');
+      .select('title price stock isAvailable approvalStatus images isEggless preparationTimeHours sizes flavors allowsCustomization');
 
     return res.status(200).json({
       success: true,
@@ -212,6 +260,14 @@ export const createItem = async (req, res) => {
           : 'Your seller account is pending admin review. You can list items once your profile is approved.'
       });
     }
+    // Sellers can NEVER manually set approvalStatus, reviewedBy, or reviewedAt
+    if (req.user.role === 'seller') {
+      delete req.body.approvalStatus;
+      delete req.body.rejectionReason;
+      delete req.body.reviewedBy;
+      delete req.body.reviewedAt;
+    }
+
     const {
       title,
       description,
@@ -220,6 +276,9 @@ export const createItem = async (req, res) => {
       stock,
       isEggless,
       preparationTimeHours,
+      sizes,
+      flavors,
+      allowsCustomization,
       images: imageUrls
     } = req.body;
 
@@ -279,6 +338,27 @@ export const createItem = async (req, res) => {
       imageList.push('https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=600&auto=format&fit=crop');
     }
 
+    // Parse optional sizes & flavors
+    let parsedSizes = [];
+    if (sizes) {
+      try {
+        parsedSizes = typeof sizes === 'string' ? JSON.parse(sizes) : sizes;
+      } catch (e) {
+        parsedSizes = [];
+      }
+    }
+
+    let parsedFlavors = [];
+    if (flavors) {
+      try {
+        parsedFlavors = typeof flavors === 'string' ? JSON.parse(flavors) : flavors;
+      } catch (e) {
+        if (typeof flavors === 'string') {
+          parsedFlavors = flavors.split(',').map(f => f.trim()).filter(Boolean);
+        }
+      }
+    }
+
     const item = await Item.create({
       title: title.trim(),
       description: description.trim(),
@@ -289,7 +369,14 @@ export const createItem = async (req, res) => {
       isEggless: isEggless === 'true' || isEggless === true,
       preparationTimeHours: Number(preparationTimeHours) || 24,
       images: imageList,
-      isAvailable: true
+      sizes: parsedSizes,
+      flavors: parsedFlavors,
+      allowsCustomization: allowsCustomization === 'true' || allowsCustomization === true,
+      isAvailable: true,
+      approvalStatus: 'Pending',
+      rejectionReason: null,
+      reviewedBy: null,
+      reviewedAt: null
     });
 
     const populatedItem = await Item.findById(item._id).populate('category', 'name slug');
@@ -320,6 +407,14 @@ export const updateItem = async (req, res) => {
           : 'Your seller account is pending admin review.'
       });
     }
+
+    // Sellers can NEVER manually set approvalStatus, reviewedBy, or reviewedAt
+    if (req.user.role === 'seller') {
+      delete req.body.approvalStatus;
+      delete req.body.rejectionReason;
+      delete req.body.reviewedBy;
+      delete req.body.reviewedAt;
+    }
     const { id } = req.params;
     const item = await Item.findById(id);
 
@@ -335,6 +430,14 @@ export const updateItem = async (req, res) => {
       });
     }
 
+    // Sellers can NEVER manually set approvalStatus, reviewedBy, or reviewedAt
+    if (req.user.role === 'seller') {
+      delete req.body.approvalStatus;
+      delete req.body.rejectionReason;
+      delete req.body.reviewedBy;
+      delete req.body.reviewedAt;
+    }
+
     const {
       title,
       description,
@@ -344,6 +447,9 @@ export const updateItem = async (req, res) => {
       isEggless,
       preparationTimeHours,
       isAvailable,
+      sizes,
+      flavors,
+      allowsCustomization,
       images: existingImages
     } = req.body;
 
@@ -370,6 +476,25 @@ export const updateItem = async (req, res) => {
     if (isEggless !== undefined) item.isEggless = isEggless === 'true' || isEggless === true;
     if (preparationTimeHours !== undefined) item.preparationTimeHours = Number(preparationTimeHours);
     if (isAvailable !== undefined) item.isAvailable = isAvailable === 'true' || isAvailable === true;
+    if (allowsCustomization !== undefined) item.allowsCustomization = allowsCustomization === 'true' || allowsCustomization === true;
+
+    if (sizes !== undefined) {
+      try {
+        item.sizes = typeof sizes === 'string' ? JSON.parse(sizes) : sizes;
+      } catch (e) {
+        // keep existing if invalid
+      }
+    }
+
+    if (flavors !== undefined) {
+      try {
+        item.flavors = typeof flavors === 'string' ? JSON.parse(flavors) : flavors;
+      } catch (e) {
+        if (typeof flavors === 'string') {
+          item.flavors = flavors.split(',').map(f => f.trim()).filter(Boolean);
+        }
+      }
+    }
 
     // Handle uploaded new images
     if (req.files && req.files.length > 0) {
@@ -377,6 +502,14 @@ export const updateItem = async (req, res) => {
       item.images = [...(existingImages ? (Array.isArray(existingImages) ? existingImages : [existingImages]) : item.images), ...newImages];
     } else if (existingImages) {
       item.images = Array.isArray(existingImages) ? existingImages : [existingImages];
+    }
+
+    // Requirement 7: Every item write by a seller resets approvalStatus to "Pending"
+    if (req.user.role === 'seller') {
+      item.approvalStatus = 'Pending';
+      item.rejectionReason = null;
+      item.reviewedBy = null;
+      item.reviewedAt = null;
     }
 
     await item.save();

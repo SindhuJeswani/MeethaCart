@@ -40,11 +40,6 @@ const userSchema = new mongoose.Schema(
         return this.role === 'seller' ? 'pending' : 'approved';
       }
     },
-    preferredLanguage: {
-      type: String,
-      enum: ['en', 'ur'],
-      default: 'en'
-    },
     phone: {
       type: String,
       trim: true,

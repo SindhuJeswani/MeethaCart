@@ -41,7 +41,10 @@ const AddEditItem = () => {
     stock: '5',
     preparationTimeHours: '24',
     isEggless: false,
-    imageUrl: ''
+    imageUrl: '',
+    sizesText: '',
+    flavorsText: '',
+    allowsCustomization: false
   });
 
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -87,7 +90,10 @@ const AddEditItem = () => {
               stock: it.stock?.toString() || '0',
               preparationTimeHours: it.preparationTimeHours?.toString() || '24',
               isEggless: Boolean(it.isEggless),
-              imageUrl: ''
+              imageUrl: '',
+              sizesText: (it.sizes || []).map((size) => `${size.name}:${size.price}`).join('\n'),
+              flavorsText: (it.flavors || []).join(', '),
+              allowsCustomization: Boolean(it.allowsCustomization)
             });
             setExistingImages(it.images || []);
           }
@@ -142,6 +148,15 @@ const AddEditItem = () => {
       return;
     }
 
+    const sizes = formData.sizesText.split('\n').map((line) => line.trim()).filter(Boolean).map((line) => {
+      const [name, rawPrice] = line.split(':');
+      return { name: name?.trim(), price: Number(rawPrice) };
+    });
+    if (sizes.some((size) => !size.name || !Number.isFinite(size.price) || size.price < 0)) {
+      setError('Enter each size as Name:Price, with a non-negative price.');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       setUploadProgress(15);
@@ -154,6 +169,9 @@ const AddEditItem = () => {
       submitData.append('stock', formData.stock);
       submitData.append('preparationTimeHours', formData.preparationTimeHours);
       submitData.append('isEggless', formData.isEggless);
+      submitData.append('sizes', JSON.stringify(sizes));
+      submitData.append('flavors', JSON.stringify(formData.flavorsText.split(',').map((flavor) => flavor.trim()).filter(Boolean)));
+      submitData.append('allowsCustomization', formData.allowsCustomization);
 
       selectedFiles.forEach((file) => {
         submitData.append('images', file);
@@ -373,6 +391,43 @@ const AddEditItem = () => {
               </div>
             </label>
           </div>
+        </div>
+
+        {/* Section 3: Order options */}
+        <div className="card-bakery p-6 space-y-4 shadow-warm">
+          <h2 className="font-serif font-bold text-chocolate text-lg border-b border-bakery-200/80 pb-3 flex items-center gap-2">
+            <Layers className="w-5 h-5 text-amber-600" />
+            <span>Order Options</span>
+          </h2>
+          <label className="block text-xs font-semibold text-bakery-700">
+            Sizes and prices (one per line, for example: Small:1200)
+            <textarea
+              rows={3}
+              value={formData.sizesText}
+              onChange={(e) => setFormData({ ...formData, sizesText: e.target.value })}
+              className="input-bakery mt-1 w-full text-sm"
+              placeholder={'Small:1200\nLarge:2400'}
+            />
+          </label>
+          <label className="block text-xs font-semibold text-bakery-700">
+            Flavors (comma separated)
+            <input
+              type="text"
+              value={formData.flavorsText}
+              onChange={(e) => setFormData({ ...formData, flavorsText: e.target.value })}
+              className="input-bakery mt-1 w-full text-sm"
+              placeholder="Chocolate, Vanilla"
+            />
+          </label>
+          <label className="flex items-center gap-2.5 p-3 rounded-xl bg-bakery-50/70 border border-bakery-200 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={formData.allowsCustomization}
+              onChange={(e) => setFormData({ ...formData, allowsCustomization: e.target.checked })}
+              className="w-4 h-4 rounded text-caramel focus:ring-caramel border-bakery-300"
+            />
+            <span className="text-xs font-bold text-chocolate">Accept an optional customization note</span>
+          </label>
         </div>
 
         {/* Section 3: Photo Upload with Animated Previews */}

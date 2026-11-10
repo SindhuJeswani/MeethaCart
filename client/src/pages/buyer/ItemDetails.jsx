@@ -1,62 +1,136 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../services/api';
 import ItemCard from '../../components/items/ItemCard';
-import { useTranslation } from '../../context/LanguageContext';
 import {
   Clock,
   Store,
   ArrowLeft,
   RefreshCw,
   CheckCircle2,
-  ChevronRight
+  ChevronRight,
+  ShoppingCart
 } from 'lucide-react';
 import { staggerContainer, staggerItem, cardHover, buttonTap, TIMING, EASING } from '../../animations/motion';
+import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../context/CartContext';
+import { useToast } from '../../context/ToastContext';
 
 const ItemDetails = () => {
   const { id } = useParams();
-  const { t, translateCategory, translateItemTitle, translateItemDescription } = useTranslation();
+  const { user, isAuthenticated } = useAuth();
+  const { addToCart } = useCart();
+  const toast = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [item, setItem] = useState(null);
   const [relatedItems, setRelatedItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [selectedSize, setSelectedSize] = useState('');
+  const [selectedFlavor, setSelectedFlavor] = useState('');
+  const [quantity, setQuantity] = useState(1);
+  const [customizationNote, setCustomizationNote] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
 
   useEffect(() => {
-    const fetchItem = async () => {
+    const fetchItemAndRelated = async () => {
       try {
         setLoading(true);
         setError('');
         const res = await api.get(`/items/${id}`);
         if (res.data?.success) {
-          setItem(res.data.item);
-          setRelatedItems(res.data.relatedItems || []);
-          setActiveImageIndex(0);
+          const it = res.data.item;
+          setItem(it);
+          if (it.sizes?.length) {
+            setSelectedSize(it.sizes[0].name);
+          }
+          if (it.flavors?.length) {
+            setSelectedFlavor(it.flavors[0]);
+          }
+
+          // Fetch related items from the same category
+          const catId = it.category?._id || it.category;
+          if (catId) {
+            try {
+              const relRes = await api.get(`/items?category=${catId}&limit=5`);
+              if (relRes.data?.success) {
+                const filtered = (relRes.data.items || []).filter((r) => r._id !== id);
+                setRelatedItems(filtered.slice(0, 4));
+              }
+            } catch (relErr) {
+              console.warn('Failed to fetch related items:', relErr.message);
+            }
+          }
+        } else {
+          setError(res.data?.message || 'Item not found');
         }
       } catch (err) {
-        setError(err.message || 'Failed to load item details.');
+        setError(err.response?.data?.message || err.message || 'Failed to load bakery item details');
       } finally {
         setLoading(false);
       }
     };
 
-    if (id) {
-      fetchItem();
-      window.scrollTo(0, 0);
-    }
+    fetchItemAndRelated();
   }, [id]);
+
+  const handleAddToCart = async () => {
+    if (!item) return;
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: `${location.pathname}${location.search}` } });
+      return;
+    }
+
+    if (item.stock <= 0 || item.isAvailable === false) {
+      toast.error('This item is currently unavailable');
+      return;
+    }
+
+    const parsedQty = Number(quantity);
+    if (!Number.isInteger(parsedQty) || parsedQty < 1 || parsedQty > item.stock) {
+      toast.error('Please enter a valid quantity');
+      return;
+    }
+
+    if (item.sizes?.length && !selectedSize) {
+      toast.error('Please select a valid size');
+      return;
+    }
+
+    if (item.flavors?.length && !selectedFlavor) {
+      toast.error('Please select a valid flavor');
+      return;
+    }
+
+    try {
+      setIsAdding(true);
+      const result = await addToCart(item, {
+        quantity: parsedQty,
+        selectedSize: selectedSize || null,
+        selectedFlavor: selectedFlavor || null,
+        customizationNote: item.allowsCustomization ? customizationNote : ''
+      });
+      toast.success(result.message || 'Item added to cart!');
+    } catch (err) {
+      toast.error(err.message || 'Server error. Item was not added.');
+    } finally {
+      setIsAdding(false);
+    }
+  };
 
   if (loading) {
     return (
-      <div className="page-container py-12">
+      <div className="page-container py-12 space-y-6">
+        <div className="h-6 w-32 skeleton rounded-md" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="aspect-[4/3] rounded-2xl skeleton skeleton-shimmer" />
+          <div className="aspect-[4/3] rounded-2xl skeleton" />
           <div className="space-y-4">
-            <div className="h-6 w-1/3 skeleton rounded-lg" />
-            <div className="h-10 w-3/4 skeleton rounded-lg" />
-            <div className="h-20 w-full skeleton rounded-xl" />
-            <div className="h-12 w-full skeleton rounded-xl" />
+            <div className="h-8 w-3/4 skeleton rounded-md" />
+            <div className="h-5 w-1/3 skeleton rounded-md" />
+            <div className="h-24 w-full skeleton rounded-xl" />
           </div>
         </div>
       </div>
@@ -65,31 +139,38 @@ const ItemDetails = () => {
 
   if (error || !item) {
     return (
-      <div className="page-container py-20 text-center space-y-4">
-        <div className="w-16 h-16 rounded-2xl bg-amber-100 text-amber-900 mx-auto flex items-center justify-center font-bold text-xl shadow-xs">
-          🍰
+      <div className="page-container py-16 text-center space-y-4">
+        <div className="p-4 rounded-full bg-rose-50 text-rose-600 w-14 h-14 mx-auto flex items-center justify-center border border-rose-200">
+          <Store className="w-6 h-6" />
         </div>
-        <h2 className="text-2xl font-serif font-bold text-chocolate">
-          {error || 'Bakery item not found'}
+        <h2 className="text-xl font-serif font-bold text-chocolate">
+          {error || 'Bakery Item Not Found'}
         </h2>
-        <p className="text-xs sm:text-sm text-bakery-600 max-w-sm mx-auto">
-          This treat might have been unlisted by the home baker or does not exist.
+        <p className="text-xs text-bakery-600 max-w-sm mx-auto">
+          The treat you are looking for may have been removed, sold out, or is temporarily unlisted by the home baker.
         </p>
-        <Link to="/items" className="btn-primary inline-flex items-center gap-2 text-xs py-2.5 px-5 shadow-xs">
-          <ArrowLeft className="w-4 h-4" />
-          <span>Browse other bakery items</span>
-        </Link>
+        <div className="pt-2">
+          <Link
+            to="/items"
+            className="btn-primary text-xs py-2 px-4 inline-flex items-center gap-1.5 shadow-xs"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Back to Browse</span>
+          </Link>
+        </div>
       </div>
     );
   }
 
-  const { seller, category } = item;
-  const images = item.images && item.images.length > 0
-    ? item.images.map((img) => (img.startsWith('http') ? img : `http://localhost:5000${img}`))
-    : ['https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=600&auto=format&fit=crop'];
+  const images = (item.images && item.images.length > 0)
+    ? item.images.map((img) => img.startsWith('http') ? img : (img.startsWith('/uploads') ? `http://localhost:5000${img}` : img))
+    : ['https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&auto=format&fit=crop&q=80'];
+
+  const category = item.category;
+  const seller = item.seller;
 
   return (
-    <div className="page-container py-8 space-y-10">
+    <div className="page-container py-6 space-y-8">
       {/* Breadcrumb Navigation */}
       <motion.nav
         initial={{ opacity: 0, y: -6 }}
@@ -105,7 +186,7 @@ const ItemDetails = () => {
         </Link>
         <ChevronRight className="w-3.5 h-3.5 text-bakery-400" />
         <span className="text-chocolate font-semibold truncate max-w-[200px]">
-          {translateItemTitle(item)}
+          {item.title}
         </span>
       </motion.nav>
 
@@ -122,7 +203,7 @@ const ItemDetails = () => {
                 exit={{ opacity: 0 }}
                 transition={{ duration: TIMING.normal, ease: EASING.out }}
                 src={images[activeImageIndex]}
-                alt={translateItemTitle(item)}
+                alt={item.title}
                 className="w-full h-full object-cover"
               />
             </AnimatePresence>
@@ -172,17 +253,17 @@ const ItemDetails = () => {
           <motion.div variants={staggerItem}>
             <div className="flex items-center gap-2 mb-2">
               <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-bakery-100 text-chocolate border border-bakery-200 shadow-2xs">
-                {translateCategory(category?.name || category?.slug)}
+                {category?.name || category?.slug}
               </span>
               {item.isEggless && (
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs">
-                  {t('items.eggless') || 'Eggless'}
+                  Eggless
                 </span>
               )}
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-serif font-bold text-chocolate leading-snug">
-              {translateItemTitle(item)}
+              {item.title}
             </h1>
 
             <Link
@@ -191,8 +272,8 @@ const ItemDetails = () => {
             >
               <Store className="w-3.5 h-3.5 text-caramel group-hover:scale-110 transition-transform" />
               <span>
-                {t('items.soldBy') || 'Sold by'}{' '}
-                <strong>{seller?.bakeryName || seller?.name || (t('items.homeBaker') || 'Home Baker')}</strong>
+                Sold by{' '}
+                <strong>{seller?.bakeryName || seller?.name || 'Home Baker'}</strong>
               </span>
             </Link>
           </motion.div>
@@ -200,31 +281,77 @@ const ItemDetails = () => {
           {/* Price & Availability Card */}
           <motion.div
             variants={staggerItem}
-            className="p-4 card-bakery flex items-center justify-between"
+            className="p-4 card-bakery space-y-4"
           >
-            <div>
-              <span className="text-[10px] uppercase font-bold text-bakery-500 tracking-wider block">
-                Price (PKR)
-              </span>
-              <div className="price-sticker text-2xl sm:text-3xl font-serif font-bold text-chocolate">
-                Rs. {item.price?.toLocaleString()}
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-bakery-500 tracking-wider block">
+                  Price (PKR)
+                </span>
+                <div className="price-sticker text-2xl sm:text-3xl font-serif font-bold text-chocolate">
+                  Rs. {((selectedSize && item.sizes?.find((s) => s.name?.toLowerCase() === selectedSize.trim().toLowerCase())?.price) || item.price)?.toLocaleString()}
+                </div>
+              </div>
+
+              <div>
+                {item.stock > 0 ? (
+                  <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold shadow-2xs">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>
+                      In stock ({item.stock} available)
+                    </span>
+                  </span>
+                ) : (
+                  <span className="px-3 py-1.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold shadow-2xs">
+                    Out of stock
+                  </span>
+                )}
               </div>
             </div>
 
-            <div>
-              {item.stock > 0 ? (
-                <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold shadow-2xs">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>
-                    {t('items.inStock') || 'In stock'} ({item.stock} {t('items.available') || 'available'})
-                  </span>
-                </span>
-              ) : (
-                <span className="px-3 py-1.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold shadow-2xs">
-                  {t('items.outOfStock') || 'Out of stock'}
-                </span>
-              )}
-            </div>
+            {item.sizes?.length > 0 && (
+              <label className="block text-xs font-semibold text-chocolate">
+                Size
+                <select value={selectedSize} onChange={(event) => setSelectedSize(event.target.value)} className="input-bakery mt-1 w-full">
+                  <option value="">Select a size</option>
+                  {item.sizes.map((size) => <option key={size.name} value={size.name}>{size.name}</option>)}
+                </select>
+              </label>
+            )}
+            {item.flavors?.length > 0 && (
+              <label className="block text-xs font-semibold text-chocolate">
+                Flavor
+                <select value={selectedFlavor} onChange={(event) => setSelectedFlavor(event.target.value)} className="input-bakery mt-1 w-full">
+                  <option value="">Select a flavor</option>
+                  {item.flavors.map((flavor) => <option key={flavor} value={flavor}>{flavor}</option>)}
+                </select>
+              </label>
+            )}
+            {user?.role === 'buyer' && (
+              <>
+                <label className="block text-xs font-semibold text-chocolate">
+                  Quantity
+                  <input type="number" min="1" max={item.stock} value={quantity} onChange={(event) => setQuantity(event.target.value)} className="input-bakery mt-1 w-full" />
+                </label>
+                {item.allowsCustomization && (
+                  <label className="block text-xs font-semibold text-chocolate">
+                    Customization note
+                    <textarea value={customizationNote} onChange={(event) => setCustomizationNote(event.target.value)} maxLength={300} rows={3} className="input-bakery mt-1 w-full" />
+                  </label>
+                )}
+              </>
+            )}
+            {(!isAuthenticated || user?.role === 'buyer') && (
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                disabled={isAdding}
+                className="btn-primary w-full justify-center disabled:opacity-60"
+              >
+                <ShoppingCart className="w-4 h-4" />
+                <span>{item.stock <= 0 || item.isAvailable === false ? 'Unavailable' : isAdding ? 'Adding...' : 'Add to Cart'}</span>
+              </button>
+            )}
           </motion.div>
 
           {/* Preparation Time Notice */}
@@ -235,12 +362,12 @@ const ItemDetails = () => {
             <Clock className="w-4 h-4 text-caramel shrink-0 mt-0.5" />
             <div className="text-xs">
               <h4 className="font-semibold text-chocolate">
-                {t('items.prepTime') || 'Preparation Time'}
+                Preparation Time
               </h4>
               <p className="text-bakery-700 mt-0.5 leading-relaxed">
-                {t('items.prepNoticePrefix') || 'This artisan item requires'}{' '}
+                This artisan item requires{' '}
                 <strong>{item.preparationTimeHours || 24} hours</strong>{' '}
-                {t('items.prepNoticeSuffix') || 'notice to bake fresh from scratch.'}
+                notice to bake fresh from scratch.
               </p>
             </div>
           </motion.div>
@@ -248,10 +375,10 @@ const ItemDetails = () => {
           {/* Item Description */}
           <motion.div variants={staggerItem} className="space-y-1.5">
             <h3 className="font-serif font-bold text-chocolate text-base">
-              {t('items.aboutItem') || 'About this treat'}
+              About this treat
             </h3>
             <p className="text-xs sm:text-sm text-bakery-700 leading-relaxed whitespace-pre-line">
-              {translateItemDescription(item)}
+              {item.description}
             </p>
           </motion.div>
         </motion.div>
@@ -270,7 +397,7 @@ const ItemDetails = () => {
               </div>
               <div>
                 <span className="text-[11px] font-semibold text-bakery-500 uppercase tracking-wider">
-                  {t('items.homeBaker') || 'Home baker'}
+                  Home baker
                 </span>
                 <h3 className="text-lg font-serif font-bold text-chocolate mt-0.5">
                   {seller.bakeryName || `${seller.name}'s Bakery`}
@@ -292,7 +419,7 @@ const ItemDetails = () => {
                 className="btn-secondary text-xs py-2 px-4 self-start sm:self-auto inline-flex items-center gap-1.5 shadow-xs"
               >
                 <Store className="w-3.5 h-3.5" />
-                <span>{t('items.viewSeller') || 'View seller storefront'}</span>
+                <span>View seller storefront</span>
               </Link>
             </motion.div>
           </div>
@@ -304,7 +431,7 @@ const ItemDetails = () => {
         <div className="space-y-4 pt-6 border-t border-bakery-200">
           <div>
             <h2 className="text-xl font-serif font-bold text-chocolate">
-              {t('items.moreInCategory') || 'More in'} {translateCategory(category?.name || category?.slug)}
+              More in {category?.name || category?.slug}
             </h2>
             <p className="text-xs text-bakery-600">
               Other freshly baked treats in this category.

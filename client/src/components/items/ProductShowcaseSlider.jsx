@@ -11,9 +11,8 @@ import {
 } from 'lucide-react';
 import api from '../../services/api';
 import fallbackImg from '../../assets/fallback-item.jpg';
-import { useTranslation } from '../../context/LanguageContext';
 
-const ProductShowcaseCard = ({ item, isUrdu, translateItemTitle, onInteraction }) => {
+const ProductShowcaseCard = ({ item, onInteraction }) => {
   const imageUrl = (() => {
     if (!item?.images || item.images.length === 0) return fallbackImg;
     const img = item.images[0];
@@ -25,19 +24,19 @@ const ProductShowcaseCard = ({ item, isUrdu, translateItemTitle, onInteraction }
   const sellerName =
     item?.seller?.bakeryName ||
     item?.seller?.name ||
-    (isUrdu ? 'ہوم بیکر' : 'Home Baker');
+    'Home Baker';
 
   const sellerCity = (() => {
     const raw = item?.seller?.city || item?.seller?.location || item?.seller?.address || '';
     if (!raw) return '';
     const low = raw.toLowerCase();
-    if (low.includes('karachi')) return isUrdu ? 'کراچی' : 'Karachi';
-    if (low.includes('lahore')) return isUrdu ? 'لاہور' : 'Lahore';
-    if (low.includes('islamabad')) return isUrdu ? 'اسلام آباد' : 'Islamabad';
+    if (low.includes('karachi')) return 'Karachi';
+    if (low.includes('lahore')) return 'Lahore';
+    if (low.includes('islamabad')) return 'Islamabad';
     return raw.split(',')[0].trim();
   })();
 
-  const title = translateItemTitle ? translateItemTitle(item) : item?.title;
+  const title = item?.title;
   const originalPrice = Math.round((item?.price || 0) * 1.15);
 
   return (
@@ -59,7 +58,7 @@ const ProductShowcaseCard = ({ item, isUrdu, translateItemTitle, onInteraction }
           className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-108"
         />
 
-        {/* Top Badges (Daraz / Shein Deal Flair) */}
+        {/* Top Badges */}
         <div className="absolute top-2 left-2 right-2 flex items-center justify-between gap-1 pointer-events-none">
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-amber-500 to-rose-500 text-white shadow-xs">
             <Flame className="w-2.5 h-2.5 fill-current" />
@@ -87,7 +86,7 @@ const ProductShowcaseCard = ({ item, isUrdu, translateItemTitle, onInteraction }
 
         {/* Hover Quick Action Indicator */}
         <div className="absolute inset-x-0 bottom-0 py-1.5 px-3 bg-gradient-to-t from-chocolate/80 via-chocolate/40 to-transparent text-white text-[11px] font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-between pointer-events-none">
-          <span>{isUrdu ? 'تفصیلات دیکھیں' : 'View Cake'}</span>
+          <span>View Cake</span>
           <ArrowRight className="w-3 h-3 transform group-hover:translate-x-0.5 transition-transform" />
         </div>
       </div>
@@ -102,7 +101,7 @@ const ProductShowcaseCard = ({ item, isUrdu, translateItemTitle, onInteraction }
             <ShieldCheck className="w-3 h-3 text-emerald-600 shrink-0" />
           </div>
 
-          {/* Cake Title (Clamp to 2 lines) */}
+          {/* Cake Title */}
           <h4 className="font-serif font-bold text-chocolate text-xs sm:text-sm line-clamp-2 leading-snug group-hover:text-caramel transition-colors">
             {title}
           </h4>
@@ -139,7 +138,6 @@ const ProductShowcaseCard = ({ item, isUrdu, translateItemTitle, onInteraction }
 };
 
 const ProductShowcaseSlider = () => {
-  const { translateItemTitle, isUrdu } = useTranslation();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
@@ -185,7 +183,7 @@ const ProductShowcaseSlider = () => {
 
   return (
     <section className="w-full page-container py-2 sm:py-3">
-      {/* Daraz / Shein Style Flash Banner Container */}
+      {/* Flash Banner Container */}
       <div className="bg-gradient-to-b from-amber-50/60 via-bakery-50/40 to-white border border-amber-950/[0.06] rounded-3xl p-5 sm:p-7 shadow-[0_8px_30px_-4px_rgba(74,44,26,0.04)] relative overflow-hidden">
         
         {/* Header Bar */}
@@ -194,17 +192,15 @@ const ProductShowcaseSlider = () => {
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide bg-rose-500 text-white shadow-2xs">
                 <Sparkles className="w-3 h-3" />
-                <span>{isUrdu ? 'ٹرینڈنگ شوکیس' : 'Trending Showcase'}</span>
+                <span>Trending Showcase</span>
               </span>
             </div>
 
             <h3 className="text-lg sm:text-2xl font-serif font-bold text-chocolate flex items-center gap-2">
-              <span>{isUrdu ? 'تازہ تیار شدہ کیکس اور ڈیزرٹس' : 'Trending Cakes & Treats'}</span>
+              <span>Trending Cakes & Treats</span>
             </h3>
             <p className="text-xs sm:text-sm text-bakery-600">
-              {isUrdu
-                ? 'پاکستان بھر کے تصدیق شدہ ہوم بیکرز کی تازہ ترین پیشکش'
-                : 'Handcrafted daily by verified home bakers across Pakistan'}
+              Handcrafted daily by verified home bakers across Pakistan
             </p>
           </div>
 
@@ -214,7 +210,7 @@ const ProductShowcaseSlider = () => {
               to="/items"
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-caramel hover:bg-caramel-dark text-white text-xs sm:text-sm font-semibold transition-colors shadow-2xs"
             >
-              <span>{isUrdu ? 'تمام دیکھیں' : 'View All'}</span>
+              <span>View All</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -256,8 +252,6 @@ const ProductShowcaseSlider = () => {
                 <ProductShowcaseCard
                   key={`${item._id}-showcase-${idx}`}
                   item={item}
-                  isUrdu={isUrdu}
-                  translateItemTitle={translateItemTitle}
                   onInteraction={() => setIsPaused(true)}
                 />
               ))}

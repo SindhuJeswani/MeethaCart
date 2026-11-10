@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslation } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
 import {
   Bell,
@@ -63,7 +62,6 @@ const INITIAL_NOTIFICATIONS = [
 ];
 
 const NotificationsPage = () => {
-  const { isUrdu } = useTranslation();
   const toast = useToast();
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
 
@@ -86,12 +84,10 @@ const NotificationsPage = () => {
         <div>
           <h1 className="text-2xl sm:text-3xl font-serif font-bold text-chocolate flex items-center gap-2.5">
             <Bell className="w-7 h-7 text-caramel" />
-            <span>{isUrdu ? 'اطلاعات اور پیغامات' : 'Notifications & Alerts'}</span>
+            <span>Notifications & Alerts</span>
           </h1>
           <p className="text-xs text-bakery-600 mt-0.5">
-            {isUrdu
-              ? 'اپنے آرڈرز، بیکرز کے پیغامات اور بولیاں کی لمحہ بہ لمحہ اطلاعات'
-              : 'Real-time updates regarding bakery preparations, bids, and order tracking.'}
+            Real-time updates regarding bakery preparations, bids, and order tracking.
           </p>
         </div>
 

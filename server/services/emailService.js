@@ -99,10 +99,47 @@ class EmailService {
         html,
         attachments
       });
+
+      // Check for rejected recipients if reported by SMTP server
+      if (info.rejected && info.rejected.length > 0) {
+        const error = new Error('We could not send a verification code to this email. Please check that the email address is correct.');
+        error.code = 'RECIPIENT_REJECTED';
+        throw error;
+      }
+
       return { success: true, messageId: info.messageId };
     } catch (error) {
       console.error('[EmailService] SMTP send error:', error.message);
-      throw new Error('Failed to send verification email. Please check SMTP settings.');
+      // Differentiate recipient/bounce errors vs mail server outage
+      const msg = (error.message || '').toLowerCase();
+      const responseCode = error.responseCode || error.code || '';
+
+      if (
+        error.code === 'RECIPIENT_REJECTED' ||
+        responseCode === 550 ||
+        responseCode === 551 ||
+        responseCode === 553 ||
+        msg.includes('invalid recipient') ||
+        msg.includes('user unknown') ||
+        msg.includes('mailbox not found') ||
+        msg.includes('recipient rejected') ||
+        msg.includes('does not exist')
+      ) {
+        throw new Error('We could not send a verification code to this email. Please check that the email address is correct.');
+      }
+
+      if (
+        error.code === 'ECONNREFUSED' ||
+        error.code === 'ETIMEDOUT' ||
+        error.code === 'ESOCKET' ||
+        msg.includes('connect') ||
+        msg.includes('timed out') ||
+        msg.includes('service unavailable')
+      ) {
+        throw new Error('Email service is temporarily unavailable. Please try again later.');
+      }
+
+      throw new Error('We could not send a verification code to this email. Please check that the email address is correct.');
     }
   }
 }

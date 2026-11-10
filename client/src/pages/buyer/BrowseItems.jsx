@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../services/api';
 import ItemCard from '../../components/items/ItemCard';
 import ItemFilterSidebar from '../../components/items/ItemFilterSidebar';
-import { useTranslation } from '../../context/LanguageContext';
 import {
   Search,
   Filter,
@@ -28,24 +27,42 @@ import {
 
 const BrowseItems = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const { t, translateCategory, lang } = useTranslation();
 
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
+  const [availableCount, setAvailableCount] = useState(0);
+  const [isCountLoading, setIsCountLoading] = useState(true);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
-  // Filter & Search states
-  const [search, setSearch] = useState(searchParams.get('search') || '');
-  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'all');
-  const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') || '6000');
-  const [isEggless, setIsEggless] = useState(searchParams.get('isEggless') === 'true');
-  const [sort, setSort] = useState(searchParams.get('sort') || 'newest');
-  const [page, setPage] = useState(Number(searchParams.get('page')) || 1);
-  const [limit, setLimit] = useState(searchParams.get('limit') || '12');
+  // Derived state from URL searchParams (single source of truth)
+  const search = searchParams.get('search') || '';
+  const selectedCategory = searchParams.get('category') || 'all';
+  const maxPrice = searchParams.get('maxPrice') || '6000';
+  const isEggless = searchParams.get('isEggless') === 'true';
+  const sort = searchParams.get('sort') || 'newest';
+  const page = Math.max(Number(searchParams.get('page')) || 1, 1);
+  const limitParam = searchParams.get('limit');
+  const limit = ['12', '24', 'all'].includes(limitParam) ? limitParam : '12';
+
+  // Ensure page and limit are always in the URL
+  useEffect(() => {
+    let needsUpdate = false;
+    const nextParams = new URLSearchParams(searchParams);
+    if (!searchParams.get('page')) {
+      nextParams.set('page', '1');
+      needsUpdate = true;
+    }
+    if (!searchParams.get('limit')) {
+      nextParams.set('limit', '12');
+      needsUpdate = true;
+    }
+    if (needsUpdate) {
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   // Load category list on mount
   useEffect(() => {
@@ -62,39 +79,45 @@ const BrowseItems = () => {
     fetchCats();
   }, []);
 
-  // Sync search param from Navbar search into state
+  // Fetch real total available count
   useEffect(() => {
-    const q = searchParams.get('search') || '';
-    if (q !== search) {
-      setSearch(q);
-      setPage(1);
-    }
-  }, [searchParams]);
+    const fetchAvailableCount = async () => {
+      try {
+        const res = await api.get('/items?limit=1');
+        if (res.data?.success) {
+          setAvailableCount(res.data.total ?? res.data.totalCount ?? 0);
+        }
+      } catch (err) {
+        console.error('Failed to load available item count:', err);
+      } finally {
+        setIsCountLoading(false);
+      }
+    };
+    fetchAvailableCount();
+  }, []);
 
-  // Fetch items whenever filters or page change
+  // Fetch items whenever searchParams change
   useEffect(() => {
     const fetchItems = async () => {
       try {
         setIsLoading(true);
-        const params = new URLSearchParams();
+        const queryParams = new URLSearchParams();
 
-        if (search.trim()) params.append('search', search.trim());
-        if (selectedCategory && selectedCategory !== 'all') params.append('category', selectedCategory);
-        if (Number(maxPrice) < 6000) params.append('maxPrice', maxPrice);
-        if (isEggless) params.append('isEggless', 'true');
-        if (sort) params.append('sort', sort);
-        if (page > 1) params.append('page', String(page));
-        if (limit && limit !== '12') params.append('limit', limit);
+        if (search.trim()) queryParams.append('search', search.trim());
+        if (selectedCategory && selectedCategory !== 'all') queryParams.append('category', selectedCategory);
+        if (Number(maxPrice) < 6000) queryParams.append('maxPrice', maxPrice);
+        if (isEggless) queryParams.append('isEggless', 'true');
+        if (sort) queryParams.append('sort', sort);
+        queryParams.append('page', String(page));
+        queryParams.append('limit', limit);
 
-        setSearchParams(params, { replace: true });
-
-        const res = await api.get(`/items?${params.toString()}`);
+        const res = await api.get(`/items?${queryParams.toString()}`);
         if (res.data?.success) {
-          const count = res.data.total ?? res.data.totalCount ?? res.data.count ?? (res.data.items?.length || 0);
-          const pagesCount = res.data.pages ?? res.data.totalPages ?? 1;
+          const total = res.data.total ?? res.data.totalCount ?? 0;
+          const pages = res.data.pages ?? res.data.totalPages ?? 1;
           setItems(res.data.items || []);
-          setTotalCount(count);
-          setTotalPages(pagesCount);
+          setTotalCount(total);
+          setTotalPages(pages);
         }
       } catch (err) {
         console.error('Failed to load items:', err);
@@ -106,14 +129,59 @@ const BrowseItems = () => {
     fetchItems();
   }, [search, selectedCategory, maxPrice, isEggless, sort, page, limit]);
 
+  // Helper to update filters: resets page to 1
+  const updateFilter = (updates) => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('page', '1');
+
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === undefined || value === null || value === '' || value === 'all' || (key === 'maxPrice' && Number(value) >= 6000) || (key === 'isEggless' && !value)) {
+        nextParams.delete(key);
+      } else {
+        nextParams.set(key, String(value));
+      }
+    });
+
+    if (!nextParams.get('limit')) {
+      nextParams.set('limit', limit);
+    }
+
+    setSearchParams(nextParams);
+    document.getElementById('items-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const handlePageChange = (nextPage) => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('page', String(nextPage));
+    if (!nextParams.get('limit')) {
+      nextParams.set('limit', limit);
+    }
+    setSearchParams(nextParams);
+    document.getElementById('items-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const handleLimitChange = (nextLimit) => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('page', '1');
+    nextParams.set('limit', nextLimit);
+    setSearchParams(nextParams);
+    document.getElementById('items-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   const handleResetFilters = () => {
-    setSearch('');
-    setSelectedCategory('all');
-    setMaxPrice('6000');
-    setIsEggless(false);
-    setSort('newest');
-    setPage(1);
-    setLimit('12');
+    const nextParams = new URLSearchParams();
+    nextParams.set('page', '1');
+    nextParams.set('limit', '12');
+    setSearchParams(nextParams);
+    document.getElementById('items-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const handleBrowseAll = () => {
+    const nextParams = new URLSearchParams();
+    nextParams.set('page', '1');
+    nextParams.set('limit', '12');
+    setSearchParams(nextParams);
+    document.getElementById('items-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   return (
@@ -127,30 +195,36 @@ const BrowseItems = () => {
       >
         <div>
           <span className="section-eyebrow">
-            {t('browse.eyebrow') || 'Artisanal Bakery Catalog'}
+            Artisanal Bakery Catalog
           </span>
           <h1 className="text-2xl md:text-3xl font-serif font-bold text-chocolate mt-0.5">
-            {t('browse.title') || 'All bakery items'}
+            All bakery items
           </h1>
           <p className="text-xs sm:text-sm text-bakery-600 mt-1">
-            {t('browse.subtitle') || 'Homemade treats prepared fresh by independent bakers across Pakistan.'}
+            Homemade treats prepared fresh by independent bakers across Pakistan.
           </p>
         </div>
 
         {/* Marketplace Trust & Freshness Highlights */}
         <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-600/20 text-chocolate text-xs font-semibold shadow-xs">
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={buttonTap}
+            type="button"
+            onClick={handleBrowseAll}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all border shadow-xs cursor-pointer bg-white hover:bg-amber-50 text-chocolate border-bakery-200"
+            title="Browse all available homemade treats"
+          >
             <Sparkles className="w-3.5 h-3.5 text-caramel shrink-0" />
-            <span>{isLoading ? "..." : (totalCount || items.length)} Homemade Treats Available</span>
-          </div>
+            <span>{isCountLoading ? "..." : availableCount} Homemade Treats Available</span>
+          </motion.button>
 
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={buttonTap}
             type="button"
             onClick={() => {
-              setIsEggless(!isEggless);
-              setPage(1);
+              updateFilter({ isEggless: !isEggless });
             }}
             className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all border shadow-xs cursor-pointer ${
               isEggless
@@ -160,7 +234,7 @@ const BrowseItems = () => {
             title="Toggle Eggless filter"
           >
             <span>🌿</span>
-            <span>{t('items.eggless') || 'Eggless Only'}</span>
+            <span>Eggless Only</span>
             {isEggless && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
           </motion.button>
         </div>
@@ -173,20 +247,11 @@ const BrowseItems = () => {
           <ItemFilterSidebar
             categories={categories}
             selectedCategory={selectedCategory}
-            onSelectCategory={(cat) => {
-              setSelectedCategory(cat);
-              setPage(1);
-            }}
+            onSelectCategory={(cat) => updateFilter({ category: cat })}
             maxPrice={maxPrice}
-            onChangeMaxPrice={(p) => {
-              setMaxPrice(p);
-              setPage(1);
-            }}
+            onChangeMaxPrice={(p) => updateFilter({ maxPrice: p })}
             isEggless={isEggless}
-            onToggleEggless={(val) => {
-              setIsEggless(val);
-              setPage(1);
-            }}
+            onToggleEggless={(val) => updateFilter({ isEggless: val })}
             onResetFilters={handleResetFilters}
           />
         </div>
@@ -201,7 +266,7 @@ const BrowseItems = () => {
           >
             <div className="flex items-center gap-1.5 font-semibold text-chocolate">
               <SlidersHorizontal className="w-4 h-4 text-caramel" />
-              <span>{t('browse.filters') || 'Filter items'}</span>
+              <span>Filter items</span>
             </div>
             {(selectedCategory !== 'all' || Number(maxPrice) < 6000 || isEggless) && (
               <span className="w-2 h-2 rounded-full bg-caramel"></span>
@@ -221,20 +286,13 @@ const BrowseItems = () => {
                   categories={categories}
                   selectedCategory={selectedCategory}
                   onSelectCategory={(cat) => {
-                    setSelectedCategory(cat);
-                    setPage(1);
+                    updateFilter({ category: cat });
                     setIsMobileFilterOpen(false);
                   }}
                   maxPrice={maxPrice}
-                  onChangeMaxPrice={(p) => {
-                    setMaxPrice(p);
-                    setPage(1);
-                  }}
+                  onChangeMaxPrice={(p) => updateFilter({ maxPrice: p })}
                   isEggless={isEggless}
-                  onToggleEggless={(val) => {
-                    setIsEggless(val);
-                    setPage(1);
-                  }}
+                  onToggleEggless={(val) => updateFilter({ isEggless: val })}
                   onResetFilters={handleResetFilters}
                 />
               </motion.div>
@@ -243,46 +301,47 @@ const BrowseItems = () => {
         </div>
 
         {/* Catalog Results Grid */}
-        <div className="flex-1 w-full space-y-4">
+        <div id="items-grid" className="flex-1 w-full space-y-4 scroll-mt-24">
           {/* Controls Bar */}
           <div className="bg-white rounded-xl border border-bakery-200 p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs shadow-xs">
             <span className="font-semibold text-chocolate">
-              {isLoading ? "..." : (totalCount || items.length)} {t('browse.itemsAvailable') || 'homemade treats found'}
+              {isLoading ? "..." : (totalCount || items.length)} homemade treats found
             </span>
 
             <div className="flex items-center gap-3 ml-auto">
               {/* Limit selector */}
               <div className="flex items-center gap-1.5">
                 <label className="text-xs font-medium text-bakery-600 whitespace-nowrap">
-                  {t('browse.show') || 'Show:'}
+                  Show:
                 </label>
                 <select
                   value={limit}
                   onChange={(e) => {
-                    setLimit(e.target.value);
-                    setPage(1);
+                    handleLimitChange(e.target.value);
                   }}
                   className="input-bakery text-xs py-1 px-2 bg-white font-medium rounded-md"
                 >
                   <option value="12">12</option>
                   <option value="24">24</option>
-                  <option value="all">{t('browse.all') || 'All'} ({totalCount})</option>
+                  <option value="all">All ({totalCount})</option>
                 </select>
               </div>
 
               {/* Sort selector */}
               <div className="flex items-center gap-1.5">
                 <label className="text-xs font-medium text-bakery-600 whitespace-nowrap">
-                  {t('browse.sort') || 'Sort:'}
+                  Sort:
                 </label>
                 <select
                   value={sort}
-                  onChange={(e) => setSort(e.target.value)}
+                  onChange={(e) => {
+                    updateFilter({ sort: e.target.value });
+                  }}
                   className="input-bakery text-xs py-1 px-2.5 bg-white font-medium rounded-md"
                 >
-                  <option value="newest">{t('browse.sortNewest') || 'Newest first'}</option>
-                  <option value="price_asc">{t('browse.sortPriceAsc') || 'Price: low to high'}</option>
-                  <option value="price_desc">{t('browse.sortPriceDesc') || 'Price: high to low'}</option>
+                  <option value="newest">Newest first</option>
+                  <option value="price_asc">Price: low to high</option>
+                  <option value="price_desc">Price: high to low</option>
                 </select>
               </div>
             </div>
@@ -291,7 +350,7 @@ const BrowseItems = () => {
           {/* Active Filter Pills with Animated Entrance */}
           {(selectedCategory !== 'all' || Number(maxPrice) < 6000 || isEggless || search) && (
             <div className="flex flex-wrap items-center gap-2 text-xs">
-              <span className="text-bakery-500">{t('browse.activeFilters') || 'Active filters:'}</span>
+              <span className="text-bakery-500">Active filters:</span>
 
               {search && (
                 <motion.span
@@ -300,7 +359,7 @@ const BrowseItems = () => {
                   className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-bakery-100 text-chocolate font-medium border border-bakery-200"
                 >
                   <span>"{search}"</span>
-                  <button onClick={() => setSearch('')} className="hover:text-strawberry">
+                  <button onClick={() => updateFilter({ search: '' })} className="hover:text-strawberry">
                     <X className="w-3 h-3" />
                   </button>
                 </motion.span>
@@ -312,8 +371,8 @@ const BrowseItems = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-bakery-100 text-chocolate font-medium border border-bakery-200"
                 >
-                  <span>{t('browse.category') || 'Category:'} {translateCategory(selectedCategory)}</span>
-                  <button onClick={() => setSelectedCategory('all')} className="hover:text-strawberry">
+                  <span>Category: {selectedCategory}</span>
+                  <button onClick={() => updateFilter({ category: 'all' })} className="hover:text-strawberry">
                     <X className="w-3 h-3" />
                   </button>
                 </motion.span>
@@ -325,8 +384,8 @@ const BrowseItems = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-bakery-100 text-chocolate font-medium border border-bakery-200"
                 >
-                  <span>{t('browse.under') || 'Under'} Rs. {Number(maxPrice).toLocaleString()}</span>
-                  <button onClick={() => setMaxPrice('6000')} className="hover:text-strawberry">
+                  <span>Under Rs. {Number(maxPrice).toLocaleString()}</span>
+                  <button onClick={() => updateFilter({ maxPrice: '6000' })} className="hover:text-strawberry">
                     <X className="w-3 h-3" />
                   </button>
                 </motion.span>
@@ -338,8 +397,8 @@ const BrowseItems = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-medium border border-emerald-200"
                 >
-                  <span>{t('browse.egglessOnly') || 'Eggless only'}</span>
-                  <button onClick={() => setIsEggless(false)} className="hover:text-rose-700">
+                  <span>Eggless only</span>
+                  <button onClick={() => updateFilter({ isEggless: false })} className="hover:text-rose-700">
                     <X className="w-3 h-3" />
                   </button>
                 </motion.span>
@@ -350,7 +409,7 @@ const BrowseItems = () => {
                 onClick={handleResetFilters}
                 className="text-xs text-caramel hover:text-caramel-dark underline font-medium ml-1"
               >
-                {t('browse.clearAll') || 'Clear all'}
+                Clear all
               </button>
             </div>
           )}
@@ -370,10 +429,10 @@ const BrowseItems = () => {
             >
               <ShoppingBag className="w-10 h-10 text-bakery-300 mx-auto mb-2" />
               <h3 className="text-base font-serif font-bold text-chocolate mb-1">
-                {t('browse.noItemsFound') || 'No items found'}
+                No items found
               </h3>
               <p className="text-xs text-bakery-600 max-w-sm mx-auto mb-4">
-                {t('browse.noItemsFoundDesc') || 'No items match your selected filters. Try removing some filters or searching for something else.'}
+                No items match your selected filters. Try removing some filters or searching for something else.
               </p>
               <motion.button
                 whileHover={{ scale: 1.03 }}
@@ -382,7 +441,7 @@ const BrowseItems = () => {
                 onClick={handleResetFilters}
                 className="btn-primary text-xs py-1.5 px-4 inline-flex shadow-xs"
               >
-                {t('browse.resetFilters') || 'Reset all filters'}
+                Reset all filters
               </motion.button>
             </motion.div>
           ) : (
@@ -405,7 +464,7 @@ const BrowseItems = () => {
           {totalPages > 1 && (
             <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-bakery-200">
               <span className="text-xs text-bakery-600 font-medium">
-                {t('browse.page') || 'Page'} {page} {t('browse.of') || 'of'} {totalPages}
+                Page {page} of {totalPages}
               </span>
               <div className="flex items-center gap-1.5">
                 <motion.button
@@ -413,13 +472,12 @@ const BrowseItems = () => {
                   type="button"
                   disabled={page <= 1}
                   onClick={() => {
-                    setPage((p) => Math.max(p - 1, 1));
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    handlePageChange(Math.max(page - 1, 1));
                   }}
                   className="btn-secondary text-xs py-1 px-2.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 shadow-xs"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>{t('browse.prev') || 'Prev'}</span>
+                  <span>Previous</span>
                 </motion.button>
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((pNum) => (
                   <motion.button
@@ -427,8 +485,7 @@ const BrowseItems = () => {
                     whileTap={buttonTap}
                     type="button"
                     onClick={() => {
-                      setPage(pNum);
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                      handlePageChange(pNum);
                     }}
                     className={`w-7 h-7 rounded-md text-xs font-bold transition-all ${
                       page === pNum
@@ -444,12 +501,11 @@ const BrowseItems = () => {
                   type="button"
                   disabled={page >= totalPages}
                   onClick={() => {
-                    setPage((p) => Math.min(p + 1, totalPages));
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    handlePageChange(Math.min(page + 1, totalPages));
                   }}
                   className="btn-secondary text-xs py-1 px-2.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 shadow-xs"
                 >
-                  <span>{t('browse.next') || 'Next'}</span>
+                  <span>Next</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </motion.button>
               </div>

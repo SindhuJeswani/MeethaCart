@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslation } from '../../context/LanguageContext';
-import { useToast } from '../../context/ToastContext';
+import React, { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import api from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
+import { ORDER_STATUS, ORDER_LIFECYCLE } from '../../config/orderConstants';
 import {
   PackageCheck,
   CheckCircle2,
@@ -10,183 +11,271 @@ import {
   ChefHat,
   Truck,
   PartyPopper,
-  ChevronDown,
-  ChevronUp,
   Store,
   MapPin,
   Phone,
-  RefreshCw,
-  ShoppingBag
+  ShoppingBag,
+  DollarSign,
+  AlertTriangle,
+  ArrowLeft,
+  XCircle,
+  FileText
 } from 'lucide-react';
-import {
-  fadeUp,
-  staggerContainer,
-  staggerItem,
-  buttonTap,
-  TIMING,
-  EASING
-} from '../../animations/motion';
+import { TIMING, EASING } from '../../animations/motion';
 
-const ORDER_STAGES = [
-  { id: 'placed', step: 1, label: 'Placed', labelUrdu: 'آرڈر موصول', desc: 'Order received by baker', icon: PackageCheck },
-  { id: 'accepted', step: 2, label: 'Accepted', labelUrdu: 'منظور شدہ', desc: 'Baker accepted request', icon: CheckCircle2 },
-  { id: 'preparing', step: 3, label: 'Preparing', labelUrdu: 'تیاری جاری', desc: 'Baking fresh in kitchen', icon: ChefHat },
-  { id: 'ready', step: 4, label: 'Ready', labelUrdu: 'پیکنگ مکمل', desc: 'Packaged & ready for courier', icon: ShoppingBag },
-  { id: 'completed', step: 5, label: 'Completed', labelUrdu: 'ترسیل مکمل', desc: 'Delivered fresh to doorstep', icon: PartyPopper }
-];
-
-const INITIAL_ORDERS = [
-  {
-    _id: 'MC-8492',
-    date: 'Today, 2:15 PM',
-    bakeryName: "Grandma's Oven Delight",
-    bakerPhone: '0300 8765432',
-    status: 'preparing',
-    totalAmount: 3550,
-    paymentMethod: 'Cash on Delivery',
-    items: [
-      { name: 'Artisan Belgian Chocolate Cake', qty: 1, price: 2400, weight: '2 lbs' },
-      { name: 'Pistachio Almond Nan Khatai', qty: 2, price: 950, weight: '12 pcs' }
-    ],
-    deliveryAddress: 'House 42, Street 7, F-8/2, Islamabad'
+const STAGE_CONFIG = {
+  [ORDER_STATUS.PLACED]: {
+    label: 'Placed',
+    desc: 'Order received by home baker',
+    icon: PackageCheck
   },
-  {
-    _id: 'MC-7301',
-    date: '18 Oct 2026',
-    bakeryName: 'Lahori Heritage Bakes',
-    bakerPhone: '0321 4455667',
-    status: 'completed',
-    totalAmount: 1850,
-    paymentMethod: 'MeethaCart Wallet',
-    items: [
-      { name: 'Traditional Gulab Jamun Cheesecake', qty: 1, price: 1650, weight: '1.5 lbs' }
-    ],
-    deliveryAddress: 'Office 301, Blue Area, Islamabad'
+  [ORDER_STATUS.ACCEPTED]: {
+    label: 'Accepted',
+    desc: 'Baker confirmed and scheduled',
+    icon: CheckCircle2
+  },
+  [ORDER_STATUS.PREPARING]: {
+    label: 'Preparing',
+    desc: 'Baking fresh in artisan kitchen',
+    icon: ChefHat
+  },
+  [ORDER_STATUS.READY]: {
+    label: 'Ready',
+    desc: 'Packaged & ready for dispatch',
+    icon: ShoppingBag
+  },
+  [ORDER_STATUS.COMPLETED]: {
+    label: 'Completed',
+    desc: 'Delivered fresh to doorstep',
+    icon: PartyPopper
   }
-];
+};
+
+const formatTimestamp = (dateStr) => {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return null;
+  return d.toLocaleString('en-PK', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
+};
 
 const OrderTrackingPage = () => {
-  const { isUrdu } = useTranslation();
-  const toast = useToast();
-  const [activeStatus, setActiveStatus] = useState('preparing');
-  const [expandedOrderId, setExpandedOrderId] = useState('MC-8492');
+  const { id } = useParams();
+  const { user } = useAuth();
 
-  const currentStageIndex = ORDER_STAGES.findIndex((s) => s.id === activeStatus);
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [unauthorized, setUnauthorized] = useState(false);
 
-  const handleSimulateStatus = (statusId) => {
-    setActiveStatus(statusId);
-    const stage = ORDER_STAGES.find((s) => s.id === statusId);
-    toast.info(`Order status updated to: ${stage?.label}`);
-  };
+  useEffect(() => {
+    let isActive = true;
+    const fetchOrder = async (showLoading = false) => {
+      try {
+        if (showLoading) {
+          setLoading(true);
+          setError('');
+          setUnauthorized(false);
+        }
+        const res = await api.get(`/orders/${id}`);
+        if (isActive && res.data?.success && res.data.order) {
+          setOrder(res.data.order);
+        }
+      } catch (err) {
+        if (!isActive) return;
+        if (!showLoading) {
+          console.warn('Failed to refresh order status:', err.message);
+          return;
+        }
+        if (err.response?.status === 403 || err.message?.includes('Unauthorized')) {
+          setUnauthorized(true);
+          setError('Unauthorized access. Only the owner buyer can view this order tracking page.');
+        } else if (err.response?.status === 404) {
+          setError('Order not found.');
+        } else {
+          setError(err.response?.data?.message || err.message || 'Failed to load order details.');
+        }
+      } finally {
+        if (isActive && showLoading) setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchOrder(true);
+    }
+    const refreshTimer = window.setInterval(() => {
+      if (id) fetchOrder();
+    }, 5000);
+    return () => {
+      isActive = false;
+      window.clearInterval(refreshTimer);
+    };
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="page-container py-16 flex flex-col items-center justify-center gap-3">
+        <div className="w-10 h-10 border-4 border-amber-500/20 border-t-caramel rounded-full animate-spin" />
+        <p className="text-sm font-medium text-bakery-700">Loading order tracking...</p>
+      </div>
+    );
+  }
+
+  if (unauthorized || error || !order) {
+    return (
+      <div className="page-container py-16 text-center space-y-4 max-w-md mx-auto">
+        <div className="w-16 h-16 rounded-full bg-red-50 text-red-600 mx-auto flex items-center justify-center font-bold text-2xl border border-red-200">
+          <AlertTriangle className="w-8 h-8" />
+        </div>
+        <h2 className="text-2xl font-serif font-bold text-chocolate">
+          {unauthorized ? 'Access Restricted' : 'Order Not Found'}
+        </h2>
+        <p className="text-xs text-bakery-600 leading-relaxed">
+          {error || 'This order could not be located or you do not have permission to view it.'}
+        </p>
+        <Link to="/items" className="btn-primary inline-flex items-center gap-2 text-xs py-2.5 px-6 shadow-xs">
+          <ArrowLeft className="w-4 h-4" />
+          <span>Browse Bakery Items</span>
+        </Link>
+      </div>
+    );
+  }
+
+  const isRejected = order.status === ORDER_STATUS.REJECTED;
+  const currentStageIndex = ORDER_LIFECYCLE.indexOf(order.status);
+
+  // Map statusHistory to quick lookup by status
+  const historyMap = (order.statusHistory || []).reduce((acc, entry) => {
+    acc[entry.status] = entry;
+    return acc;
+  }, {});
 
   return (
-    <div className="page-container py-8 max-w-5xl mx-auto space-y-8">
-      {/* Header */}
+    <div className="page-container py-8 max-w-4xl mx-auto space-y-6">
+      {/* Header with Navigation */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-bakery-200 pb-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-chocolate flex items-center gap-2.5">
-            <Truck className="w-7 h-7 text-caramel" />
-            <span>{isUrdu ? 'لائیو آرڈر ٹریکنگ اور سابقہ آرڈرز' : 'Live Order Tracking & History'}</span>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-semibold text-bakery-500">Live Order Tracking</span>
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200 uppercase">
+              #{order.orderNumber || order._id}
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-chocolate">
+            {order.seller?.bakeryName || order.seller?.name || 'Artisan Bakery'}
           </h1>
           <p className="text-xs text-bakery-600 mt-0.5">
-            {isUrdu
-              ? 'اپنے تازہ تیار شدہ کیک اور بیکری اشیاء کی تیاری کے مراحل لائیو دیکھیں'
-              : 'Real-time progress for your handcrafted orders from oven to doorstep.'}
+            Placed on: {formatTimestamp(order.createdAt)}
           </p>
         </div>
+
         <Link
           to="/items"
           className="btn-secondary text-xs py-2 px-4 inline-flex items-center gap-1.5 self-start sm:self-auto"
         >
           <ShoppingBag className="w-3.5 h-3.5 text-caramel" />
-          <span>{isUrdu ? 'مزید آرڈر کریں' : 'Order More Bakes'}</span>
+          <span>Browse More Bakes</span>
         </Link>
       </div>
 
-      {/* Active Order Live Tracking Hero Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: TIMING.normal, ease: EASING.out }}
-        className="bg-white rounded-2xl border border-bakery-200 p-6 sm:p-8 shadow-warm space-y-6"
-      >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-bakery-100 pb-5">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-200 uppercase tracking-wide">
-                Live Tracking
+      {/* Rejection Alert Banner (If order was rejected by seller) */}
+      {isRejected && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="p-6 rounded-2xl bg-red-50 border-2 border-red-200 text-red-900 shadow-sm space-y-2"
+        >
+          <div className="flex items-center gap-2.5">
+            <XCircle className="w-6 h-6 text-red-600 shrink-0" />
+            <h3 className="font-serif font-bold text-lg text-red-900">
+              Order Rejected by Baker
+            </h3>
+          </div>
+          <p className="text-xs text-red-800 leading-relaxed pl-8">
+            The home baker was unable to accept this order at this time.
+          </p>
+          <div className="mt-3 pl-8">
+            <div className="p-3.5 rounded-xl bg-white border border-red-200 text-xs">
+              <span className="font-bold text-red-900 block mb-1">Reason for Rejection:</span>
+              <p className="text-red-800 italic">
+                "{order.rejectionReason || 'Kitchen capacity exceeded for requested delivery time.'}"
+              </p>
+              {historyMap[ORDER_STATUS.REJECTED]?.timestamp && (
+                <span className="text-[10px] text-bakery-500 block mt-2">
+                  Rejected at: {formatTimestamp(historyMap[ORDER_STATUS.REJECTED].timestamp)}
+                </span>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Status Timeline Card (Only for non-rejected orders or shows timeline up to rejection) */}
+      {!isRejected && (
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: TIMING.normal, ease: EASING.out }}
+          className="bg-white rounded-2xl border border-bakery-200 p-6 sm:p-8 shadow-warm space-y-8"
+        >
+          <div className="flex items-center justify-between border-b border-bakery-100 pb-4">
+            <div>
+              <h2 className="font-serif font-bold text-chocolate text-lg">
+                Order Status Timeline
+              </h2>
+              <p className="text-xs text-bakery-600 mt-0.5">
+                Current State: <strong className="text-caramel uppercase">{order.status}</strong>
+              </p>
+            </div>
+            <div className="text-right">
+              <span className="text-[11px] text-bakery-500 uppercase tracking-wider block">Payment</span>
+              <span
+                className={`text-xs font-bold px-2.5 py-0.5 rounded-full border inline-block ${
+                  order.paymentStatus === 'Collected'
+                    ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                    : 'bg-amber-100 text-amber-800 border-amber-300'
+                }`}
+              >
+                COD · {order.paymentStatus}
               </span>
-              <span className="text-xs font-semibold text-bakery-500">Order #MC-8492</span>
-            </div>
-            <h2 className="text-xl font-serif font-bold text-chocolate">
-              Grandma's Oven Delight
-            </h2>
-            <p className="text-xs text-bakery-600">
-              Expected arrival: <strong className="text-chocolate">Today by 5:15 PM</strong>
-            </p>
-          </div>
-
-          {/* Interactive Simulation Pills (for smooth testing of animations) */}
-          <div className="flex flex-col sm:items-end gap-1.5">
-            <span className="text-[10px] text-bakery-500 font-semibold uppercase tracking-wider">
-              Simulate Status Transition:
-            </span>
-            <div className="flex flex-wrap gap-1">
-              {ORDER_STAGES.map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => handleSimulateStatus(s.id)}
-                  className={`text-[10px] px-2 py-1 rounded font-semibold transition-all ${
-                    activeStatus === s.id
-                      ? 'bg-chocolate text-white ring-2 ring-caramel'
-                      : 'bg-bakery-100 text-bakery-700 hover:bg-bakery-200'
-                  }`}
-                >
-                  {s.label}
-                </button>
-              ))}
             </div>
           </div>
-        </div>
 
-        {/* Animated Progress Timeline */}
-        <div className="pt-2 pb-4">
-          <div className="relative">
+          {/* Stepper Timeline */}
+          <div className="relative pt-4 pb-2">
             {/* Background line */}
-            <div className="absolute top-6 left-6 right-6 h-1 bg-bakery-100 rounded-full z-0" />
-            {/* Smooth filling line */}
+            <div className="absolute top-10 left-8 right-8 h-1 bg-bakery-100 rounded-full z-0 hidden sm:block" />
+            {/* Filling line */}
             <motion.div
-              className="absolute top-6 left-6 h-1 bg-gradient-to-r from-amber-500 to-caramel rounded-full z-0"
+              className="absolute top-10 left-8 h-1 bg-gradient-to-r from-amber-500 to-caramel rounded-full z-0 hidden sm:block"
               initial={false}
               animate={{
-                width: `${(currentStageIndex / (ORDER_STAGES.length - 1)) * 92}%`
+                width: `${Math.max(0, (currentStageIndex / (ORDER_LIFECYCLE.length - 1)) * 88)}%`
               }}
-              transition={{ duration: TIMING.slow, ease: EASING.out }}
+              transition={{ duration: TIMING.normal, ease: EASING.out }}
             />
 
-            <div className="relative z-10 flex items-start justify-between">
-              {ORDER_STAGES.map((stage, idx) => {
+            <div className="relative z-10 grid grid-cols-1 sm:grid-cols-5 gap-6 sm:gap-2">
+              {ORDER_LIFECYCLE.map((stageName, idx) => {
+                const config = STAGE_CONFIG[stageName];
+                const StageIcon = config.icon;
                 const isPassed = idx < currentStageIndex;
                 const isCurrent = idx === currentStageIndex;
                 const isUpcoming = idx > currentStageIndex;
-                const StageIcon = stage.icon;
+                const historyEntry = historyMap[stageName];
+                const stageTime = historyEntry?.timestamp ? formatTimestamp(historyEntry.timestamp) : null;
 
                 return (
-                  <div key={stage.id} className="flex flex-col items-center text-center max-w-[90px] sm:max-w-[120px]">
-                    {/* Node circle with pulse or check */}
-                    <div className="relative mb-2">
-                      <motion.div
-                        initial={false}
-                        animate={
-                          isCurrent
-                            ? { scale: [1, 1.14, 1] }
-                            : { scale: 1 }
-                        }
-                        transition={
-                          isCurrent
-                            ? { duration: 1.8, repeat: Infinity, ease: 'easeInOut' }
-                            : { duration: 0.2 }
-                        }
+                  <div key={stageName} className="flex sm:flex-col items-center sm:text-center gap-3 sm:gap-2">
+                    {/* Circle Node */}
+                    <div className="relative shrink-0">
+                      <div
                         className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm shadow-xs transition-colors ${
                           isPassed
                             ? 'bg-emerald-600 text-white border-2 border-emerald-600 ring-4 ring-emerald-50'
@@ -196,17 +285,11 @@ const OrderTrackingPage = () => {
                         }`}
                       >
                         {isPassed ? (
-                          <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-                          >
-                            <CheckCircle2 className="w-5 h-5 text-white" />
-                          </motion.div>
+                          <CheckCircle2 className="w-5 h-5 text-white" />
                         ) : (
                           <StageIcon className="w-5 h-5" />
                         )}
-                      </motion.div>
+                      </div>
 
                       {isCurrent && (
                         <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
@@ -216,158 +299,144 @@ const OrderTrackingPage = () => {
                       )}
                     </div>
 
-                    <h4
-                      className={`text-xs font-bold leading-tight ${
-                        isCurrent
-                          ? 'text-chocolate'
-                          : isPassed
-                          ? 'text-emerald-800'
-                          : 'text-bakery-400'
-                      }`}
-                    >
-                      {isUrdu ? stage.labelUrdu : stage.label}
-                    </h4>
-                    <p className="text-[10px] text-bakery-500 hidden sm:block mt-0.5 leading-snug">
-                      {stage.desc}
-                    </p>
+                    {/* Step Text & Timestamp */}
+                    <div className="min-w-0">
+                      <h4
+                        className={`text-xs font-bold leading-tight ${
+                          isCurrent
+                            ? 'text-chocolate font-bold'
+                            : isPassed
+                            ? 'text-emerald-800'
+                            : 'text-bakery-400'
+                        }`}
+                      >
+                        {config.label}
+                      </h4>
+                      <p className="text-[10px] text-bakery-500 leading-snug hidden sm:block mt-0.5">
+                        {config.desc}
+                      </p>
+                      {stageTime ? (
+                        <span className="text-[10px] text-bakery-600 font-semibold block mt-1 bg-bakery-50 px-1.5 py-0.5 rounded border border-bakery-200/60">
+                          {stageTime}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-bakery-300 block mt-1">Pending</span>
+                      )}
+                    </div>
                   </div>
                 );
               })}
             </div>
           </div>
-        </div>
-
-        {/* Dispatch & Baker info pill */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs bg-bakery-50 p-4 rounded-xl border border-bakery-200">
-          <div className="flex items-start gap-2.5">
-            <Store className="w-4 h-4 text-caramel shrink-0 mt-0.5" />
-            <div>
-              <span className="text-bakery-500 block">Artisan Kitchen:</span>
-              <strong className="text-chocolate">Grandma's Oven Delight (F-8/2, Islamabad)</strong>
-            </div>
-          </div>
-          <div className="flex items-start gap-2.5">
-            <Phone className="w-4 h-4 text-caramel shrink-0 mt-0.5" />
-            <div>
-              <span className="text-bakery-500 block">Baker Contact:</span>
-              <strong className="text-chocolate">0300 8765432</strong>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Order History Section with Expandable Cards */}
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-xl font-serif font-bold text-chocolate">
-            {isUrdu ? 'سابقہ آرڈرز کی تاریخ' : 'Recent Order History'}
-          </h2>
-          <p className="text-xs text-bakery-600">
-            {isUrdu ? 'تفصیلات دیکھنے کے لیے کسی بھی آرڈر پر کلک کریں' : 'Click any past order to expand items and delivery breakdown.'}
-          </p>
-        </div>
-
-        <motion.div
-          variants={staggerContainer(0.06)}
-          initial="hidden"
-          animate="visible"
-          className="space-y-3"
-        >
-          {INITIAL_ORDERS.map((order) => {
-            const isExpanded = expandedOrderId === order._id;
-            return (
-              <motion.div
-                key={order._id}
-                variants={staggerItem}
-                layout
-                className="bg-white rounded-xl border border-bakery-200 overflow-hidden shadow-xs hover:border-bakery-300 transition-colors"
-              >
-                {/* Header row */}
-                <div
-                  onClick={() => setExpandedOrderId(isExpanded ? null : order._id)}
-                  className="p-4 sm:p-5 flex items-center justify-between cursor-pointer select-none"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-bakery-100 text-chocolate flex items-center justify-center font-serif font-bold text-sm shrink-0 border border-bakery-200">
-                      🧁
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-chocolate text-sm">Order #{order._id}</span>
-                        <span
-                          className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border ${
-                            order.status === 'completed'
-                              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                              : 'bg-amber-50 text-amber-800 border-amber-200'
-                          }`}
-                        >
-                          {order.status}
-                        </span>
-                      </div>
-                      <p className="text-xs text-bakery-600 mt-0.5">
-                        {order.bakeryName} · {order.date}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <span className="font-serif font-bold text-chocolate text-sm sm:text-base">
-                      Rs. {order.totalAmount.toLocaleString()}
-                    </span>
-                    <motion.div
-                      animate={{ rotate: isExpanded ? 180 : 0 }}
-                      transition={{ duration: TIMING.micro }}
-                      className="text-bakery-500"
-                    >
-                      <ChevronDown className="w-4 h-4" />
-                    </motion.div>
-                  </div>
-                </div>
-
-                {/* Smooth Expandable Body */}
-                <AnimatePresence>
-                  {isExpanded && (
-                    <motion.div
-                      key="details"
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: TIMING.normal, ease: EASING.out }}
-                      className="overflow-hidden border-t border-bakery-100 bg-bakery-50/50"
-                    >
-                      <div className="p-4 sm:p-5 space-y-3 text-xs">
-                        <div className="space-y-2">
-                          <span className="font-semibold text-bakery-700 block uppercase tracking-wider text-[10px]">
-                            Ordered Items:
-                          </span>
-                          {order.items.map((item, i) => (
-                            <div key={i} className="flex justify-between text-bakery-700 bg-white p-2.5 rounded-lg border border-bakery-200">
-                              <span>
-                                {item.name} <strong className="text-chocolate">× {item.qty}</strong> ({item.weight})
-                              </span>
-                              <strong className="text-chocolate">Rs. {(item.price * item.qty).toLocaleString()}</strong>
-                            </div>
-                          ))}
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 text-bakery-600">
-                          <div>
-                            <span className="text-[11px] block text-bakery-500">Delivery Address:</span>
-                            <span className="text-chocolate font-medium">{order.deliveryAddress}</span>
-                          </div>
-                          <div>
-                            <span className="text-[11px] block text-bakery-500">Payment Option:</span>
-                            <span className="text-chocolate font-medium">{order.paymentMethod}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            );
-          })}
         </motion.div>
+      )}
+
+      {/* Order Items & Order Summary Card */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Items List */}
+        <div className="lg:col-span-7 bg-white rounded-2xl border border-bakery-200 p-6 shadow-xs space-y-4">
+          <h3 className="font-serif font-bold text-chocolate text-base border-b border-bakery-100 pb-3 flex items-center gap-2">
+            <ShoppingBag className="w-4 h-4 text-caramel" />
+            <span>Ordered Items</span>
+          </h3>
+
+          <div className="space-y-3 divide-y divide-bakery-100">
+            {order.items?.map((it, idx) => (
+              <div key={idx} className={idx > 0 ? 'pt-3 flex justify-between gap-3' : 'flex justify-between gap-3'}>
+                <div>
+                  <h4 className="font-bold text-chocolate text-xs sm:text-sm">{it.name}</h4>
+                  <div className="flex flex-wrap gap-1.5 pt-1 text-[11px] text-bakery-600">
+                    <span className="font-semibold text-chocolate">Quantity: {it.quantity}</span>
+                    {it.selectedSize && <span>· Size: {it.selectedSize}</span>}
+                    {it.selectedFlavor && <span>· Flavor: {it.selectedFlavor}</span>}
+                  </div>
+                  {it.customizationNote && (
+                    <p className="text-[11px] text-bakery-700 italic pt-1">
+                      Note: "{it.customizationNote}"
+                    </p>
+                  )}
+                  <p className="text-xs text-caramel font-semibold mt-1">
+                    Rs. {it.price.toLocaleString()} each
+                  </p>
+                </div>
+                <div className="text-right shrink-0">
+                  <span className="text-xs sm:text-sm font-bold text-chocolate font-serif">
+                    Rs. {(it.price * it.quantity).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="border-t border-bakery-200 pt-3 flex justify-between items-center text-sm font-bold text-chocolate">
+            <span>Total Amount:</span>
+            <span className="font-serif text-lg text-caramel">
+              Rs. {order.totalAmount?.toLocaleString()}
+            </span>
+          </div>
+        </div>
+
+        {/* Dispatch & Delivery Details */}
+        <div className="lg:col-span-5 space-y-4">
+          <div className="bg-white rounded-2xl border border-bakery-200 p-5 shadow-xs space-y-4">
+            <h3 className="font-serif font-bold text-chocolate text-sm border-b border-bakery-100 pb-2 flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-caramel" />
+              <span>Delivery Details</span>
+            </h3>
+
+            <div className="space-y-3 text-xs text-bakery-700">
+              <div>
+                <span className="text-bakery-500 block text-[11px] uppercase tracking-wider">
+                  Delivery Address:
+                </span>
+                <strong className="text-chocolate font-medium block mt-0.5">
+                  {order.deliveryAddress}
+                </strong>
+              </div>
+
+              <div>
+                <span className="text-bakery-500 block text-[11px] uppercase tracking-wider">
+                  Contact Phone:
+                </span>
+                <strong className="text-chocolate font-medium block mt-0.5">
+                  {order.contactNumber}
+                </strong>
+              </div>
+
+              {order.note && (
+                <div>
+                  <span className="text-bakery-500 block text-[11px] uppercase tracking-wider">
+                    Buyer Note for Seller:
+                  </span>
+                  <p className="text-bakery-700 italic mt-0.5">"{order.note}"</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Baker Details Card */}
+          <div className="bg-white rounded-2xl border border-bakery-200 p-5 shadow-xs space-y-3">
+            <h3 className="font-serif font-bold text-chocolate text-sm border-b border-bakery-100 pb-2 flex items-center gap-2">
+              <Store className="w-4 h-4 text-caramel" />
+              <span>Baker Kitchen</span>
+            </h3>
+
+            <div className="space-y-1.5 text-xs text-bakery-700">
+              <p className="font-bold text-chocolate text-sm">
+                {order.seller?.bakeryName || order.seller?.name || 'Artisan Baker'}
+              </p>
+              {order.seller?.address && (
+                <p className="text-bakery-600">Location: {order.seller.address}</p>
+              )}
+              {order.seller?.phone && (
+                <p className="text-bakery-600 flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5 text-caramel" />
+                  <span>{order.seller.phone}</span>
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -4,11 +4,20 @@ import { AnimatePresence, motion } from 'framer-motion';
 
 // Context Providers
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { LanguageProvider } from './context/LanguageContext';
 import { ToastProvider } from './context/ToastContext';
-import { ThemeProvider } from './context/ThemeContext';
 import { CartProvider } from './context/CartContext';
 import { FEATURES } from './config/features';
+
+// Clean up any legacy language and theme preferences from localStorage
+if (typeof window !== 'undefined' && window.localStorage) {
+  try {
+    localStorage.removeItem('meethacart_lang');
+    localStorage.removeItem('meethacart_lang_selected');
+    localStorage.removeItem('meethacart-theme');
+  } catch (e) {
+    // ignore
+  }
+}
 
 // Common Components
 import Navbar from './components/common/Navbar';
@@ -16,7 +25,6 @@ import Footer from './components/common/Footer';
 import ProtectedRoute from './components/guards/ProtectedRoute';
 import SplashScreen from './components/common/SplashScreen';
 import TopProgressBar from './components/common/TopProgressBar';
-import ThemePicker from './components/common/ThemePicker';
 
 // Public Pages (Milestone 3)
 import Welcome from './pages/Welcome';
@@ -44,6 +52,7 @@ import SellerApprovals from './pages/admin/SellerApprovals';
 import SellerDetail from './pages/admin/SellerDetail';
 import CategoryManager from './pages/admin/CategoryManager';
 import UserList from './pages/admin/UserList';
+import ItemReviews from './pages/admin/ItemReviews';
 import OrdersPlaceholder from './pages/admin/OrdersPlaceholder';
 
 // 404 Not Found Page
@@ -51,7 +60,10 @@ import NotFound from './pages/NotFound';
 
 // Future Pages (Loaded conditionally behind FEATURES flags)
 import CartPage from './pages/buyer/CartPage';
+import CheckoutPage from './pages/buyer/CheckoutPage';
+import OrderConfirmationPage from './pages/buyer/OrderConfirmationPage';
 import OrderTrackingPage from './pages/buyer/OrderTrackingPage';
+import SellerOrders from './pages/seller/SellerOrders';
 import WalletPage from './pages/buyer/WalletPage';
 import NotificationsPage from './pages/buyer/NotificationsPage';
 import CustomRequestsPage from './pages/buyer/CustomRequestsPage';
@@ -67,8 +79,7 @@ const IndexRoute = () => {
   }
 
   const hasVisited = localStorage.getItem('meethacart_guest_visited');
-  const hasLangSelected = localStorage.getItem('meethacart_lang_selected');
-  if (hasVisited || hasLangSelected) {
+  if (hasVisited) {
     return <Home />;
   }
 
@@ -98,7 +109,7 @@ function AppContent() {
     <>
       <TopProgressBar />
       {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
-      <div className="min-h-screen w-full flex flex-col font-sans overflow-x-hidden selection:bg-amber-200 selection:text-amber-900" style={{ backgroundColor: 'var(--color-bg)' }}>
+      <div className="min-h-screen w-full flex flex-col font-sans overflow-x-hidden ajrak-bg-pattern selection:bg-amber-200 selection:text-amber-900" style={{ backgroundColor: 'var(--color-bg)' }}>
         {!isWelcomePage && <Navbar />}
         <main className="flex-1 flex flex-col overflow-x-hidden">
           <AnimatePresence mode="wait">
@@ -123,22 +134,56 @@ function AppContent() {
                 <Route path="/items" element={<BrowseItems />} />
                 <Route path="/items/:id" element={<ItemDetails />} />
 
-                {/* ── Post-Milestone 3 Routes (Locked behind Feature Flags -> 404) ── */}
+                {/* ── M4/M5 routes are enabled; later milestone routes remain feature-gated ── */}
                 <Route
                   path="/cart"
-                  element={FEATURES.CART_AND_CHECKOUT ? <CartPage /> : <NotFound />}
+                  element={
+                    FEATURES.CART_AND_CHECKOUT ? (
+                      <ProtectedRoute allowedRoles={['buyer']}>
+                        <CartPage />
+                      </ProtectedRoute>
+                    ) : <NotFound />
+                  }
                 />
                 <Route
                   path="/checkout"
-                  element={FEATURES.CART_AND_CHECKOUT ? <CartPage /> : <NotFound />}
+                  element={
+                    FEATURES.CART_AND_CHECKOUT ? (
+                      <ProtectedRoute allowedRoles={['buyer']}>
+                        <CheckoutPage />
+                      </ProtectedRoute>
+                    ) : <NotFound />
+                  }
                 />
                 <Route
-                  path="/orders"
-                  element={FEATURES.ORDERS_AND_TRACKING ? <OrderTrackingPage /> : <NotFound />}
+                  path="/orders/confirmation"
+                  element={
+                    FEATURES.CART_AND_CHECKOUT ? (
+                      <ProtectedRoute allowedRoles={['buyer']}>
+                        <OrderConfirmationPage />
+                      </ProtectedRoute>
+                    ) : <NotFound />
+                  }
                 />
                 <Route
                   path="/orders/:id"
-                  element={FEATURES.ORDERS_AND_TRACKING ? <OrderTrackingPage /> : <NotFound />}
+                  element={
+                    FEATURES.ORDERS_AND_TRACKING ? (
+                      <ProtectedRoute allowedRoles={['buyer']}>
+                        <OrderTrackingPage />
+                      </ProtectedRoute>
+                    ) : <NotFound />
+                  }
+                />
+                <Route
+                  path="/seller/orders"
+                  element={
+                    FEATURES.ORDERS_AND_TRACKING ? (
+                      <ProtectedRoute allowedRoles={['seller', 'admin']}>
+                        <SellerOrders />
+                      </ProtectedRoute>
+                    ) : <NotFound />
+                  }
                 />
                 <Route
                   path="/wallet"
@@ -240,6 +285,14 @@ function AppContent() {
                   }
                 />
                 <Route
+                  path="/admin/item-reviews"
+                  element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                      <ItemReviews />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/admin/orders"
                   element={
                     <ProtectedRoute allowedRoles={['admin']}>
@@ -255,9 +308,6 @@ function AppContent() {
           </AnimatePresence>
         </main>
         {!isWelcomePage && <Footer />}
-
-        {/* Floating Theme Switcher on Pre-login / Auth / Welcome Pages */}
-        {isAuthPage && <ThemePicker variant="floating" />}
       </div>
     </>
   );
@@ -265,19 +315,15 @@ function AppContent() {
 
 function App() {
   return (
-    <ThemeProvider>
-      <LanguageProvider>
-        <AuthProvider>
-          <CartProvider>
-            <ToastProvider>
-              <Router>
-                <AppContent />
-              </Router>
-            </ToastProvider>
-          </CartProvider>
-        </AuthProvider>
-      </LanguageProvider>
-    </ThemeProvider>
+    <AuthProvider>
+      <CartProvider>
+        <ToastProvider>
+          <Router>
+            <AppContent />
+          </Router>
+        </ToastProvider>
+      </CartProvider>
+    </AuthProvider>
   );
 }
 

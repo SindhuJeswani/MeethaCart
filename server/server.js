@@ -9,6 +9,8 @@ import userRoutes from './routes/userRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
 import itemRoutes from './routes/itemRoutes.js';
+import cartRoutes from './routes/cartRoutes.js';
+import orderRoutes from './routes/orderRoutes.js';
 
 // ES Module directory resolution
 const __filename = fileURLToPath(import.meta.url);
@@ -57,12 +59,14 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Mount Routes (M1, M2 & M3)
+// Mount Routes (M1-M5)
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/items', itemRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/orders', orderRoutes);
 
 // 404 handler for undefined API routes
 app.use('/api/*', (req, res) => {
@@ -105,7 +109,6 @@ const ensureAdminExists = async () => {
         role: 'admin',
         isVerified: true,
         sellerStatus: 'approved',
-        preferredLanguage: 'en',
         phone: '03000000001'
       });
       console.log('👑 [Auth] Admin account initialized.');
@@ -138,6 +141,11 @@ const startServer = async () => {
       const { seedDatabase } = await import('./scripts/seed.js');
       await seedDatabase();
     }
+    const { Item } = await import('./models/Item.js');
+    await Item.updateMany(
+      { approvalStatus: { $exists: false } },
+      { $set: { approvalStatus: 'Approved' } }
+    );
     app.listen(PORT, () => {
       console.log(`\n🍰 ===============================================`);
       console.log(`🍰 MeethaCart Server running on http://localhost:${PORT}`);

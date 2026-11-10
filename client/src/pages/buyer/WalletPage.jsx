@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslation } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
 import AnimatedCounter from '../../components/common/AnimatedCounter';
 import {
@@ -58,7 +57,6 @@ const INITIAL_TRANSACTIONS = [
 ];
 
 const WalletPage = () => {
-  const { isUrdu } = useTranslation();
   const toast = useToast();
   const [balance, setBalance] = useState(8500);
   const [transactions, setTransactions] = useState(INITIAL_TRANSACTIONS);
@@ -112,12 +110,10 @@ const WalletPage = () => {
       <div className="border-b border-bakery-200 pb-4">
         <h1 className="text-2xl sm:text-3xl font-serif font-bold text-chocolate flex items-center gap-2.5">
           <Wallet className="w-7 h-7 text-caramel" />
-          <span>{isUrdu ? 'میتھا کارٹ والیٹ اور ادائیگی' : 'MeethaCart Wallet & Payments'}</span>
+          <span>MeethaCart Wallet & Payments</span>
         </h1>
         <p className="text-xs text-bakery-600 mt-0.5">
-          {isUrdu
-            ? 'فوری آرڈر، ایک کلک ریفنڈز اور محفوظ بیکری ادائیگی کا نظام'
-            : 'Store credits for 1-click checkout, seamless bakery refunds and instant cash top-ups.'}
+          Store credits for 1-click checkout, seamless bakery refunds and instant cash top-ups.
         </p>
       </div>
 
@@ -152,7 +148,7 @@ const WalletPage = () => {
               className="btn-primary text-xs py-2.5 px-5 bg-caramel hover:bg-caramel-dark text-white font-bold inline-flex items-center justify-center gap-2 shadow-xs"
             >
               <PlusCircle className="w-4 h-4" />
-              <span>{isUrdu ? 'رقم جمع کریں' : 'Top Up Wallet'}</span>
+              <span>Top Up Wallet</span>
             </a>
             <button
               onClick={simulateFailure}

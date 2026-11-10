@@ -8,7 +8,10 @@ import {
   getUsers,
   getAdminOrders,
   deleteUser,
-  updateUserRole
+  updateUserRole,
+  getItemReviews,
+  acceptItem,
+  rejectItem
 } from '../controllers/adminController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { authorize } from '../middleware/roleMiddleware.js';
@@ -26,6 +29,11 @@ router.get('/metrics', getMetrics);
 router.get('/sellers', getSellers);
 router.get('/sellers/:id', getSellerDetails);
 router.patch('/sellers/:id/status', updateSellerStatus);
+
+// Bakery item reviews & moderation
+router.get('/items', getItemReviews);
+router.patch('/items/:id/accept', acceptItem);
+router.patch('/items/:id/reject', rejectItem);
 
 // User management directory
 router.get('/users', getUsers);

@@ -12,6 +12,8 @@ import {
   Eye,
   ShoppingBag,
   Clock,
+  CheckCircle2,
+  XCircle,
   ToggleLeft,
   ToggleRight,
   AlertCircle
@@ -197,6 +199,7 @@ const SellerItems = () => {
                   <th className="py-3 px-4">Category</th>
                   <th className="py-3 px-4">Price</th>
                   <th className="py-3 px-4">Stock</th>
+                  <th className="py-3 px-4">Status</th>
                   <th className="py-3 px-4">Availability</th>
                   <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
@@ -243,6 +246,37 @@ const SellerItems = () => {
 
                       <td className="py-3.5 px-4">
                         <span className="font-medium text-bakery-800">{it.stock ?? 0} units</span>
+                      </td>
+
+                      <td className="py-3.5 px-4">
+                        {it.approvalStatus === 'Approved' ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            Approved
+                          </span>
+                        ) : it.approvalStatus === 'Rejected' ? (
+                          <div className="space-y-1">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                              <XCircle className="w-3.5 h-3.5" />
+                              Rejected
+                            </span>
+                            {it.rejectionReason && (
+                              <div className="text-[11px] text-rose-800 bg-rose-50 p-2 rounded-lg border border-rose-200 max-w-xs break-words">
+                                <span className="font-bold">Reason:</span> {it.rejectionReason}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div>
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                              <Clock className="w-3.5 h-3.5" />
+                              Pending Review
+                            </span>
+                            <span className="block mt-0.5 text-[10px] text-bakery-500">
+                              Awaiting admin approval
+                            </span>
+                          </div>
+                        )}
                       </td>
 
                       <td className="py-3.5 px-4">

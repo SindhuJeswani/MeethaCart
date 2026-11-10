@@ -31,10 +31,10 @@ class OtpService {
     });
 
     if (recentOtpsInHour >= MAX_HOURLY_RESENDS) {
-      throw new Error('Hourly OTP request limit reached. Please try again after 1 hour.');
+      throw new Error('Too many requests. Please try again later.');
     }
 
-    // Check last active OTP cooldown
+    // Check last active OTP cooldown (1 request per 60 seconds)
     const latestActive = await Otp.findOne({
       email: normalizedEmail,
       purpose,
@@ -42,8 +42,7 @@ class OtpService {
     }).sort({ createdAt: -1 });
 
     if (latestActive && new Date() < latestActive.resendAvailableAt) {
-      const waitSeconds = Math.ceil((latestActive.resendAvailableAt.getTime() - Date.now()) / 1000);
-      throw new Error(`Please wait ${waitSeconds} seconds before requesting a new OTP.`);
+      throw new Error('Too many requests. Please try again later.');
     }
 
     // Invalidate previous unconsumed OTPs for this purpose
@@ -59,6 +58,9 @@ class OtpService {
     const expiresAt = new Date(Date.now() + OTP_VALIDITY_MINUTES * 60 * 1000);
     const resendAvailableAt = new Date(Date.now() + RESEND_COOLDOWN_SECONDS * 1000);
 
+    // 3. Dispatch email BEFORE persisting OTP document so failures leave no pending record
+    await emailService.sendOtpEmail(normalizedEmail, plainOtp, purpose);
+
     await Otp.create({
       email: normalizedEmail,
       otpHash,
@@ -68,9 +70,6 @@ class OtpService {
       attempts: 0,
       consumed: false
     });
-
-    // 3. Dispatch email
-    await emailService.sendOtpEmail(normalizedEmail, plainOtp, purpose);
 
     return {
       success: true,

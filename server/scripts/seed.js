@@ -37,7 +37,6 @@ export const seedDatabase = async () => {
     role: 'admin',
     isVerified: true,
     sellerStatus: 'approved',
-    preferredLanguage: 'en',
     phone: '03001234500',
     address: 'Clifton Block 2, Karachi'
   });
@@ -54,8 +53,7 @@ export const seedDatabase = async () => {
     phone: '03001234501',
     address: 'Clifton Block 4, Karachi',
     isVerified: true,
-    sellerStatus: 'approved',
-    preferredLanguage: 'en'
+    sellerStatus: 'approved'
   });
 
   const sellerTariq = await User.create({
@@ -68,8 +66,7 @@ export const seedDatabase = async () => {
     phone: '03001234502',
     address: 'Burns Road, Saddar, Karachi',
     isVerified: true,
-    sellerStatus: 'approved',
-    preferredLanguage: 'ur'
+    sellerStatus: 'approved'
   });
 
   const sellerZainab = await User.create({
@@ -82,8 +79,7 @@ export const seedDatabase = async () => {
     phone: '03001234503',
     address: 'Gulshan-e-Iqbal Block 13-D, Karachi',
     isVerified: true,
-    sellerStatus: 'approved',
-    preferredLanguage: 'en'
+    sellerStatus: 'approved'
   });
 
   const sellerBilal = await User.create({
@@ -96,8 +92,7 @@ export const seedDatabase = async () => {
     phone: '03001234504',
     address: 'DHA Phase 6, Karachi',
     isVerified: true,
-    sellerStatus: 'pending',
-    preferredLanguage: 'en'
+    sellerStatus: 'pending'
   });
 
   const sellerHamza = await User.create({
@@ -110,8 +105,7 @@ export const seedDatabase = async () => {
     phone: '03001234505',
     address: 'Bahadurabad, Karachi',
     isVerified: true,
-    sellerStatus: 'blocked',
-    preferredLanguage: 'ur'
+    sellerStatus: 'blocked'
   });
 
   console.log('✓ Created 5 Karachi sellers (3 Approved, 1 Pending, 1 Blocked)');
@@ -122,36 +116,31 @@ export const seedDatabase = async () => {
       name: 'Sara Ahmed',
       email: 'sara.ahmed@meethacart.pk',
       phone: '03001234511',
-      address: 'House 42, PECHS Block 2, Karachi',
-      preferredLanguage: 'en'
+      address: 'House 42, PECHS Block 2, Karachi'
     },
     {
       name: 'Omer Farooq',
       email: 'omer.farooq@meethacart.pk',
       phone: '03001234512',
-      address: 'Flat 3B, North Nazimabad Block H, Karachi',
-      preferredLanguage: 'ur'
+      address: 'Flat 3B, North Nazimabad Block H, Karachi'
     },
     {
       name: 'Hira Mani',
       email: 'hira.mani@meethacart.pk',
       phone: '03001234513',
-      address: 'Bungalow 12, Clifton Block 8, Karachi',
-      preferredLanguage: 'en'
+      address: 'Bungalow 12, Clifton Block 8, Karachi'
     },
     {
       name: 'Usman Qureshi',
       email: 'usman.qureshi@meethacart.pk',
       phone: '03001234514',
-      address: 'Plot 7, Bahadurabad Main Roundabout, Karachi',
-      preferredLanguage: 'ur'
+      address: 'Plot 7, Bahadurabad Main Roundabout, Karachi'
     },
     {
       name: 'Mahnoor Baloch',
       email: 'mahnoor.baloch@meethacart.pk',
       phone: '03001234515',
-      address: 'Falcon Complex, Malir Cantt, Karachi',
-      preferredLanguage: 'en'
+      address: 'Falcon Complex, Malir Cantt, Karachi'
     }
   ];
 
@@ -231,6 +220,9 @@ export const seedDatabase = async () => {
       stock: 8,
       preparationTimeHours: 12,
       isEggless: false,
+      sizes: [{ name: '1 lb', price: 1600 }, { name: '2 lbs', price: 2800 }],
+      flavors: ['Dark Chocolate', 'Mocha'],
+      allowsCustomization: true,
       images: ['https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=600&auto=format&fit=crop']
     },
     {
@@ -277,6 +269,8 @@ export const seedDatabase = async () => {
       stock: 25,
       preparationTimeHours: 4,
       isEggless: true,
+      sizes: [{ name: '500 g', price: 750 }, { name: '1 kg', price: 1450 }],
+      flavors: ['Classic Rose Cardamom', 'Kewra'],
       images: ['https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&auto=format&fit=crop']
     },
     {
@@ -500,7 +494,7 @@ export const seedDatabase = async () => {
     }
   ];
 
-  await Item.insertMany(sampleItems);
+  await Item.insertMany(sampleItems.map((item) => ({ ...item, approvalStatus: 'Approved' })));
   console.log(`✓ Seeded ${sampleItems.length} Realistic Karachi Bakery Items.`);
 
   console.log('\n🎉 =======================================================');

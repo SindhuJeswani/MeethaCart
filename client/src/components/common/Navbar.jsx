@@ -2,36 +2,36 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
-import { useTranslation } from '../../context/LanguageContext';
-import { useTheme } from '../../context/ThemeContext';
+import { useCart } from '../../context/CartContext';
 import Container from './Container';
 import Logo from './Logo';
-import ThemePicker from './ThemePicker';
+import RoleChoiceModal from './RoleChoiceModal';
 import {
   Search,
   LogOut,
   Menu,
   X,
-  Globe,
   ChevronDown,
   LayoutDashboard,
   ShoppingBag,
+  ShoppingCart,
   Package,
   ShieldCheck,
-  Compass
+  Compass,
+  Home
 } from 'lucide-react';
 import { buttonTap, TIMING, EASING } from '../../animations/motion';
 
 const Navbar = () => {
   const { user, logout, isAuthenticated } = useAuth();
-  const { lang, toggleLanguage, t } = useTranslation();
-  const { isAjrak, isStreet } = useTheme();
+  const { cartCount } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [showRoleModal, setShowRoleModal] = useState(false);
   const userMenuRef = useRef(null);
 
   // Close user dropdown when clicking outside
@@ -72,18 +72,13 @@ const Navbar = () => {
     return location.pathname.startsWith(path);
   };
 
-  // Milestone 3 Scope Navigation Links
   const navLinks = [
-    { to: '/items', label: t('nav.browseItems') || 'Browse Items', icon: Compass }
+    { to: '/', label: 'Home', icon: Home },
+    { to: '/items', label: 'Browse Items', icon: Compass }
   ];
 
   const roleLabel = (() => {
     if (!user?.role) return '';
-    if (lang === 'ur') {
-      if (user.role === 'admin') return 'ایڈمن';
-      if (user.role === 'seller') return 'بیکر';
-      return 'خریدار';
-    }
     if (user.role === 'admin') return 'Admin';
     if (user.role === 'seller') return 'Baker';
     return 'Buyer';
@@ -98,9 +93,9 @@ const Navbar = () => {
         className="w-full sticky top-0 left-0 right-0 z-40 bg-[#4A2C1A] text-white shadow-md border-b border-white/10 select-none"
         style={{ backgroundColor: 'var(--nav-bg)' }}
       >
-        <Container className="flex items-center justify-between h-16 gap-3 lg:gap-5">
+        <Container className="flex items-center justify-between h-16 gap-3 lg:gap-4">
           
-          {/* Logo with SL monogram */}
+          {/* Logo */}
           <div className="flex items-center shrink-0">
             <Logo variant="light" size={34} />
           </div>
@@ -116,7 +111,7 @@ const Navbar = () => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t('nav.searchPlaceholder') || 'Search handcrafted cakes, mithai, bakes...'}
+                placeholder="Search handcrafted cakes, mithai, bakes..."
                 className="w-full bg-transparent border-none text-white placeholder-white/45 text-xs px-2.5 focus:outline-none"
               />
               {searchQuery && (
@@ -135,35 +130,50 @@ const Navbar = () => {
           {/* Desktop Right Action Controls */}
           <div className="flex items-center gap-2 lg:gap-2.5 shrink-0">
             
+            {/* Desktop Home Link */}
+            <Link
+              to="/"
+              className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium tracking-wide transition-all ${
+                isActive('/')
+                  ? 'bg-white/20 text-white font-semibold shadow-xs'
+                  : 'text-amber-100/80 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              <Home className="w-3.5 h-3.5 text-amber-300/90 shrink-0" />
+              <span>Home</span>
+            </Link>
+
             {/* Desktop Browse Items Link */}
             <Link
               to="/items"
-              className={`hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium tracking-wide transition-all ${
+              className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium tracking-wide transition-all ${
                 isActive('/items')
                   ? 'bg-white/20 text-white font-semibold shadow-xs'
                   : 'text-amber-100/80 hover:text-white hover:bg-white/10'
               }`}
             >
               <Compass className="w-3.5 h-3.5 text-amber-300/90 shrink-0" />
-              <span>{t('nav.browseItems') || 'Browse Items'}</span>
+              <span>Browse Items</span>
             </Link>
 
-            {/* Theme Picker Component */}
-            <ThemePicker />
-
-            {/* Language toggle: Rounded-full pill */}
-            <motion.button
-              whileTap={buttonTap}
-              whileHover={{ scale: 1.03 }}
-              onClick={toggleLanguage}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/15 bg-white/[0.06] hover:bg-white/12 text-xs font-medium text-amber-100 hover:text-white transition-all shrink-0 cursor-pointer"
-              title={lang === 'en' ? 'اردو میں تبدیل کریں' : 'Switch to English'}
-            >
-              <Globe className="w-3.5 h-3.5 text-amber-300/90 shrink-0" />
-              <span style={{ fontFamily: "'Noto Nastaliq Urdu', 'Noto Naskh Arabic', sans-serif" }}>
-                {lang === 'en' ? 'اردو' : 'English'}
-              </span>
-            </motion.button>
+            {isAuthenticated && user?.role === 'buyer' && (
+              <Link
+                to="/cart"
+                className={`relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium tracking-wide transition-all ${
+                  isActive('/cart')
+                    ? 'bg-white/20 text-white font-semibold shadow-xs'
+                    : 'text-amber-100/80 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <ShoppingCart className="w-3.5 h-3.5 text-amber-300/90 shrink-0" />
+                <span>Cart</span>
+                {cartCount > 0 && (
+                  <span className="min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+            )}
 
             {/* Authentication state */}
             {isAuthenticated ? (
@@ -224,14 +234,24 @@ const Navbar = () => {
                         </Link>
 
                         {user?.role === 'seller' && (
-                          <Link
-                            to="/seller/items"
-                            onClick={() => setUserMenuOpen(false)}
-                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-amber-100 hover:text-white hover:bg-white/10 transition-colors"
-                          >
-                            <Package className="w-4 h-4 text-amber-300 shrink-0" />
-                            <span>Manage Bakery Items</span>
-                          </Link>
+                          <>
+                            <Link
+                              to="/seller/orders"
+                              onClick={() => setUserMenuOpen(false)}
+                              className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-amber-100 hover:text-white hover:bg-white/10 transition-colors"
+                            >
+                              <ShoppingBag className="w-4 h-4 text-amber-300 shrink-0" />
+                              <span>Orders</span>
+                            </Link>
+                            <Link
+                              to="/seller/items"
+                              onClick={() => setUserMenuOpen(false)}
+                              className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-amber-100 hover:text-white hover:bg-white/10 transition-colors"
+                            >
+                              <Package className="w-4 h-4 text-amber-300 shrink-0" />
+                              <span>Manage Bakery Items</span>
+                            </Link>
+                          </>
                         )}
 
                         {user?.role === 'admin' && (
@@ -263,7 +283,7 @@ const Navbar = () => {
                         className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-red-300 hover:text-red-100 hover:bg-red-500/20 transition-colors cursor-pointer"
                       >
                         <LogOut className="w-4 h-4 text-red-400 shrink-0" />
-                        <span>{t('nav.logout') || 'Sign Out'}</span>
+                        <span>Sign Out</span>
                       </button>
                     </motion.div>
                   )}
@@ -275,14 +295,15 @@ const Navbar = () => {
                   to="/login"
                   className="px-3.5 py-1.5 text-xs font-semibold text-amber-100 hover:text-white rounded-full hover:bg-white/10 transition-all whitespace-nowrap"
                 >
-                  {t('nav.login') || 'Sign in'}
+                  Sign in
                 </Link>
-                <Link
-                  to="/register"
-                  className="btn-primary text-xs py-1.5 px-4 rounded-full font-semibold shadow-xs hover:scale-[1.02] active:scale-[0.98] transition-all whitespace-nowrap"
+                <button
+                  type="button"
+                  onClick={() => setShowRoleModal(true)}
+                  className="btn-primary text-xs py-1.5 px-4 rounded-full font-semibold shadow-xs hover:scale-[1.02] active:scale-[0.98] transition-all whitespace-nowrap cursor-pointer"
                 >
-                  {t('nav.register') || 'Register'}
-                </Link>
+                  Register
+                </button>
               </div>
             )}
 
@@ -302,14 +323,6 @@ const Navbar = () => {
         {/* Sindhi Ajrak Geometric Block-Print Band */}
         <div className="ajrak-pattern-band" />
       </motion.header>
-
-      {/* Bold Street Market Marquee Strip */}
-      <div className="street-marquee-strip">
-        <div className="animate-marquee inline-block whitespace-nowrap font-bold text-xs">
-          FRESH HOMEMADE BAKES • KARACHI ARTISAN CHEFS • CUSTOM CAKES • LOCAL HOME BAKERS • 100% PURE DESI GHEE MITHAI •&nbsp;
-          FRESH HOMEMADE BAKES • KARACHI ARTISAN CHEFS • CUSTOM CAKES • LOCAL HOME BAKERS • 100% PURE DESI GHEE MITHAI •&nbsp;
-        </div>
-      </div>
 
       {/* Mobile Drawer Menu */}
       <AnimatePresence>
@@ -354,7 +367,7 @@ const Navbar = () => {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={t('nav.searchPlaceholder') || 'Search items...'}
+                  placeholder="Search items..."
                   className="flex-1 px-2 py-1.5 bg-transparent text-white text-xs placeholder-white/50 focus:outline-none"
                 />
                 <button type="submit" className="p-1 text-white/70">
@@ -378,6 +391,20 @@ const Navbar = () => {
                   </Link>
                 ))}
 
+                {isAuthenticated && user?.role === 'buyer' && (
+                  <Link
+                    to="/cart"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-amber-100/80 hover:text-white hover:bg-white/10 transition-all"
+                  >
+                    <span className="flex items-center gap-2">
+                      <ShoppingCart className="w-4 h-4 text-amber-300" />
+                      <span>Cart</span>
+                    </span>
+                    {cartCount > 0 && <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-bold">{cartCount}</span>}
+                  </Link>
+                )}
+
                 {isAuthenticated && (
                   <>
                     <Link
@@ -390,14 +417,24 @@ const Navbar = () => {
                     </Link>
 
                     {user?.role === 'seller' && (
-                      <Link
-                        to="/seller/items"
-                        onClick={() => setMobileOpen(false)}
-                        className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm font-medium text-amber-100/80 hover:text-white hover:bg-white/10 transition-all"
-                      >
-                        <Package className="w-4 h-4 text-amber-300" />
-                        <span>Manage Items</span>
-                      </Link>
+                      <>
+                        <Link
+                          to="/seller/orders"
+                          onClick={() => setMobileOpen(false)}
+                          className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm font-medium text-amber-100/80 hover:text-white hover:bg-white/10 transition-all"
+                        >
+                          <ShoppingBag className="w-4 h-4 text-amber-300" />
+                          <span>Orders</span>
+                        </Link>
+                        <Link
+                          to="/seller/items"
+                          onClick={() => setMobileOpen(false)}
+                          className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm font-medium text-amber-100/80 hover:text-white hover:bg-white/10 transition-all"
+                        >
+                          <Package className="w-4 h-4 text-amber-300" />
+                          <span>Manage Items</span>
+                        </Link>
+                      </>
                     )}
 
                     {user?.role === 'admin' && (
@@ -413,24 +450,14 @@ const Navbar = () => {
                   </>
                 )}
 
-                <div className="pt-3 border-t border-white/10 flex items-center justify-between mt-3">
-                  <button
-                    onClick={toggleLanguage}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/20 text-xs font-semibold text-amber-100 hover:text-white hover:bg-white/10 transition-all"
-                  >
-                    <Globe className="w-3.5 h-3.5 text-amber-300" />
-                    <span style={{ fontFamily: "'Noto Nastaliq Urdu', 'Noto Naskh Arabic', sans-serif" }}>
-                      {lang === 'en' ? 'اردو' : 'English'}
-                    </span>
-                  </button>
-
+                <div className="pt-3 border-t border-white/10 flex items-center justify-end mt-3">
                   {isAuthenticated ? (
                     <button
                       onClick={handleLogout}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-red-300 hover:bg-red-500/10 transition-all"
                     >
                       <LogOut className="w-3.5 h-3.5" />
-                      {t('nav.logout') || 'Sign out'}
+                      Sign out
                     </button>
                   ) : (
                     <div className="flex items-center gap-2">
@@ -439,15 +466,18 @@ const Navbar = () => {
                         onClick={() => setMobileOpen(false)}
                         className="px-3 py-1.5 text-xs font-medium text-amber-100 hover:text-white rounded-full hover:bg-white/10 transition-all"
                       >
-                        {t('nav.login') || 'Sign in'}
+                        Sign in
                       </Link>
-                      <Link
-                        to="/register"
-                        onClick={() => setMobileOpen(false)}
-                        className="btn-primary text-xs py-1.5 px-3 rounded-full"
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMobileOpen(false);
+                          setShowRoleModal(true);
+                        }}
+                        className="btn-primary text-xs py-1.5 px-3 rounded-full cursor-pointer"
                       >
-                        {t('nav.register') || 'Register'}
-                      </Link>
+                        Register
+                      </button>
                     </div>
                   )}
                 </div>
@@ -456,6 +486,16 @@ const Navbar = () => {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Role Selection Modal */}
+      <RoleChoiceModal
+        isOpen={showRoleModal}
+        onClose={() => setShowRoleModal(false)}
+        onSelectRole={(role) => {
+          setShowRoleModal(false);
+          navigate(`/register?role=${role}`);
+        }}
+      />
     </>
   );
 };

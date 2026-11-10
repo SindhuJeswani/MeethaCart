@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
-import { useTranslation } from '../../context/LanguageContext';
 import { ShieldCheck, RefreshCw, AlertCircle, CheckCircle2, ArrowRight, Info, Check } from 'lucide-react';
 import AuthLayout from '../../components/auth/AuthLayout';
 import {
@@ -20,7 +19,6 @@ const VerifyOtp = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { verifySignupOtp, verifyLoginOtp, resendOtp, pendingAuth } = useAuth();
-  const { t } = useTranslation();
 
   const email = location.state?.email || pendingAuth?.email || '';
   const purpose = location.state?.purpose || pendingAuth?.purpose || 'signup_verification';
@@ -224,6 +222,41 @@ const VerifyOtp = () => {
       footerLinkAction="Back to sign in"
       footerLinkTo="/login"
     >
+      {/* Email Display with Wrong Email? Change it link */}
+      {email && (
+        <div className="mb-4 p-3 rounded-xl bg-amber-50/70 border border-amber-950/[0.08] flex items-center justify-between text-xs">
+          <div className="truncate mr-2">
+            <span className="text-bakery-500 block text-[10px] uppercase font-bold tracking-wider">Recipient</span>
+            <span className="font-semibold text-chocolate truncate block">{email}</span>
+          </div>
+          {purpose === 'signup_verification' ? (
+            <button
+              type="button"
+              onClick={() => {
+                const stateData = location.state?.formData || {};
+                navigate(`/register?role=${location.state?.role || 'buyer'}`, {
+                  state: {
+                    email,
+                    role: location.state?.role || 'buyer',
+                    ...stateData
+                  }
+                });
+              }}
+              className="text-xs font-bold text-caramel hover:text-caramel-dark underline shrink-0 cursor-pointer"
+            >
+              Wrong email? Change it
+            </button>
+          ) : (
+            <Link
+              to="/forgot-password"
+              className="text-xs font-bold text-caramel hover:text-caramel-dark underline shrink-0"
+            >
+              Wrong email? Change it
+            </Link>
+          )}
+        </div>
+      )}
+
       {/* Dev Mode Banner (Quick fill for developer convenience) */}
       <AnimatePresence>
         {devOtp && (
@@ -264,7 +297,7 @@ const VerifyOtp = () => {
       <div className="mb-4 p-3 rounded-lg bg-bakery-100 border border-bakery-200 text-xs text-bakery-800 flex items-start gap-2">
         <Info className="w-4 h-4 text-caramel shrink-0 mt-0.5" />
         <p className="leading-relaxed">
-          {t('auth.spamDisclaimer') || 'If you do not see the email in your inbox within a minute, please check your spam or junk folder.'}
+          If you do not see the email in your inbox within a minute, please check your spam or junk folder.
         </p>
       </div>
 
@@ -339,7 +372,7 @@ const VerifyOtp = () => {
             {/* 6 Individual Staggered OTP Input Boxes */}
             <div>
               <label className="block text-[11px] font-bold uppercase tracking-wider text-bakery-700/90 mb-3 text-center">
-                {t('auth.enterOtp') || 'Enter 6-Digit Verification Code'} <span className="text-rose-500">*</span>
+                Enter 6-Digit Verification Code <span className="text-rose-500">*</span>
               </label>
 
               <motion.div
@@ -486,7 +519,7 @@ const VerifyOtp = () => {
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-xs text-caramel bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-colors shadow-xs"
                     >
                       <RefreshCw className={`w-3.5 h-3.5 ${isResending ? 'animate-spin' : ''}`} />
-                      <span>{t('auth.resendOtp') || 'Resend verification code'}</span>
+                      <span>Resend verification code</span>
                     </motion.button>
                   )}
                 </AnimatePresence>
@@ -506,7 +539,7 @@ const VerifyOtp = () => {
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
-                  <span>{t('auth.verifyButton') || 'Verify & Continue'}</span>
+                  <span>Verify & Continue</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}

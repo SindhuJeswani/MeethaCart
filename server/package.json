@@ -1,7 +1,7 @@
 {
   "name": "meethacart-server",
   "version": "1.0.0",
-  "description": "Backend API for MeethaCart - AI-Powered Bilingual Bakery Marketplace",
+  "description": "Backend API for MeethaCart - Bakery Marketplace",
   "main": "server.js",
   "type": "module",
   "scripts": {

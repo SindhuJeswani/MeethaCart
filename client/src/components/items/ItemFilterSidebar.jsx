@@ -1,6 +1,5 @@
 import React from 'react';
 import { Filter, RotateCcw } from 'lucide-react';
-import { useTranslation } from '../../context/LanguageContext';
 
 const ItemFilterSidebar = ({
   categories = [],
@@ -12,8 +11,6 @@ const ItemFilterSidebar = ({
   onToggleEggless,
   onResetFilters
 }) => {
-  const { t, translateCategory } = useTranslation();
-
   return (
     <aside className="w-full lg:w-60 space-y-5 shrink-0">
       <div className="card-bakery p-4 space-y-5">
@@ -23,7 +20,7 @@ const ItemFilterSidebar = ({
           <div className="flex items-center gap-1.5">
             <Filter className="w-4 h-4 text-caramel" />
             <h3 className="font-semibold text-chocolate text-sm">
-              {t('items.filters') || 'Filters'}
+              Filters
             </h3>
           </div>
           <button
@@ -32,14 +29,14 @@ const ItemFilterSidebar = ({
             className="text-xs text-caramel hover:text-chocolate flex items-center gap-1 transition-colors"
           >
             <RotateCcw className="w-3 h-3" />
-            <span>{t('items.reset') || 'Reset'}</span>
+            <span>Reset</span>
           </button>
         </div>
 
         {/* Categories Section */}
         <div className="space-y-2">
           <label className="block text-xs font-semibold text-bakery-700">
-            {t('items.category') || 'Category'}
+            Category
           </label>
           <div className="space-y-1">
             <button
@@ -51,7 +48,7 @@ const ItemFilterSidebar = ({
                   : 'text-bakery-700 hover:bg-bakery-100'
               }`}
             >
-              <span>{t('items.allItems') || 'All items'}</span>
+              <span>All items</span>
               {selectedCategory === 'all' && (
                 <span className="w-1.5 h-1.5 rounded-full bg-caramel"></span>
               )}
@@ -68,7 +65,7 @@ const ItemFilterSidebar = ({
                     : 'text-bakery-700 hover:bg-bakery-100'
                 }`}
               >
-                <span>{translateCategory(cat.name || cat.slug)}</span>
+                <span>{cat.name || cat.slug}</span>
                 {(selectedCategory === cat.slug || selectedCategory === cat._id) && (
                   <span className="w-1.5 h-1.5 rounded-full bg-caramel"></span>
                 )}
@@ -81,7 +78,7 @@ const ItemFilterSidebar = ({
         <div className="space-y-2.5 pt-3 border-t border-bakery-200">
           <div className="flex items-center justify-between">
             <label className="text-xs font-semibold text-bakery-700">
-              {t('items.maxPrice') || 'Max price'}
+              Max price
             </label>
             <span className="text-xs font-bold text-chocolate bg-bakery-100 px-2 py-0.5 rounded">
               Rs. {Number(maxPrice).toLocaleString()}
@@ -107,7 +104,7 @@ const ItemFilterSidebar = ({
         {/* Dietary Filter (Eggless) */}
         <div className="pt-3 border-t border-bakery-200">
           <label className="text-xs font-semibold text-bakery-700 block mb-2">
-            {t('items.dietaryPreference') || 'Dietary preference'}
+            Dietary preference
           </label>
           <label className="flex items-center gap-2 p-2 rounded-md hover:bg-bakery-100 transition-colors cursor-pointer border border-bakery-200">
             <input
@@ -117,7 +114,7 @@ const ItemFilterSidebar = ({
               className="w-4 h-4 rounded text-caramel focus:ring-caramel border-bakery-300"
             />
             <span className="text-xs font-medium text-bakery-800">
-              {t('items.egglessOnly') || 'Eggless only'}
+              Eggless only
             </span>
           </label>
         </div>

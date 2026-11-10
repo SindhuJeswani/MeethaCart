@@ -22,13 +22,13 @@ export const getMe = async (req, res) => {
 };
 
 /**
- * @desc    Update user profile & language preference
+ * @desc    Update user profile
  * @route   PUT /api/users/profile
  * @access  Protected
  */
 export const updateProfile = async (req, res) => {
   try {
-    const { name, phone, bio, bakeryName, address, avatar, preferredLanguage, role } = req.body;
+    const { name, phone, bio, bakeryName, address, avatar, role } = req.body;
 
     // Admin-only protection: reject any attempt to elevate role to admin
     if (role === 'admin') {
@@ -48,10 +48,6 @@ export const updateProfile = async (req, res) => {
     if (bio !== undefined) user.bio = bio.trim();
     if (address !== undefined) user.address = address.trim();
     if (avatar !== undefined) user.avatar = avatar;
-
-    if (preferredLanguage && ['en', 'ur'].includes(preferredLanguage)) {
-      user.preferredLanguage = preferredLanguage;
-    }
 
     // Sellers can update their bakery brand name
     if (user.role === 'seller' && bakeryName) {
@@ -93,12 +89,16 @@ export const getPublicSellerProfile = async (req, res) => {
 
     // Dynamic import to prevent circular dependency if Item model is loaded later
     let items = [];
-    try {
+    if (seller.sellerStatus === 'approved') {
       const { Item } = await import('../models/Item.js');
-      items = await Item.find({ seller: id, isAvailable: true }).populate('category', 'name slug');
-    } catch (e) {
-      // Items collection may not have any docs yet
-      items = [];
+      items = await Item.find({
+        seller: id,
+        isAvailable: true,
+        stock: { $gt: 0 },
+        approvalStatus: 'Approved'
+      })
+        .populate('category', 'name slug')
+        .populate('seller', 'name bakeryName avatar address sellerStatus');
     }
 
     return res.status(200).json({

@@ -873,11 +873,6 @@ const SellerDetailView = ({ sellerId, onStatusChange, isModal = false, onClose }
             </div>
 
             <div className="p-3.5 rounded-xl bg-bakery-50/70 border border-bakery-200/70 space-y-1">
-              <span className="text-bakery-400 font-semibold uppercase tracking-wider text-[10px]">Language Preference</span>
-              <div className="font-bold text-chocolate">{seller.preferredLanguage === 'ur' ? 'Urdu (اردو)' : 'English'}</div>
-            </div>
-
-            <div className="p-3.5 rounded-xl bg-bakery-50/70 border border-bakery-200/70 space-y-1">
               <span className="text-bakery-400 font-semibold uppercase tracking-wider text-[10px]">Registration Date</span>
               <div className="font-bold text-chocolate">{new Date(seller.createdAt).toLocaleString()}</div>
             </div>

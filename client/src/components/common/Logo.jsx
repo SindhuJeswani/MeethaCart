@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useTranslation } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 
 /**
@@ -20,9 +19,6 @@ const Logo = ({
   showSubtitle = false,
   className = ''
 }) => {
-  const { lang } = useTranslation();
-  const isUr = lang === 'ur';
-
   // Safely resolve user for role-aware home linking
   let authContext = null;
   try {
@@ -93,9 +89,8 @@ const Logo = ({
       className={`inline-flex items-center gap-2.5 sm:gap-3 group select-none ${className}`}
       style={{ color: isLightVariant ? '#F7F2EA' : isDarkVariant ? '#1A1A1A' : undefined }}
     >
-      {/* ── Monogram Mark (Always LTR to prevent geometric inversion in RTL) ── */}
+      {/* ── Monogram Mark ── */}
       <div
-        dir="ltr"
         className="shrink-0 flex items-center justify-center transition-transform duration-250 ease-out group-hover:scale-105"
         style={{ width: numSize, height: numSize }}
       >
@@ -138,10 +133,6 @@ const Logo = ({
             <span className={`font-serif ${titleClass} font-bold tracking-tight ${textColor} whitespace-nowrap`}>
               {wordmarkText}
             </span>
-          ) : isUr ? (
-            <span className={`font-serif ${titleClass} font-bold tracking-tight ${textColor} whitespace-nowrap`}>
-              میٹھا <span className={`${accentColorClass} font-serif font-extrabold`}>کارٹ</span>
-            </span>
           ) : (
             <span className={`font-serif ${titleClass} font-bold tracking-tight ${textColor} whitespace-nowrap`}>
               Meetha<span className={`${accentColorClass} font-serif font-extrabold`}>Cart</span>
@@ -150,7 +141,7 @@ const Logo = ({
 
           {showSubtitle && (
             <span className={`block ${subtitleClass} uppercase font-semibold mt-1 ${subtextColor}`}>
-              {isUr ? 'گھریلو اور روایتی بیکری · پاکستان' : 'Homemade Bakery · Pakistan'}
+              Homemade Bakery · Pakistan
             </span>
           )}
         </div>

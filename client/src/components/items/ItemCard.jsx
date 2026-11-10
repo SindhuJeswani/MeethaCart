@@ -1,9 +1,12 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Store, ArrowRight, Clock } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Store, Clock, ShoppingCart, X } from 'lucide-react';
 import fallbackImg from '../../assets/fallback-item.jpg';
-import { useTranslation } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../context/CartContext';
+import { useToast } from '../../context/ToastContext';
 import { cardHover, buttonTap, TIMING, EASING } from '../../animations/motion';
 
 const isFreshToday = (item) => {
@@ -19,7 +22,17 @@ const isFreshToday = (item) => {
 };
 
 const ItemCard = ({ item }) => {
-  const { t, translateCategory, translateItemTitle, lang } = useTranslation();
+  const { user, isAuthenticated } = useAuth();
+  const { addToCart } = useCart();
+  const toast = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+  const [selectedSize, setSelectedSize] = useState(item?.sizes?.[0]?.name || '');
+  const [selectedFlavor, setSelectedFlavor] = useState(item?.flavors?.[0] || '');
+  const [quantity, setQuantity] = useState(1);
+  const [customizationNote, setCustomizationNote] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
 
   const imageUrl = (() => {
     if (!item?.images || item.images.length === 0) return null;
@@ -29,21 +42,75 @@ const ItemCard = ({ item }) => {
     return img;
   })();
 
-  const sellerName = item?.seller?.bakeryName || item?.seller?.name || (lang === 'ur' ? 'ہوم بیکر' : 'Home Baker');
+  const sellerName = item?.seller?.bakeryName || item?.seller?.name || 'Home Baker';
   const rawCity = item?.seller?.city || item?.seller?.location || item?.seller?.address || '';
   const sellerCity = (() => {
     if (!rawCity) return '';
     let c = rawCity;
-    if (c.toLowerCase().includes('karachi')) return lang === 'ur' ? 'کراچی' : 'Karachi';
-    if (c.toLowerCase().includes('lahore')) return lang === 'ur' ? 'لاہور' : 'Lahore';
-    if (c.toLowerCase().includes('islamabad')) return lang === 'ur' ? 'اسلام آباد' : 'Islamabad';
+    if (c.toLowerCase().includes('karachi')) return 'Karachi';
+    if (c.toLowerCase().includes('lahore')) return 'Lahore';
+    if (c.toLowerCase().includes('islamabad')) return 'Islamabad';
     return c;
   })();
 
   const categoryName = item?.category?.name || '';
   const freshToday = isFreshToday(item);
   const outOfStock = item?.stock !== undefined && item.stock <= 0;
+  const isUnavailable = outOfStock || item?.isAvailable === false ||
+    item?.approvalStatus !== 'Approved' || item?.seller?.sellerStatus !== 'approved';
+  const isBuyerOrGuest = !isAuthenticated || user?.role === 'buyer';
+  const hasOptions = Boolean(item?.sizes?.length || item?.flavors?.length);
   const showEggless = Boolean(item?.isEggless);
+  const handleAddToCart = async () => {
+    if (!item) return;
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: `${location.pathname}${location.search}` } });
+      return;
+    }
+    if (user?.role !== 'buyer') return;
+
+    if (isUnavailable) {
+      toast.error('This item is currently unavailable');
+      return;
+    }
+
+    if (hasOptions && !isOptionsOpen) {
+      setIsOptionsOpen(true);
+      return;
+    }
+
+    const parsedQty = hasOptions ? Number(quantity) : 1;
+    if (!Number.isInteger(parsedQty) || parsedQty < 1 || parsedQty > item.stock) {
+      toast.error('Please enter a valid quantity');
+      return;
+    }
+
+    if (item.sizes?.length && !selectedSize) {
+      toast.error('Please select a valid size');
+      return;
+    }
+
+    if (item.flavors?.length && !selectedFlavor) {
+      toast.error('Please select a valid flavor');
+      return;
+    }
+
+    try {
+      setIsAdding(true);
+      const result = await addToCart(item, {
+        quantity: parsedQty,
+        selectedSize: selectedSize || null,
+        selectedFlavor: selectedFlavor || null,
+        customizationNote: item?.allowsCustomization ? customizationNote : ''
+      });
+      setIsOptionsOpen(false);
+      toast.success(result.message || 'Item added to cart!');
+    } catch (error) {
+      toast.error(error.message || 'Server error. Item was not added.');
+    } finally {
+      setIsAdding(false);
+    }
+  };
 
   return (
     <motion.article
@@ -62,7 +129,7 @@ const ItemCard = ({ item }) => {
             whileHover={{ scale: 1.07 }}
             transition={{ duration: 0.4, ease: EASING.out }}
             src={imageUrl || fallbackImg}
-            alt={translateItemTitle(item) || 'Bakery item'}
+            alt={item?.title || 'Bakery item'}
             className="w-full h-full object-cover transition-transform"
             loading="lazy"
             onError={(e) => {
@@ -76,7 +143,7 @@ const ItemCard = ({ item }) => {
         {outOfStock && (
           <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center">
             <span className="px-3 py-1 rounded-lg bg-rose-600 text-white font-bold text-xs uppercase tracking-wider shadow-sm">
-              {t('items.outOfStock') || 'Out of stock'}
+              Out of stock
             </span>
           </div>
         )}
@@ -85,17 +152,17 @@ const ItemCard = ({ item }) => {
         <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5 pointer-events-none">
           {categoryName && (
             <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-white/95 text-chocolate shadow-[0_2px_8px_rgba(74,44,26,0.06)] border border-amber-950/[0.08] backdrop-blur-xs">
-              {translateCategory(categoryName)}
+              {categoryName}
             </span>
           )}
           {showEggless && (
             <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-emerald-600 text-white shadow-2xs">
-              {t('items.eggless') || 'Eggless'}
+              Eggless
             </span>
           )}
           {freshToday && !outOfStock && (
             <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-caramel text-white shadow-2xs">
-              {t('items.freshToday') || 'Fresh today'}
+              Fresh today
             </span>
           )}
         </div>
@@ -117,7 +184,7 @@ const ItemCard = ({ item }) => {
           {/* Item title */}
           <Link to={`/items/${item?._id}`} className="block mt-1.5">
             <h3 className="font-serif font-bold text-chocolate text-sm sm:text-base leading-snug line-clamp-2 group-hover:text-caramel transition-colors">
-              {translateItemTitle(item)}
+              {item?.title}
             </h3>
           </Link>
         </div>
@@ -126,26 +193,87 @@ const ItemCard = ({ item }) => {
         <div className="pt-3 border-t border-amber-950/[0.06] flex items-center justify-between gap-2 mt-auto">
           <div>
             <div className="text-sm sm:text-base font-serif font-bold text-chocolate leading-none">
-              {lang === 'ur' ? 'روپے ' : 'Rs. '}{item?.price ? item.price.toLocaleString() : '0'}
+              Rs. {item?.price ? item.price.toLocaleString() : '0'}
             </div>
             {item?.preparationTimeHours ? (
               <span className="text-[10px] text-bakery-500 font-medium flex items-center gap-1 mt-1">
                 <Clock className="w-2.5 h-2.5 text-caramel" />
-                <span>{item.preparationTimeHours} {t('items.prepTimeHours') || 'h prep'}</span>
+                <span>{item.preparationTimeHours} h prep</span>
               </span>
             ) : null}
           </div>
 
-          <motion.div whileHover={{ scale: 1.04 }} whileTap={buttonTap}>
-            <Link
-              to={`/items/${item?._id}`}
-              className="btn-primary text-xs py-2 px-3.5 font-bold rounded-xl whitespace-nowrap shadow-xs hover:shadow-sm"
-            >
-              <span>{t('items.viewItem') || 'View item'}</span>
-            </Link>
-          </motion.div>
+          <div className="flex items-center gap-1.5">
+            <motion.div whileHover={{ scale: 1.03 }} whileTap={buttonTap}>
+              <Link
+                to={`/items/${item?._id}`}
+                className="btn-primary text-[10px] sm:text-xs py-2 px-2 sm:px-3 font-bold rounded-xl whitespace-nowrap shadow-xs hover:shadow-sm"
+              >
+                <span>View item</span>
+              </Link>
+            </motion.div>
+            {isBuyerOrGuest && (
+              <motion.button
+                whileHover={!isUnavailable ? { scale: 1.03 } : undefined}
+                whileTap={!isUnavailable ? buttonTap : undefined}
+                type="button"
+                disabled={isUnavailable || isAdding}
+                onClick={handleAddToCart}
+                className="btn-secondary text-[10px] sm:text-xs py-2 px-2 sm:px-3 font-bold rounded-xl whitespace-nowrap flex items-center gap-1 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <ShoppingCart className="w-3 h-3" />
+                <span>{isUnavailable ? 'Unavailable' : isAdding ? 'Adding...' : 'Add to Cart'}</span>
+              </motion.button>
+            )}
+          </div>
         </div>
       </div>
+      {isOptionsOpen && createPortal(
+        <div className="fixed inset-0 z-[10000] bg-black/50 flex items-center justify-center p-4" onMouseDown={(event) => {
+          if (event.target === event.currentTarget) setIsOptionsOpen(false);
+        }}>
+          <div role="dialog" aria-modal="true" aria-labelledby={`cart-options-${item._id}`} className="bg-white rounded-2xl shadow-xl w-full max-w-md p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 id={`cart-options-${item._id}`} className="font-serif font-bold text-chocolate">{item?.title}</h2>
+              <button type="button" onClick={() => setIsOptionsOpen(false)} aria-label="Close options" className="p-1 text-bakery-500 hover:text-chocolate">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            {item?.sizes?.length > 0 && (
+              <label className="block text-xs font-semibold text-chocolate">
+                Size
+                <select value={selectedSize} onChange={(event) => setSelectedSize(event.target.value)} className="input-bakery mt-1 w-full">
+                  <option value="">Select a size</option>
+                  {item.sizes.map((size) => <option key={size.name} value={size.name}>{size.name}</option>)}
+                </select>
+              </label>
+            )}
+            {item?.flavors?.length > 0 && (
+              <label className="block text-xs font-semibold text-chocolate">
+                Flavor
+                <select value={selectedFlavor} onChange={(event) => setSelectedFlavor(event.target.value)} className="input-bakery mt-1 w-full">
+                  <option value="">Select a flavor</option>
+                  {item.flavors.map((flavor) => <option key={flavor} value={flavor}>{flavor}</option>)}
+                </select>
+              </label>
+            )}
+            <label className="block text-xs font-semibold text-chocolate">
+              Quantity
+              <input type="number" min="1" max={item.stock} value={quantity} onChange={(event) => setQuantity(event.target.value)} className="input-bakery mt-1 w-full" />
+            </label>
+            {item?.allowsCustomization && (
+              <label className="block text-xs font-semibold text-chocolate">
+                Customization note
+                <textarea value={customizationNote} onChange={(event) => setCustomizationNote(event.target.value)} maxLength={300} rows={3} className="input-bakery mt-1 w-full" />
+              </label>
+            )}
+            <button type="button" onClick={handleAddToCart} disabled={isAdding || !Number.isInteger(Number(quantity)) || Number(quantity) < 1 || Number(quantity) > item.stock || (item?.sizes?.length > 0 && !selectedSize) || (item?.flavors?.length > 0 && !selectedFlavor)} className="btn-primary w-full justify-center disabled:opacity-60">
+              {isAdding ? 'Adding...' : 'Confirm and Add to Cart'}
+            </button>
+          </div>
+        </div>,
+        document.body
+      )}
     </motion.article>
   );
 };

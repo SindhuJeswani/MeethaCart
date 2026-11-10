@@ -1,117 +1,164 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import api from '../services/api';
+import { useAuth } from './AuthContext';
 
 const CartContext = createContext(null);
 
-const DEFAULT_SAMPLE_ITEMS = [
-  {
-    _id: 'cart-1',
-    name: 'Artisan Belgian Chocolate Cake',
-    nameUrdu: 'بیلجیئن چاکلیٹ کیک',
-    price: 2400,
-    quantity: 1,
-    weight: '2 lbs',
-    seller: { name: "Grandma's Oven", bakeryName: "Grandma's Oven Delight" },
-    image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=500&auto=format&fit=crop&q=80'
-  },
-  {
-    _id: 'cart-2',
-    name: 'Pistachio Almond Nan Khatai (Box of 12)',
-    nameUrdu: 'پستہ بادام نان خطائی',
-    price: 950,
-    quantity: 2,
-    weight: '12 pcs',
-    seller: { name: 'Lahore Sweets & Bakes', bakeryName: 'Lahori Heritage Bakes' },
-    image: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=500&auto=format&fit=crop&q=80'
-  }
-];
-
 export const CartProvider = ({ children }) => {
-  const [items, setItems] = useState(() => {
-    try {
-      const saved = localStorage.getItem('meethacart_cart_items');
-      return saved ? JSON.parse(saved) : DEFAULT_SAMPLE_ITEMS;
-    } catch {
-      return DEFAULT_SAMPLE_ITEMS;
-    }
-  });
-
+  const { user, isAuthenticated } = useAuth();
+  const [cart, setCart] = useState(null);
+  const [items, setItems] = useState([]);
+  const [cartCount, setCartCount] = useState(0);
+  const [totalPrice, setTotalPrice] = useState(0);
+  const [loading, setLoading] = useState(false);
   const [badgeBump, setBadgeBump] = useState(false);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('meethacart_cart_items', JSON.stringify(items));
-    } catch {
-      // ignore
-    }
-  }, [items]);
 
   const triggerBadgeBump = () => {
     setBadgeBump(true);
     setTimeout(() => setBadgeBump(false), 300);
   };
 
-  const addToCart = (product, qty = 1) => {
-    setItems((prev) => {
-      const existing = prev.find((i) => i._id === product._id);
-      if (existing) {
-        return prev.map((i) =>
-          i._id === product._id ? { ...i, quantity: i.quantity + qty } : i
-        );
+  // Fetch cart from backend for logged-in buyer
+  const fetchCart = useCallback(async () => {
+    if (!isAuthenticated || user?.role !== 'buyer') {
+      setCart(null);
+      setItems([]);
+      setCartCount(0);
+      setTotalPrice(0);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const res = await api.get('/cart');
+      if (res.data?.success) {
+        setCart(res.data.cart);
+        setItems(res.data.items || res.data.cart?.items || []);
+        setCartCount(res.data.cartCount || 0);
+        setTotalPrice(res.data.totalPrice || 0);
       }
-      return [
-        ...prev,
-        {
-          _id: product._id,
-          name: product.name,
-          nameUrdu: product.nameUrdu,
-          price: product.price,
-          quantity: qty,
-          weight: product.weight || '1 pc',
-          seller: product.seller || { name: 'Home Baker', bakeryName: 'Artisan Bakery' },
-          image: product.image || (product.images && product.images[0]) || ''
-        }
-      ];
-    });
-    triggerBadgeBump();
+    } catch (err) {
+      console.error('[CartContext] Failed to load cart:', err.message);
+      setCart(null);
+      setItems([]);
+      setCartCount(0);
+      setTotalPrice(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [isAuthenticated, user?.role]);
+
+  useEffect(() => {
+    fetchCart();
+  }, [fetchCart]);
+
+  // Add item with options and quantity
+  const addToCart = async (item, options = {}) => {
+    const {
+      quantity = 1,
+      selectedSize = null,
+      selectedFlavor = null,
+      customizationNote = ''
+    } = options;
+
+    try {
+      const res = await api.post('/cart/items', {
+        itemId: item._id,
+        quantity,
+        selectedSize,
+        selectedFlavor,
+        customizationNote
+      });
+
+      if (res.data?.success) {
+        setCart(res.data.cart);
+        setItems(res.data.items || res.data.cart?.items || []);
+        setCartCount(res.data.cartCount || 0);
+        setTotalPrice(res.data.totalPrice || 0);
+        triggerBadgeBump();
+        return { success: true, message: res.data.message || 'Item added to cart' };
+      }
+      return { success: false, message: res.data?.message || 'Server error. Item was not added.' };
+    } catch (err) {
+      const msg = err.response?.data?.message || err.message || 'Server error. Item was not added.';
+      throw new Error(msg);
+    }
   };
 
-  const updateQuantity = (id, delta) => {
-    setItems((prev) =>
-      prev
-        .map((item) => {
-          if (item._id === id) {
-            const newQty = item.quantity + delta;
-            return newQty > 0 ? { ...item, quantity: newQty } : null;
-          }
-          return item;
-        })
-        .filter(Boolean)
-    );
-    triggerBadgeBump();
+  // Update item quantity or options
+  const updateCartItem = async (cartItemId, updates = {}) => {
+    try {
+      const res = await api.put(`/cart/items/${cartItemId}`, updates);
+      if (res.data?.success) {
+        setCart(res.data.cart);
+        setItems(res.data.items || res.data.cart?.items || []);
+        setCartCount(res.data.cartCount || 0);
+        setTotalPrice(res.data.totalPrice || 0);
+        triggerBadgeBump();
+        return { success: true, message: res.data.message };
+      }
+      return { success: false, message: res.data?.message || 'Server error. Cart was not updated.' };
+    } catch (err) {
+      const msg = err.response?.data?.message || err.message || 'Server error. Cart was not updated.';
+      throw new Error(msg);
+    }
   };
 
-  const removeItem = (id) => {
-    setItems((prev) => prev.filter((item) => item._id !== id));
+  // Quick quantity increment/decrement helper
+  const updateQuantity = async (cartItemId, newQuantity) => {
+    return updateCartItem(cartItemId, { quantity: newQuantity });
   };
 
-  const clearCart = () => {
-    setItems([]);
+  // Remove single item from cart
+  const removeItem = async (cartItemId) => {
+    try {
+      const res = await api.delete(`/cart/items/${cartItemId}`);
+      if (res.data?.success) {
+        setCart(res.data.cart);
+        setItems(res.data.items || res.data.cart?.items || []);
+        setCartCount(res.data.cartCount || 0);
+        setTotalPrice(res.data.totalPrice || 0);
+        triggerBadgeBump();
+        return { success: true, message: res.data.message };
+      }
+      return { success: false, message: res.data?.message || 'Server error. Item was not removed.' };
+    } catch (err) {
+      const msg = err.response?.data?.message || err.message || 'Server error. Item was not removed.';
+      throw new Error(msg);
+    }
   };
 
-  const cartCount = items.reduce((sum, item) => sum + item.quantity, 0);
-  const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  // Clear entire cart
+  const clearCart = async () => {
+    try {
+      const res = await api.delete('/cart');
+      if (res.data?.success) {
+        setCart(res.data.cart);
+        setItems(res.data.items || []);
+        setCartCount(res.data.cartCount || 0);
+        setTotalPrice(res.data.totalPrice || 0);
+        triggerBadgeBump();
+      }
+    } catch (err) {
+      throw new Error(err.response?.data?.message || 'Server error. Cart was not updated.');
+    }
+  };
 
   return (
     <CartContext.Provider
       value={{
+        cart,
         items,
         cartCount,
         totalPrice,
+        loading,
+        badgeBump,
         addToCart,
+        updateCartItem,
         updateQuantity,
         removeItem,
         clearCart,
-        badgeBump
+        refreshCart: fetchCart
       }}
     >
       {children}

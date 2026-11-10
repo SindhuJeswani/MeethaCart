@@ -6,7 +6,6 @@ import api from '../services/api';
 import ItemCard from '../components/items/ItemCard';
 import ProductShowcaseSlider from '../components/items/ProductShowcaseSlider';
 import heroImg from '../assets/hero.jpg';
-import { useTranslation } from '../context/LanguageContext';
 import {
   fadeUp,
   staggerContainer,
@@ -17,13 +16,25 @@ import {
 } from '../animations/motion';
 
 const Home = () => {
-  const { t, translateCategory } = useTranslation();
   const [categories, setCategories] = useState([]);
   const [latestItems, setLatestItems] = useState([]);
+  const [availableCount, setAvailableCount] = useState(0);
   const [loadingItems, setLoadingItems] = useState(true);
   const [loadingCats, setLoadingCats] = useState(true);
 
   useEffect(() => {
+    // 0. Fetch available items count
+    const fetchCount = async () => {
+      try {
+        const res = await api.get('/items?limit=1');
+        if (res.data?.success) {
+          setAvailableCount(res.data.total ?? res.data.totalCount ?? 0);
+        }
+      } catch (err) {
+        console.warn('Failed to load count:', err.message);
+      }
+    };
+
     // 1. Fetch categories
     const fetchCategories = async () => {
       try {
@@ -38,13 +49,16 @@ const Home = () => {
       }
     };
 
-    // 2. Fetch latest items
+    // 2. Fetch latest items (limit 8)
     const fetchLatestItems = async () => {
       try {
         setLoadingItems(true);
         const res = await api.get('/items?limit=8&sort=newest');
         if (res.data?.success) {
-          setLatestItems(res.data.items || []);
+          const approved = (res.data.items || []).filter(
+            (item) => item.approvalStatus === 'Approved' && item.seller?.sellerStatus === 'approved'
+          );
+          setLatestItems(approved.slice(0, 8));
         }
       } catch (err) {
         console.warn('Failed to load latest items:', err.message);
@@ -53,12 +67,13 @@ const Home = () => {
       }
     };
 
+    fetchCount();
     fetchCategories();
     fetchLatestItems();
   }, []);
 
   return (
-    <div className="space-y-8 sm:space-y-12 pb-14">
+    <div className="space-y-8 sm:space-y-12 pb-16">
 
       {/* 1. CATEGORY CHIPS BAR */}
       <div className="bg-white border-b border-bakery-200 py-2.5 shadow-2xs">
@@ -68,7 +83,7 @@ const Home = () => {
               to="/items"
               className="px-3.5 py-1.5 rounded-full bg-bakery-100 text-chocolate font-medium hover:bg-bakery-200 whitespace-nowrap transition-colors"
             >
-              {t('home.allItems') || 'All items'}
+              All items
             </Link>
 
             {loadingCats ? (
@@ -84,7 +99,7 @@ const Home = () => {
                     to={`/items?category=${encodeURIComponent(cat.slug || cat.name)}`}
                     className="px-3.5 py-1.5 rounded-full border border-bakery-200 text-bakery-700 font-medium hover:bg-bakery-100 hover:text-chocolate whitespace-nowrap transition-colors block"
                   >
-                    {translateCategory(cat.name || cat.slug)}
+                    {cat.name || cat.slug}
                   </Link>
                 </motion.div>
               ))
@@ -104,16 +119,28 @@ const Home = () => {
           
           {/* Left: Text & Actions */}
           <div className="p-6 sm:p-10 md:col-span-7 flex flex-col justify-center space-y-4">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100/80 text-amber-900 border border-amber-200 w-fit">
-              <Sparkles className="w-3.5 h-3.5 text-caramel" />
-              <span>Certified Artisan Home Bakers</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100/80 text-amber-900 border border-amber-200 w-fit">
+                <Sparkles className="w-3.5 h-3.5 text-caramel" />
+                <span>Certified Artisan Home Bakers</span>
+              </div>
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={buttonTap}>
+                <Link
+                  to="/items"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all border shadow-xs cursor-pointer bg-white hover:bg-amber-50 text-chocolate border-bakery-200"
+                  title="Browse all available homemade treats"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-caramel shrink-0" />
+                  <span>{availableCount > 0 ? availableCount : '...'} Homemade Treats Available</span>
+                </Link>
+              </motion.div>
             </div>
 
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-serif font-bold text-chocolate leading-tight">
-              {t('home.heroTitle') || 'Homemade cakes and bakes from local bakers in Pakistan'}
+              Homemade cakes and bakes from local bakers in Pakistan
             </h1>
             <p className="text-sm sm:text-base text-bakery-700 max-w-lg leading-relaxed">
-              {t('home.heroSubtitle') || 'Browse ready items or contact a baker directly for custom cakes and party orders.'}
+              Browse ready items or contact a baker directly for custom cakes and party orders.
             </p>
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <motion.div whileHover={{ scale: 1.03 }} whileTap={buttonTap}>
@@ -123,7 +150,7 @@ const Home = () => {
                   className="btn-primary text-sm py-2.5 px-5 font-medium shadow-xs"
                 >
                   <ShoppingBag className="w-4 h-4" />
-                  <span>{t('home.browseItems') || 'Browse items'}</span>
+                  <span>Browse items</span>
                 </Link>
               </motion.div>
               <motion.div whileHover={{ scale: 1.03 }} whileTap={buttonTap}>
@@ -133,7 +160,7 @@ const Home = () => {
                   className="btn-secondary text-sm py-2.5 px-5 font-medium shadow-xs"
                 >
                   <Store className="w-4 h-4" />
-                  <span>{t('home.sellOnMeethaCart') || 'Sell on MeethaCart'}</span>
+                  <span>Sell on MeethaCart</span>
                 </Link>
               </motion.div>
             </div>
@@ -147,35 +174,33 @@ const Home = () => {
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
             />
           </div>
-
         </div>
       </motion.section>
 
-      {/* CONTINUOUS AUTO-SCROLLING PRODUCT SHOWCASE (Daraz / Shein style) */}
+      {/* 2.5 PRODUCT SHOWCASE FLASH SLIDER */}
       <ProductShowcaseSlider />
 
-      {/* 3. LATEST ITEMS GRID with Scroll Reveal */}
+      {/* 3. LATEST ITEMS GRID */}
       <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-40px' }}
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ duration: TIMING.normal, ease: EASING.out }}
         className="page-container space-y-4"
       >
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl sm:text-2xl font-serif font-bold text-chocolate">
-              {t('home.latestItems') || 'Latest items'}
+              Latest items
             </h2>
             <p className="text-xs sm:text-sm text-bakery-600">
-              {t('home.latestItemsSubtitle') || 'Freshly listed by local home bakers'}
+              Freshly listed by local home bakers
             </p>
           </div>
           <Link
             to="/items"
             className="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-caramel hover:text-caramel-dark transition-colors"
           >
-            <span>{t('home.viewAll') || 'View all items'}</span>
+            <span>View all items</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
@@ -188,7 +213,7 @@ const Home = () => {
           </div>
         ) : latestItems.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-xl border border-bakery-200 text-bakery-500 text-sm">
-            {t('home.noItemsListed') || 'No items listed yet. Check back soon!'}
+            No items listed yet. Check back soon!
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
@@ -210,10 +235,10 @@ const Home = () => {
         <div className="bg-white border border-bakery-200 rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
           <div className="space-y-1">
             <h3 className="font-serif font-bold text-chocolate text-base sm:text-lg">
-              {t('home.sellerBannerTitle') || 'Are you a home baker?'}
+              Are you a home baker?
             </h3>
             <p className="text-xs sm:text-sm text-bakery-600">
-              {t('home.sellerBannerDesc') || 'List your bakery items, receive orders from buyers in your city, and manage your storefront.'}
+              List your bakery items, receive orders from buyers in your city, and manage your storefront.
             </p>
           </div>
           <motion.div whileHover={{ scale: 1.03 }} whileTap={buttonTap}>
@@ -221,7 +246,7 @@ const Home = () => {
               to="/register?role=seller"
               className="btn-primary text-xs sm:text-sm py-2 px-4 font-medium shrink-0 shadow-xs"
             >
-              {t('home.becomeSeller') || 'Become a seller'}
+              Become a seller
             </Link>
           </motion.div>
         </div>
@@ -237,7 +262,7 @@ const Home = () => {
       >
         <div className="border-t border-bakery-200 pt-8 pb-4">
           <h2 className="text-center text-lg font-serif font-bold text-chocolate mb-6">
-            {t('home.howItWorksTitle') || 'How MeethaCart works'}
+            How MeethaCart works
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
             <motion.div
@@ -250,10 +275,10 @@ const Home = () => {
               </div>
               <div>
                 <h4 className="font-semibold text-chocolate text-sm">
-                  {t('home.step1Title') || '1. Find a baker or item'}
+                  1. Find a baker or item
                 </h4>
                 <p className="text-xs text-bakery-600 mt-1 leading-relaxed">
-                  {t('home.step1Desc') || 'Search by cake type, dessert category, or location to find bakers near you.'}
+                  Search by cake type, dessert category, or location to find bakers near you.
                 </p>
               </div>
             </motion.div>
@@ -268,10 +293,10 @@ const Home = () => {
               </div>
               <div>
                 <h4 className="font-semibold text-chocolate text-sm">
-                  {t('home.step2Title') || '2. Order or request custom'}
+                  2. Order or request custom
                 </h4>
                 <p className="text-xs text-bakery-600 mt-1 leading-relaxed">
-                  {t('home.step2Desc') || 'Choose ready items or contact the baker with custom flavors, weights, and dates.'}
+                  Choose ready items or contact the baker with custom flavors, weights, and dates.
                 </p>
               </div>
             </motion.div>
@@ -286,10 +311,10 @@ const Home = () => {
               </div>
               <div>
                 <h4 className="font-semibold text-chocolate text-sm">
-                  {t('home.step3Title') || '3. Freshly prepared for you'}
+                  3. Freshly prepared for you
                 </h4>
                 <p className="text-xs text-bakery-600 mt-1 leading-relaxed">
-                  {t('home.step3Desc') || 'Your order is prepared fresh on demand and delivered on your specified schedule.'}
+                  Your order is prepared fresh on demand and delivered on your specified schedule.
                 </p>
               </div>
             </motion.div>

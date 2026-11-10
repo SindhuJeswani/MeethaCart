@@ -2,15 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../services/api';
-import { useTranslation } from '../../context/LanguageContext';
-import { Lock, ArrowRight, AlertCircle, CheckCircle2, KeyRound } from 'lucide-react';
+import { Lock, ArrowRight, AlertCircle, CheckCircle2, KeyRound, Eye, EyeOff } from 'lucide-react';
 import AuthLayout from '../../components/auth/AuthLayout';
 import { shakeVariant, buttonTap } from '../../animations/motion';
 
 const ResetPassword = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { t } = useTranslation();
 
   const email = location.state?.email || '';
   const initialOtp = location.state?.otp || '';
@@ -18,6 +16,8 @@ const ResetPassword = () => {
   const [otp, setOtp] = useState(initialOtp);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -155,14 +155,22 @@ const ResetPassword = () => {
           <div className="relative group">
             <Lock className="w-4 h-4 text-bakery-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none group-focus-within:text-caramel transition-colors" />
             <input
-              type="password"
+              type={showNewPassword ? 'text' : 'password'}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder="Min 8 characters"
               required
               autoComplete="new-password"
-              className="input-bakery pl-11"
+              className="input-bakery pl-11 pr-11"
             />
+            <button
+              type="button"
+              onClick={() => setShowNewPassword(!showNewPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-bakery-400 hover:text-bakery-700 transition-colors p-1.5 rounded-lg hover:bg-bakery-100 cursor-pointer"
+              aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
+            >
+              {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
           </div>
         </div>
 
@@ -174,14 +182,22 @@ const ResetPassword = () => {
           <div className="relative group">
             <Lock className="w-4 h-4 text-bakery-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none group-focus-within:text-caramel transition-colors" />
             <input
-              type="password"
+              type={showConfirmPassword ? 'text' : 'password'}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Re-enter new password"
               required
               autoComplete="new-password"
-              className="input-bakery pl-11"
+              className="input-bakery pl-11 pr-11"
             />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-bakery-400 hover:text-bakery-700 transition-colors p-1.5 rounded-lg hover:bg-bakery-100 cursor-pointer"
+              aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+            >
+              {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
           </div>
         </div>
 

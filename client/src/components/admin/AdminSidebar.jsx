@@ -6,11 +6,11 @@ import {
   UserCheck,
   FolderTree,
   Users,
+  Cake,
   Shield,
   ArrowLeft
 } from 'lucide-react';
 import Logo from '../common/Logo';
-import ThemePicker from '../common/ThemePicker';
 import { slideInLeft, buttonTap } from '../../animations/motion';
 
 const AdminSidebar = ({ pendingCount = 0 }) => {
@@ -30,6 +30,11 @@ const AdminSidebar = ({ pendingCount = 0 }) => {
       to: '/admin/categories',
       label: 'Categories',
       icon: FolderTree
+    },
+    {
+      to: '/admin/item-reviews',
+      label: 'Item Reviews',
+      icon: Cake
     },
     {
       to: '/admin/users',
@@ -55,7 +60,6 @@ const AdminSidebar = ({ pendingCount = 0 }) => {
         <div className="px-2 pb-4 border-b" style={{ borderColor: 'var(--color-border)' }}>
           <div className="flex items-center justify-between">
             <Logo variant="dark" size={32} wordmarkText="Admin" to="/admin/dashboard" />
-            <ThemePicker />
           </div>
           <div className="flex items-center gap-1.5 mt-2 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-primary)' }}>
             <Shield className="w-3.5 h-3.5" />

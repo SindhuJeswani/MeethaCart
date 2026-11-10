@@ -7,7 +7,6 @@ import {
   Search,
   CheckCircle2,
   XCircle,
-  Globe,
   Store,
   User,
   Shield,
@@ -161,7 +160,6 @@ const UserList = () => {
                     <th className="py-3 px-4">User</th>
                     <th className="py-3 px-4">Role</th>
                     <th className="py-3 px-4">Email Status</th>
-                    <th className="py-3 px-4">Language</th>
                     <th className="py-3 px-4">Date Joined</th>
                   </tr>
                 </thead>
@@ -214,13 +212,6 @@ const UserList = () => {
                               <span>Unverified</span>
                             </span>
                           )}
-                        </td>
-
-                        <td className="py-3.5 px-4">
-                          <div className="inline-flex items-center gap-1 text-xs text-bakery-700 font-medium uppercase">
-                            <Globe className="w-3 h-3 text-amber-600" />
-                            <span>{u.preferredLanguage || 'en'}</span>
-                          </div>
                         </td>
 
                         <td className="py-3.5 px-4 text-xs text-bakery-600">

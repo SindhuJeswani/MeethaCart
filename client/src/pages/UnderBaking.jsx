@@ -1,21 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useTranslation } from '../context/LanguageContext';
-import { ArrowLeft, ShoppingBag, Sparkles } from 'lucide-react';
-import { fadeUp, buttonTap, TIMING, EASING } from '../animations/motion';
+import { ArrowLeft, ShoppingBag } from 'lucide-react';
+import { fadeUp } from '../animations/motion';
 
 const UnderBaking = ({
   title = 'This Feature',
-  titleUrdu,
-  description = '',
-  descUrdu = ''
+  description = ''
 }) => {
-  const { isUrdu } = useTranslation();
-
-  const activeTitle = isUrdu && titleUrdu ? titleUrdu : title;
-  const activeDesc = isUrdu && descUrdu ? descUrdu : description;
-
   return (
     <div className="min-h-[75vh] flex items-center justify-center px-4 py-16 bg-bakery-50">
       <motion.div
@@ -56,22 +48,20 @@ const UnderBaking = ({
         {/* Content */}
         <div className="space-y-2">
           <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-900 border border-amber-200">
-            {isUrdu ? 'زیرِ تیاری' : 'Coming Soon'}
+            Coming Soon
           </span>
 
           <h1 className="text-2xl sm:text-3xl font-serif font-bold text-chocolate">
-            {isUrdu ? 'ابھی اوون میں ہے' : 'Under Baking'}
+            Under Baking
           </h1>
 
           <p className="text-sm font-medium text-chocolate/90 leading-relaxed">
-            {isUrdu
-              ? activeTitle + ' ابھی اوون میں ہے اور اگلی اپڈیٹ میں دستیاب ہوگا۔'
-              : activeTitle + ' is still in the oven. It will be ready in an upcoming milestone.'}
+            {title} is still in the oven. It will be ready in an upcoming milestone.
           </p>
 
-          {activeDesc && (
+          {description && (
             <p className="text-xs text-bakery-600 mt-1 leading-relaxed">
-              {activeDesc}
+              {description}
             </p>
           )}
         </div>
@@ -83,20 +73,21 @@ const UnderBaking = ({
             className="w-full sm:w-auto btn-secondary text-xs py-2.5 px-4 rounded-lg font-medium inline-flex items-center justify-center gap-1.5 shadow-xs"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>{isUrdu ? 'ہوم پیج پر جائیں' : 'Back to home'}</span>
+            <span>Back to home</span>
           </Link>
           <Link
             to="/items"
             className="w-full sm:w-auto btn-primary text-xs py-2.5 px-4 rounded-lg font-medium inline-flex items-center justify-center gap-1.5 shadow-xs"
           >
             <ShoppingBag className="w-3.5 h-3.5" />
-            <span>{isUrdu ? 'اشیاء دیکھیں' : 'Browse items'}</span>
+            <span>Browse items</span>
           </Link>
         </div>
 
       </motion.div>
     </div>
   );
+};
 };
 
 export default UnderBaking;

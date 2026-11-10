@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import confetti from 'canvas-confetti';
-import { useTranslation } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
 import {
   Sparkles,
@@ -58,7 +57,6 @@ const SAMPLE_BIDS = [
 ];
 
 const CustomRequestsPage = () => {
-  const { isUrdu } = useTranslation();
   const toast = useToast();
 
   // Circular timer countdown state (60s loop demo)
@@ -121,12 +119,10 @@ const CustomRequestsPage = () => {
         <div>
           <h1 className="text-2xl sm:text-3xl font-serif font-bold text-chocolate flex items-center gap-2.5">
             <Sparkles className="w-7 h-7 text-caramel" />
-            <span>{isUrdu ? 'خصوصی کیک آرڈرز اور بیکرز کی بولیاں' : 'Custom Cake Requests & Bidding'}</span>
+            <span>Custom Cake Requests & Bidding</span>
           </h1>
           <p className="text-xs text-bakery-600 mt-0.5">
-            {isUrdu
-              ? 'اپنے من پسند ڈیزائن کی تفصیلات درج کریں اور قریبی بیکرز سے بہترین پیشکشیں وصول کریں'
-              : 'Post your event inspiration, set your budget, and receive custom bids from certified home bakers.'}
+            Post your event inspiration, set your budget, and receive custom bids from certified home bakers.
           </p>
         </div>
 
