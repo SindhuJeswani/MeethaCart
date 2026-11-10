@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useCart } from '../../context/CartContext';
 import Container from './Container';
 import Logo from './Logo';
 import ThemePicker from './ThemePicker';
@@ -16,6 +17,7 @@ import {
   ChevronDown,
   LayoutDashboard,
   ShoppingBag,
+  ShoppingCart,
   Package,
   ShieldCheck,
   Compass
@@ -26,6 +28,7 @@ const Navbar = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const { lang, toggleLanguage, t } = useTranslation();
   const { isAjrak, isStreet } = useTheme();
+  const { cartCount } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -147,6 +150,25 @@ const Navbar = () => {
               <Compass className="w-3.5 h-3.5 text-amber-300/90 shrink-0" />
               <span>{t('nav.browseItems') || 'Browse Items'}</span>
             </Link>
+
+            {isAuthenticated && user?.role === 'buyer' && (
+              <Link
+                to="/cart"
+                className={`relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium tracking-wide transition-all ${
+                  isActive('/cart')
+                    ? 'bg-white/20 text-white font-semibold shadow-xs'
+                    : 'text-amber-100/80 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <ShoppingCart className="w-3.5 h-3.5 text-amber-300/90 shrink-0" />
+                <span>Cart</span>
+                {cartCount > 0 && (
+                  <span className="min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+            )}
 
             {/* Theme Picker Component */}
             <ThemePicker />
@@ -377,6 +399,20 @@ const Navbar = () => {
                     <span>{link.label}</span>
                   </Link>
                 ))}
+
+                {isAuthenticated && user?.role === 'buyer' && (
+                  <Link
+                    to="/cart"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-amber-100/80 hover:text-white hover:bg-white/10 transition-all"
+                  >
+                    <span className="flex items-center gap-2">
+                      <ShoppingCart className="w-4 h-4 text-amber-300" />
+                      <span>Cart</span>
+                    </span>
+                    {cartCount > 0 && <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-bold">{cartCount}</span>}
+                  </Link>
+                )}
 
                 {isAuthenticated && (
                   <>

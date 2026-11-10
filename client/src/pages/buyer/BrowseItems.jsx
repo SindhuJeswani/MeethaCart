@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../services/api';
 import ItemCard from '../../components/items/ItemCard';
@@ -28,12 +28,13 @@ import {
 
 const BrowseItems = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
   const { t, translateCategory, lang } = useTranslation();
 
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
+  const [availableCount, setAvailableCount] = useState(0);
+  const [isCountLoading, setIsCountLoading] = useState(true);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
@@ -62,14 +63,41 @@ const BrowseItems = () => {
     fetchCats();
   }, []);
 
-  // Sync search param from Navbar search into state
   useEffect(() => {
-    const q = searchParams.get('search') || '';
-    if (q !== search) {
-      setSearch(q);
-      setPage(1);
+    const fetchAvailableCount = async () => {
+      try {
+        const res = await api.get('/items?limit=1');
+        if (res.data?.success) setAvailableCount(res.data.total ?? res.data.totalCount ?? 0);
+      } catch (err) {
+        console.error('Failed to load available item count:', err);
+      } finally {
+        setIsCountLoading(false);
+      }
+    };
+    fetchAvailableCount();
+  }, []);
+
+  // Keep the controls synchronized with browser back/forward navigation.
+  useEffect(() => {
+    const requestedPage = Number(searchParams.get('page'));
+    const nextPage = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+    const requestedLimit = searchParams.get('limit');
+    const nextLimit = ['12', '24', 'all'].includes(requestedLimit) ? requestedLimit : '12';
+    const normalizedParams = new URLSearchParams(searchParams);
+    normalizedParams.set('page', String(nextPage));
+    normalizedParams.set('limit', nextLimit);
+    if (normalizedParams.toString() !== searchParams.toString()) {
+      setSearchParams(normalizedParams, { replace: true });
     }
-  }, [searchParams]);
+
+    setSearch(searchParams.get('search') || '');
+    setSelectedCategory(searchParams.get('category') || 'all');
+    setMaxPrice(searchParams.get('maxPrice') || '6000');
+    setIsEggless(searchParams.get('isEggless') === 'true');
+    setSort(searchParams.get('sort') || 'newest');
+    setPage(nextPage);
+    setLimit(nextLimit);
+  }, [searchParams, setSearchParams]);
 
   // Fetch items whenever filters or page change
   useEffect(() => {
@@ -83,10 +111,12 @@ const BrowseItems = () => {
         if (Number(maxPrice) < 6000) params.append('maxPrice', maxPrice);
         if (isEggless) params.append('isEggless', 'true');
         if (sort) params.append('sort', sort);
-        if (page > 1) params.append('page', String(page));
-        if (limit && limit !== '12') params.append('limit', limit);
+        params.append('page', String(page));
+        params.append('limit', limit);
 
-        setSearchParams(params, { replace: true });
+        if (params.toString() !== new URLSearchParams(searchParams).toString()) {
+          setSearchParams(params, { replace: true });
+        }
 
         const res = await api.get(`/items?${params.toString()}`);
         if (res.data?.success) {
@@ -106,6 +136,24 @@ const BrowseItems = () => {
     fetchItems();
   }, [search, selectedCategory, maxPrice, isEggless, sort, page, limit]);
 
+  const handlePageChange = (nextPage) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('page', String(nextPage));
+    params.set('limit', limit);
+    setSearchParams(params);
+    setPage(nextPage);
+    document.getElementById('items-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const handleLimitChange = (nextLimit) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('page', '1');
+    params.set('limit', nextLimit);
+    setSearchParams(params);
+    setLimit(nextLimit);
+    setPage(1);
+  };
+
   const handleResetFilters = () => {
     setSearch('');
     setSelectedCategory('all');
@@ -114,6 +162,19 @@ const BrowseItems = () => {
     setSort('newest');
     setPage(1);
     setLimit('12');
+  };
+
+  const handleBrowseAll = () => {
+    setSearch('');
+    setSelectedCategory('all');
+    setMaxPrice('6000');
+    setIsEggless(false);
+    setSort('newest');
+    setPage(1);
+    setLimit('12');
+    const params = new URLSearchParams({ page: '1', limit: '12' });
+    setSearchParams(params);
+    document.getElementById('items-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   return (
@@ -139,10 +200,17 @@ const BrowseItems = () => {
 
         {/* Marketplace Trust & Freshness Highlights */}
         <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-600/20 text-chocolate text-xs font-semibold shadow-xs">
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={buttonTap}
+            type="button"
+            onClick={handleBrowseAll}
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-600/20 text-chocolate text-xs font-semibold shadow-xs cursor-pointer hover:bg-amber-500/15 transition-colors"
+            title="Browse all available homemade treats"
+          >
             <Sparkles className="w-3.5 h-3.5 text-caramel shrink-0" />
-            <span>{isLoading ? "..." : (totalCount || items.length)} Homemade Treats Available</span>
-          </div>
+            <span>{isCountLoading ? "..." : availableCount} Homemade Treats Available</span>
+          </motion.button>
 
           <motion.button
             whileHover={{ scale: 1.03 }}
@@ -243,7 +311,7 @@ const BrowseItems = () => {
         </div>
 
         {/* Catalog Results Grid */}
-        <div className="flex-1 w-full space-y-4">
+        <div id="items-grid" className="flex-1 w-full space-y-4 scroll-mt-24">
           {/* Controls Bar */}
           <div className="bg-white rounded-xl border border-bakery-200 p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs shadow-xs">
             <span className="font-semibold text-chocolate">
@@ -259,8 +327,7 @@ const BrowseItems = () => {
                 <select
                   value={limit}
                   onChange={(e) => {
-                    setLimit(e.target.value);
-                    setPage(1);
+                    handleLimitChange(e.target.value);
                   }}
                   className="input-bakery text-xs py-1 px-2 bg-white font-medium rounded-md"
                 >
@@ -277,7 +344,10 @@ const BrowseItems = () => {
                 </label>
                 <select
                   value={sort}
-                  onChange={(e) => setSort(e.target.value)}
+                  onChange={(e) => {
+                    setSort(e.target.value);
+                    setPage(1);
+                  }}
                   className="input-bakery text-xs py-1 px-2.5 bg-white font-medium rounded-md"
                 >
                   <option value="newest">{t('browse.sortNewest') || 'Newest first'}</option>
@@ -300,7 +370,7 @@ const BrowseItems = () => {
                   className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-bakery-100 text-chocolate font-medium border border-bakery-200"
                 >
                   <span>"{search}"</span>
-                  <button onClick={() => setSearch('')} className="hover:text-strawberry">
+                  <button onClick={() => { setSearch(''); setPage(1); }} className="hover:text-strawberry">
                     <X className="w-3 h-3" />
                   </button>
                 </motion.span>
@@ -313,7 +383,7 @@ const BrowseItems = () => {
                   className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-bakery-100 text-chocolate font-medium border border-bakery-200"
                 >
                   <span>{t('browse.category') || 'Category:'} {translateCategory(selectedCategory)}</span>
-                  <button onClick={() => setSelectedCategory('all')} className="hover:text-strawberry">
+                  <button onClick={() => { setSelectedCategory('all'); setPage(1); }} className="hover:text-strawberry">
                     <X className="w-3 h-3" />
                   </button>
                 </motion.span>
@@ -326,7 +396,7 @@ const BrowseItems = () => {
                   className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-bakery-100 text-chocolate font-medium border border-bakery-200"
                 >
                   <span>{t('browse.under') || 'Under'} Rs. {Number(maxPrice).toLocaleString()}</span>
-                  <button onClick={() => setMaxPrice('6000')} className="hover:text-strawberry">
+                  <button onClick={() => { setMaxPrice('6000'); setPage(1); }} className="hover:text-strawberry">
                     <X className="w-3 h-3" />
                   </button>
                 </motion.span>
@@ -339,7 +409,7 @@ const BrowseItems = () => {
                   className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-medium border border-emerald-200"
                 >
                   <span>{t('browse.egglessOnly') || 'Eggless only'}</span>
-                  <button onClick={() => setIsEggless(false)} className="hover:text-rose-700">
+                  <button onClick={() => { setIsEggless(false); setPage(1); }} className="hover:text-rose-700">
                     <X className="w-3 h-3" />
                   </button>
                 </motion.span>
@@ -413,8 +483,7 @@ const BrowseItems = () => {
                   type="button"
                   disabled={page <= 1}
                   onClick={() => {
-                    setPage((p) => Math.max(p - 1, 1));
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    handlePageChange(Math.max(page - 1, 1));
                   }}
                   className="btn-secondary text-xs py-1 px-2.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 shadow-xs"
                 >
@@ -427,8 +496,7 @@ const BrowseItems = () => {
                     whileTap={buttonTap}
                     type="button"
                     onClick={() => {
-                      setPage(pNum);
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                      handlePageChange(pNum);
                     }}
                     className={`w-7 h-7 rounded-md text-xs font-bold transition-all ${
                       page === pNum
@@ -444,8 +512,7 @@ const BrowseItems = () => {
                   type="button"
                   disabled={page >= totalPages}
                   onClick={() => {
-                    setPage((p) => Math.min(p + 1, totalPages));
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    handlePageChange(Math.min(page + 1, totalPages));
                   }}
                   className="btn-secondary text-xs py-1 px-2.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 shadow-xs"
                 >

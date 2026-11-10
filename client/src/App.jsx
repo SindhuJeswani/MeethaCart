@@ -44,6 +44,7 @@ import SellerApprovals from './pages/admin/SellerApprovals';
 import SellerDetail from './pages/admin/SellerDetail';
 import CategoryManager from './pages/admin/CategoryManager';
 import UserList from './pages/admin/UserList';
+import ItemReviews from './pages/admin/ItemReviews';
 import OrdersPlaceholder from './pages/admin/OrdersPlaceholder';
 
 // 404 Not Found Page
@@ -51,7 +52,10 @@ import NotFound from './pages/NotFound';
 
 // Future Pages (Loaded conditionally behind FEATURES flags)
 import CartPage from './pages/buyer/CartPage';
+import CheckoutPage from './pages/buyer/CheckoutPage';
+import OrderConfirmationPage from './pages/buyer/OrderConfirmationPage';
 import OrderTrackingPage from './pages/buyer/OrderTrackingPage';
+import SellerOrders from './pages/seller/SellerOrders';
 import WalletPage from './pages/buyer/WalletPage';
 import NotificationsPage from './pages/buyer/NotificationsPage';
 import CustomRequestsPage from './pages/buyer/CustomRequestsPage';
@@ -123,22 +127,56 @@ function AppContent() {
                 <Route path="/items" element={<BrowseItems />} />
                 <Route path="/items/:id" element={<ItemDetails />} />
 
-                {/* ── Post-Milestone 3 Routes (Locked behind Feature Flags -> 404) ── */}
+                {/* ── M4/M5 routes are enabled; later milestone routes remain feature-gated ── */}
                 <Route
                   path="/cart"
-                  element={FEATURES.CART_AND_CHECKOUT ? <CartPage /> : <NotFound />}
+                  element={
+                    FEATURES.CART_AND_CHECKOUT ? (
+                      <ProtectedRoute allowedRoles={['buyer']}>
+                        <CartPage />
+                      </ProtectedRoute>
+                    ) : <NotFound />
+                  }
                 />
                 <Route
                   path="/checkout"
-                  element={FEATURES.CART_AND_CHECKOUT ? <CartPage /> : <NotFound />}
+                  element={
+                    FEATURES.CART_AND_CHECKOUT ? (
+                      <ProtectedRoute allowedRoles={['buyer']}>
+                        <CheckoutPage />
+                      </ProtectedRoute>
+                    ) : <NotFound />
+                  }
                 />
                 <Route
-                  path="/orders"
-                  element={FEATURES.ORDERS_AND_TRACKING ? <OrderTrackingPage /> : <NotFound />}
+                  path="/orders/confirmation"
+                  element={
+                    FEATURES.CART_AND_CHECKOUT ? (
+                      <ProtectedRoute allowedRoles={['buyer']}>
+                        <OrderConfirmationPage />
+                      </ProtectedRoute>
+                    ) : <NotFound />
+                  }
                 />
                 <Route
                   path="/orders/:id"
-                  element={FEATURES.ORDERS_AND_TRACKING ? <OrderTrackingPage /> : <NotFound />}
+                  element={
+                    FEATURES.ORDERS_AND_TRACKING ? (
+                      <ProtectedRoute allowedRoles={['buyer']}>
+                        <OrderTrackingPage />
+                      </ProtectedRoute>
+                    ) : <NotFound />
+                  }
+                />
+                <Route
+                  path="/seller/orders"
+                  element={
+                    FEATURES.ORDERS_AND_TRACKING ? (
+                      <ProtectedRoute allowedRoles={['seller', 'admin']}>
+                        <SellerOrders />
+                      </ProtectedRoute>
+                    ) : <NotFound />
+                  }
                 />
                 <Route
                   path="/wallet"
@@ -236,6 +274,14 @@ function AppContent() {
                   element={
                     <ProtectedRoute allowedRoles={['admin']}>
                       <UserList />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/item-reviews"
+                  element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                      <ItemReviews />
                     </ProtectedRoute>
                   }
                 />

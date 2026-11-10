@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../services/api';
 import ItemCard from '../../components/items/ItemCard';
@@ -10,18 +10,32 @@ import {
   ArrowLeft,
   RefreshCw,
   CheckCircle2,
-  ChevronRight
+  ChevronRight,
+  ShoppingCart
 } from 'lucide-react';
 import { staggerContainer, staggerItem, cardHover, buttonTap, TIMING, EASING } from '../../animations/motion';
+import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../context/CartContext';
+import { useToast } from '../../context/ToastContext';
 
 const ItemDetails = () => {
   const { id } = useParams();
   const { t, translateCategory, translateItemTitle, translateItemDescription } = useTranslation();
+  const { user, isAuthenticated } = useAuth();
+  const { addToCart } = useCart();
+  const toast = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [item, setItem] = useState(null);
   const [relatedItems, setRelatedItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [selectedSize, setSelectedSize] = useState('');
+  const [selectedFlavor, setSelectedFlavor] = useState('');
+  const [quantity, setQuantity] = useState(1);
+  const [customizationNote, setCustomizationNote] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
 
   useEffect(() => {
     const fetchItem = async () => {
@@ -33,6 +47,10 @@ const ItemDetails = () => {
           setItem(res.data.item);
           setRelatedItems(res.data.relatedItems || []);
           setActiveImageIndex(0);
+          setSelectedSize(res.data.item.sizes?.[0]?.name || '');
+          setSelectedFlavor(res.data.item.flavors?.[0] || '');
+          setQuantity(1);
+          setCustomizationNote('');
         }
       } catch (err) {
         setError(err.message || 'Failed to load item details.');
@@ -46,6 +64,29 @@ const ItemDetails = () => {
       window.scrollTo(0, 0);
     }
   }, [id]);
+
+  const handleAddToCart = async () => {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: `${location.pathname}${location.search}` } });
+      return;
+    }
+    if (user?.role !== 'buyer') return;
+
+    try {
+      setIsAdding(true);
+      const result = await addToCart(item, {
+        quantity: Number(quantity),
+        selectedSize: selectedSize || null,
+        selectedFlavor: selectedFlavor || null,
+        customizationNote: item?.allowsCustomization ? customizationNote : ''
+      });
+      toast.success(result.message || 'Item added to cart!');
+    } catch (addError) {
+      toast.error(addError.message || 'Server error. Item was not added.');
+    } finally {
+      setIsAdding(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -200,18 +241,19 @@ const ItemDetails = () => {
           {/* Price & Availability Card */}
           <motion.div
             variants={staggerItem}
-            className="p-4 card-bakery flex items-center justify-between"
+            className="p-4 card-bakery space-y-4"
           >
-            <div>
+            <div className="flex items-center justify-between gap-3">
+              <div>
               <span className="text-[10px] uppercase font-bold text-bakery-500 tracking-wider block">
                 Price (PKR)
               </span>
               <div className="price-sticker text-2xl sm:text-3xl font-serif font-bold text-chocolate">
                 Rs. {item.price?.toLocaleString()}
               </div>
-            </div>
+              </div>
 
-            <div>
+              <div>
               {item.stock > 0 ? (
                 <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold shadow-2xs">
                   <CheckCircle2 className="w-3.5 h-3.5" />
@@ -224,7 +266,52 @@ const ItemDetails = () => {
                   {t('items.outOfStock') || 'Out of stock'}
                 </span>
               )}
+              </div>
             </div>
+
+            {item.sizes?.length > 0 && (
+              <label className="block text-xs font-semibold text-chocolate">
+                Size
+                <select value={selectedSize} onChange={(event) => setSelectedSize(event.target.value)} className="input-bakery mt-1 w-full">
+                  <option value="">Select a size</option>
+                  {item.sizes.map((size) => <option key={size.name} value={size.name}>{size.name}</option>)}
+                </select>
+              </label>
+            )}
+            {item.flavors?.length > 0 && (
+              <label className="block text-xs font-semibold text-chocolate">
+                Flavor
+                <select value={selectedFlavor} onChange={(event) => setSelectedFlavor(event.target.value)} className="input-bakery mt-1 w-full">
+                  <option value="">Select a flavor</option>
+                  {item.flavors.map((flavor) => <option key={flavor} value={flavor}>{flavor}</option>)}
+                </select>
+              </label>
+            )}
+            {user?.role === 'buyer' && (
+              <>
+                <label className="block text-xs font-semibold text-chocolate">
+                  Quantity
+                  <input type="number" min="1" max={item.stock} value={quantity} onChange={(event) => setQuantity(event.target.value)} className="input-bakery mt-1 w-full" />
+                </label>
+                {item.allowsCustomization && (
+                  <label className="block text-xs font-semibold text-chocolate">
+                    Customization note
+                    <textarea value={customizationNote} onChange={(event) => setCustomizationNote(event.target.value)} maxLength={300} rows={3} className="input-bakery mt-1 w-full" />
+                  </label>
+                )}
+              </>
+            )}
+            {(!isAuthenticated || user?.role === 'buyer') && (
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                disabled={isAdding || item.stock <= 0 || item.isAvailable === false || !Number.isInteger(Number(quantity)) || Number(quantity) < 1 || Number(quantity) > item.stock || (item.sizes?.length > 0 && !selectedSize) || (item.flavors?.length > 0 && !selectedFlavor)}
+                className="btn-primary w-full justify-center disabled:opacity-60"
+              >
+                <ShoppingCart className="w-4 h-4" />
+                <span>{item.stock <= 0 || item.isAvailable === false ? 'Unavailable' : isAdding ? 'Adding...' : 'Add to Cart'}</span>
+              </button>
+            )}
           </motion.div>
 
           {/* Preparation Time Notice */}

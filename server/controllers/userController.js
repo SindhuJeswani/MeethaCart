@@ -93,12 +93,16 @@ export const getPublicSellerProfile = async (req, res) => {
 
     // Dynamic import to prevent circular dependency if Item model is loaded later
     let items = [];
-    try {
+    if (seller.sellerStatus === 'approved') {
       const { Item } = await import('../models/Item.js');
-      items = await Item.find({ seller: id, isAvailable: true }).populate('category', 'name slug');
-    } catch (e) {
-      // Items collection may not have any docs yet
-      items = [];
+      items = await Item.find({
+        seller: id,
+        isAvailable: true,
+        stock: { $gt: 0 },
+        approvalStatus: 'Approved'
+      })
+        .populate('category', 'name slug')
+        .populate('seller', 'name bakeryName avatar address sellerStatus');
     }
 
     return res.status(200).json({

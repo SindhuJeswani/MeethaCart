@@ -6,6 +6,7 @@ import {
   UserCheck,
   FolderTree,
   Users,
+  Cake,
   Shield,
   ArrowLeft
 } from 'lucide-react';
@@ -30,6 +31,11 @@ const AdminSidebar = ({ pendingCount = 0 }) => {
       to: '/admin/categories',
       label: 'Categories',
       icon: FolderTree
+    },
+    {
+      to: '/admin/item-reviews',
+      label: 'Item Reviews',
+      icon: Cake
     },
     {
       to: '/admin/users',

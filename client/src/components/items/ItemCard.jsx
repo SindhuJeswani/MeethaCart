@@ -1,9 +1,13 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Store, ArrowRight, Clock } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Store, Clock, ShoppingCart, X } from 'lucide-react';
 import fallbackImg from '../../assets/fallback-item.jpg';
 import { useTranslation } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../context/CartContext';
+import { useToast } from '../../context/ToastContext';
 import { cardHover, buttonTap, TIMING, EASING } from '../../animations/motion';
 
 const isFreshToday = (item) => {
@@ -20,6 +24,17 @@ const isFreshToday = (item) => {
 
 const ItemCard = ({ item }) => {
   const { t, translateCategory, translateItemTitle, lang } = useTranslation();
+  const { user, isAuthenticated } = useAuth();
+  const { addToCart } = useCart();
+  const toast = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+  const [selectedSize, setSelectedSize] = useState(item?.sizes?.[0]?.name || '');
+  const [selectedFlavor, setSelectedFlavor] = useState(item?.flavors?.[0] || '');
+  const [quantity, setQuantity] = useState(1);
+  const [customizationNote, setCustomizationNote] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
 
   const imageUrl = (() => {
     if (!item?.images || item.images.length === 0) return null;
@@ -43,7 +58,38 @@ const ItemCard = ({ item }) => {
   const categoryName = item?.category?.name || '';
   const freshToday = isFreshToday(item);
   const outOfStock = item?.stock !== undefined && item.stock <= 0;
+  const isUnavailable = outOfStock || item?.isAvailable === false ||
+    item?.approvalStatus !== 'Approved' || item?.seller?.sellerStatus !== 'approved';
+  const isBuyerOrGuest = !isAuthenticated || user?.role === 'buyer';
+  const hasOptions = Boolean(item?.sizes?.length || item?.flavors?.length);
   const showEggless = Boolean(item?.isEggless);
+  const handleAddToCart = async () => {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: `${location.pathname}${location.search}` } });
+      return;
+    }
+    if (user?.role !== 'buyer' || isUnavailable) return;
+    if (hasOptions && !isOptionsOpen) {
+      setIsOptionsOpen(true);
+      return;
+    }
+
+    try {
+      setIsAdding(true);
+      const result = await addToCart(item, {
+        quantity: hasOptions ? Number(quantity) : 1,
+        selectedSize: selectedSize || null,
+        selectedFlavor: selectedFlavor || null,
+        customizationNote: item?.allowsCustomization ? customizationNote : ''
+      });
+      setIsOptionsOpen(false);
+      toast.success(result.message || 'Item added to cart!');
+    } catch (error) {
+      toast.error(error.message || 'Server error. Item was not added.');
+    } finally {
+      setIsAdding(false);
+    }
+  };
 
   return (
     <motion.article
@@ -136,16 +182,77 @@ const ItemCard = ({ item }) => {
             ) : null}
           </div>
 
-          <motion.div whileHover={{ scale: 1.04 }} whileTap={buttonTap}>
-            <Link
-              to={`/items/${item?._id}`}
-              className="btn-primary text-xs py-2 px-3.5 font-bold rounded-xl whitespace-nowrap shadow-xs hover:shadow-sm"
-            >
-              <span>{t('items.viewItem') || 'View item'}</span>
-            </Link>
-          </motion.div>
+          <div className="flex items-center gap-1.5">
+            <motion.div whileHover={{ scale: 1.03 }} whileTap={buttonTap}>
+              <Link
+                to={`/items/${item?._id}`}
+                className="btn-primary text-[10px] sm:text-xs py-2 px-2 sm:px-3 font-bold rounded-xl whitespace-nowrap shadow-xs hover:shadow-sm"
+              >
+                <span>{t('items.viewItem') || 'View item'}</span>
+              </Link>
+            </motion.div>
+            {isBuyerOrGuest && (
+              <motion.button
+                whileHover={!isUnavailable ? { scale: 1.03 } : undefined}
+                whileTap={!isUnavailable ? buttonTap : undefined}
+                type="button"
+                disabled={isUnavailable || isAdding}
+                onClick={handleAddToCart}
+                className="btn-secondary text-[10px] sm:text-xs py-2 px-2 sm:px-3 font-bold rounded-xl whitespace-nowrap flex items-center gap-1 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <ShoppingCart className="w-3 h-3" />
+                <span>{isUnavailable ? 'Unavailable' : isAdding ? 'Adding...' : 'Add to Cart'}</span>
+              </motion.button>
+            )}
+          </div>
         </div>
       </div>
+      {isOptionsOpen && createPortal(
+        <div className="fixed inset-0 z-[10000] bg-black/50 flex items-center justify-center p-4" onMouseDown={(event) => {
+          if (event.target === event.currentTarget) setIsOptionsOpen(false);
+        }}>
+          <div role="dialog" aria-modal="true" aria-labelledby={`cart-options-${item._id}`} className="bg-white rounded-2xl shadow-xl w-full max-w-md p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 id={`cart-options-${item._id}`} className="font-serif font-bold text-chocolate">{translateItemTitle(item)}</h2>
+              <button type="button" onClick={() => setIsOptionsOpen(false)} aria-label="Close options" className="p-1 text-bakery-500 hover:text-chocolate">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            {item?.sizes?.length > 0 && (
+              <label className="block text-xs font-semibold text-chocolate">
+                Size
+                <select value={selectedSize} onChange={(event) => setSelectedSize(event.target.value)} className="input-bakery mt-1 w-full">
+                  <option value="">Select a size</option>
+                  {item.sizes.map((size) => <option key={size.name} value={size.name}>{size.name}</option>)}
+                </select>
+              </label>
+            )}
+            {item?.flavors?.length > 0 && (
+              <label className="block text-xs font-semibold text-chocolate">
+                Flavor
+                <select value={selectedFlavor} onChange={(event) => setSelectedFlavor(event.target.value)} className="input-bakery mt-1 w-full">
+                  <option value="">Select a flavor</option>
+                  {item.flavors.map((flavor) => <option key={flavor} value={flavor}>{flavor}</option>)}
+                </select>
+              </label>
+            )}
+            <label className="block text-xs font-semibold text-chocolate">
+              Quantity
+              <input type="number" min="1" max={item.stock} value={quantity} onChange={(event) => setQuantity(event.target.value)} className="input-bakery mt-1 w-full" />
+            </label>
+            {item?.allowsCustomization && (
+              <label className="block text-xs font-semibold text-chocolate">
+                Customization note
+                <textarea value={customizationNote} onChange={(event) => setCustomizationNote(event.target.value)} maxLength={300} rows={3} className="input-bakery mt-1 w-full" />
+              </label>
+            )}
+            <button type="button" onClick={handleAddToCart} disabled={isAdding || !Number.isInteger(Number(quantity)) || Number(quantity) < 1 || Number(quantity) > item.stock || (item?.sizes?.length > 0 && !selectedSize) || (item?.flavors?.length > 0 && !selectedFlavor)} className="btn-primary w-full justify-center disabled:opacity-60">
+              {isAdding ? 'Adding...' : 'Confirm and Add to Cart'}
+            </button>
+          </div>
+        </div>,
+        document.body
+      )}
     </motion.article>
   );
 };

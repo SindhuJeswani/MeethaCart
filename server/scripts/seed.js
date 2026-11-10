@@ -231,6 +231,9 @@ export const seedDatabase = async () => {
       stock: 8,
       preparationTimeHours: 12,
       isEggless: false,
+      sizes: [{ name: '1 lb', price: 1600 }, { name: '2 lbs', price: 2800 }],
+      flavors: ['Dark Chocolate', 'Mocha'],
+      allowsCustomization: true,
       images: ['https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=600&auto=format&fit=crop']
     },
     {
@@ -277,6 +280,8 @@ export const seedDatabase = async () => {
       stock: 25,
       preparationTimeHours: 4,
       isEggless: true,
+      sizes: [{ name: '500 g', price: 750 }, { name: '1 kg', price: 1450 }],
+      flavors: ['Classic Rose Cardamom', 'Kewra'],
       images: ['https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&auto=format&fit=crop']
     },
     {
@@ -500,7 +505,7 @@ export const seedDatabase = async () => {
     }
   ];
 
-  await Item.insertMany(sampleItems);
+  await Item.insertMany(sampleItems.map((item) => ({ ...item, approvalStatus: 'Approved' })));
   console.log(`✓ Seeded ${sampleItems.length} Realistic Karachi Bakery Items.`);
 
   console.log('\n🎉 =======================================================');

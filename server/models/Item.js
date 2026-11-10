@@ -60,6 +60,41 @@ const itemSchema = new mongoose.Schema(
       type: Number,
       default: 24,
       min: [1, 'Preparation time must be at least 1 hour']
+    },
+    sizes: [
+      {
+        name: { type: String, trim: true },
+        price: { type: Number, min: 0 }
+      }
+    ],
+    flavors: [
+      {
+        type: String,
+        trim: true
+      }
+    ],
+    allowsCustomization: {
+      type: Boolean,
+      default: false
+    },
+    approvalStatus: {
+      type: String,
+      enum: ['Pending', 'Approved', 'Rejected'],
+      default: 'Pending',
+      index: true
+    },
+    rejectionReason: {
+      type: String,
+      default: null
+    },
+    reviewedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+    reviewedAt: {
+      type: Date,
+      default: null
     }
   },
   {

@@ -368,3 +368,118 @@ export const updateUserRole = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
+
+/**
+ * @desc    Get bakery items for admin review
+ * @route   GET /api/admin/items
+ * @access  Protected (Admin)
+ */
+export const getItemReviews = async (req, res) => {
+  try {
+    const { status = 'Pending', search } = req.query;
+    const query = {};
+
+    if (['Pending', 'Approved', 'Rejected'].includes(status)) {
+      query.approvalStatus = status;
+    } else if (status !== 'all') {
+      query.approvalStatus = 'Pending';
+    }
+
+    if (search && search.trim()) {
+      const term = search.trim();
+      query.$or = [
+        { title: { $regex: term, $options: 'i' } },
+        { description: { $regex: term, $options: 'i' } }
+      ];
+    }
+
+    const [items, pendingCount] = await Promise.all([
+      Item.find(query)
+        .populate('seller', 'name bakeryName email phone avatar sellerStatus')
+        .populate('category', 'name slug')
+        .populate('reviewedBy', 'name email')
+        .sort({ createdAt: -1 }),
+      Item.countDocuments({ approvalStatus: 'Pending' })
+    ]);
+
+    return res.status(200).json({ success: true, count: items.length, pendingCount, items });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/**
+ * @desc    Approve a bakery item
+ * @route   PATCH /api/admin/items/:id/accept
+ * @access  Protected (Admin)
+ */
+export const acceptItem = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ success: false, message: 'Invalid item ID format.' });
+    }
+
+    const item = await Item.findById(id);
+    if (!item) {
+      return res.status(404).json({ success: false, message: 'Bakery item not found.' });
+    }
+    if (item.approvalStatus !== 'Pending') {
+      return res.status(400).json({ success: false, message: 'This item has already been reviewed' });
+    }
+
+    item.approvalStatus = 'Approved';
+    item.rejectionReason = null;
+    item.reviewedBy = req.user._id;
+    item.reviewedAt = new Date();
+    await item.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `Item '${item.title}' has been approved and is now live on the marketplace.`,
+      item
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/**
+ * @desc    Reject a bakery item with a reason
+ * @route   PATCH /api/admin/items/:id/reject
+ * @access  Protected (Admin)
+ */
+export const rejectItem = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ success: false, message: 'Invalid item ID format.' });
+    }
+
+    const item = await Item.findById(id);
+    if (!item) {
+      return res.status(404).json({ success: false, message: 'Bakery item not found.' });
+    }
+    if (item.approvalStatus !== 'Pending') {
+      return res.status(400).json({ success: false, message: 'This item has already been reviewed' });
+    }
+    if (!reason || !reason.trim()) {
+      return res.status(400).json({ success: false, message: 'Please enter a reason for rejection' });
+    }
+
+    item.approvalStatus = 'Rejected';
+    item.rejectionReason = reason.trim();
+    item.reviewedBy = req.user._id;
+    item.reviewedAt = new Date();
+    await item.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `Item '${item.title}' has been rejected.`,
+      item
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
