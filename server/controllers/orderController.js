@@ -82,8 +82,8 @@ export const createOrder = async (req, res) => {
         unavailableReason = 'no longer exists';
       } else if (liveItem.approvalStatus !== 'Approved') {
         unavailableReason = 'is not approved';
-      } else if (liveItem.seller?.sellerStatus !== 'approved') {
-        unavailableReason = 'is from a seller who is not approved';
+      } else if (liveItem.seller?.isBlocked || liveItem.seller?.sellerStatus !== 'approved') {
+        unavailableReason = 'is from a seller who is blocked or not approved';
       } else if (!liveItem.isAvailable) {
         unavailableReason = 'is marked unavailable';
       } else if (!Number.isFinite(liveItem.stock) || liveItem.stock < requestedByItem.get(liveItem._id.toString())) {
@@ -91,10 +91,9 @@ export const createOrder = async (req, res) => {
       }
 
       if (unavailableReason) {
-        const itemTitle = entry.item?.title || entry.itemTitle || 'An item in your cart';
         return res.status(400).json({
           success: false,
-          message: `${itemTitle} is no longer available (${unavailableReason}). Please remove it to proceed.`
+          message: 'An item in your cart is no longer available'
         });
       }
     }
@@ -322,7 +321,7 @@ export const acceptOrder = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Server error. Status was not updated.'
+      message: 'Server error. Order was not accepted.'
     });
   }
 };
@@ -398,7 +397,57 @@ export const rejectOrder = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Server error. Status was not updated.'
+      message: 'Server error. Order was not rejected.'
+    });
+  }
+};
+
+/**
+ * @desc    Get order history for authenticated buyer (M6 Order History)
+ * @route   GET /api/orders/my-orders
+ * @access  Protected (Buyer)
+ */
+export const getBuyerOrders = async (req, res) => {
+  try {
+    const { status, page, limit } = req.query;
+    const query = { buyer: req.user._id };
+
+    if (status && status !== 'all') {
+      if (status === 'active') {
+        query.status = { $in: [ORDER_STATUS.PLACED, ORDER_STATUS.ACCEPTED, ORDER_STATUS.PREPARING, ORDER_STATUS.READY] };
+      } else if (status === 'completed') {
+        query.status = ORDER_STATUS.COMPLETED;
+      } else if (status === 'rejected') {
+        query.status = ORDER_STATUS.REJECTED;
+      } else {
+        query.status = status;
+      }
+    }
+
+    const totalOrders = await Order.countDocuments(query);
+
+    let queryBuilder = Order.find(query)
+      .populate('seller', 'name bakeryName phone address')
+      .sort({ createdAt: -1 });
+
+    if (page && limit) {
+      const pageNum = Math.max(1, parseInt(page, 10) || 1);
+      const limitNum = Math.max(1, parseInt(limit, 10) || 10);
+      queryBuilder = queryBuilder.skip((pageNum - 1) * limitNum).limit(limitNum);
+    }
+
+    const orders = await queryBuilder;
+
+    return res.status(200).json({
+      success: true,
+      count: orders.length,
+      totalOrders,
+      orders
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Unable to load orders. Please try again.'
     });
   }
 };

@@ -36,6 +36,13 @@ const SellerApprovals = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedSellerId, setSelectedSellerId] = useState(null);
+
+  // Reject Modal State
+  const [rejectModalSeller, setRejectModalSeller] = useState(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const [rejectError, setRejectError] = useState('');
+  const [isSubmittingReject, setIsSubmittingReject] = useState(false);
+
   const toast = useToast();
 
   const fetchSellers = async () => {
@@ -63,7 +70,7 @@ const SellerApprovals = () => {
       }
     } catch (err) {
       console.error('Failed to load sellers:', err);
-      setError(err.message || 'Failed to retrieve sellers list.');
+      setError(err.response?.data?.message || err.message || 'Failed to retrieve sellers list.');
     } finally {
       setIsLoading(false);
     }
@@ -90,14 +97,53 @@ const SellerApprovals = () => {
             ? 'Seller approved successfully.'
             : newStatus === 'blocked'
             ? 'Seller suspended.'
-            : 'Seller reset to pending review.'
+            : 'Seller status updated.'
         );
         setSellers((prev) =>
-          prev.map((s) => (s._id === sellerId ? { ...s, sellerStatus: newStatus } : s))
+          prev.map((s) => (s._id === sellerId ? { ...s, sellerStatus: newStatus, approvedAt: new Date() } : s))
         );
       }
     } catch (err) {
-      toast.error(err.message || 'Failed to update seller status.');
+      toast.error(err.response?.data?.message || 'Server error. Account was not approved.');
+    }
+  };
+
+  const handleOpenRejectModal = (seller) => {
+    setRejectModalSeller(seller);
+    setRejectReason('');
+    setRejectError('');
+  };
+
+  const handleConfirmReject = async (e) => {
+    e.preventDefault();
+    if (!rejectReason.trim()) {
+      setRejectError('Please enter a reason for rejection');
+      return;
+    }
+
+    try {
+      setIsSubmittingReject(true);
+      setRejectError('');
+      const res = await api.patch(`/admin/sellers/${rejectModalSeller._id}/status`, {
+        status: 'rejected',
+        reason: rejectReason.trim()
+      });
+
+      if (res.data?.success) {
+        toast.success('Seller request rejected.');
+        setSellers((prev) =>
+          prev.map((s) =>
+            s._id === rejectModalSeller._id
+              ? { ...s, sellerStatus: 'rejected', rejectionReason: rejectReason.trim() }
+              : s
+          )
+        );
+        setRejectModalSeller(null);
+      }
+    } catch (err) {
+      setRejectError(err.response?.data?.message || 'Server error. Request was not rejected.');
+    } finally {
+      setIsSubmittingReject(false);
     }
   };
 
@@ -143,7 +189,7 @@ const SellerApprovals = () => {
         <div className="card-bakery p-4 space-y-4 sm:space-y-0 sm:flex sm:items-center sm:justify-between gap-4">
           {/* Status Tabs with animated highlight */}
           <div className="flex items-center gap-1.5 p-1 bg-bakery-100 rounded-xl border border-bakery-200 overflow-x-auto">
-            {['all', 'pending', 'approved', 'blocked'].map((st) => (
+            {['all', 'pending', 'approved', 'rejected', 'blocked'].map((st) => (
               <button
                 key={st}
                 onClick={() => setStatusFilter(st)}
@@ -269,6 +315,23 @@ const SellerApprovals = () => {
                                 <span>Pending Review</span>
                               </motion.span>
                             )}
+                            {seller.sellerStatus === 'rejected' && (
+                              <motion.div
+                                key="rejected"
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                              >
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs">
+                                  <XCircle className="w-3.5 h-3.5" />
+                                  <span>Rejected</span>
+                                </span>
+                                {seller.rejectionReason && (
+                                  <p className="text-[10px] text-rose-600 mt-0.5 max-w-[150px] truncate" title={seller.rejectionReason}>
+                                    Reason: {seller.rejectionReason}
+                                  </p>
+                                )}
+                              </motion.div>
+                            )}
                             {seller.sellerStatus === 'blocked' && (
                               <motion.span
                                 key="blocked"
@@ -329,10 +392,10 @@ const SellerApprovals = () => {
                               <motion.button
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={buttonTap}
-                                onClick={() => handleUpdateStatus(seller._id, 'blocked')}
+                                onClick={() => handleOpenRejectModal(seller)}
                                 className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs shadow-xs transition-colors"
                               >
-                                Block
+                                Reject
                               </motion.button>
                             </>
                           )}
@@ -368,6 +431,73 @@ const SellerApprovals = () => {
           )}
         </div>
       </main>
+
+      {/* Reject Modal */}
+      <AnimatePresence>
+        {rejectModalSeller && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-red-100 text-red-700 flex items-center justify-center">
+                  <AlertCircle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-serif font-bold text-chocolate text-base">
+                    Reject Seller Request
+                  </h3>
+                  <p className="text-xs text-bakery-600">
+                    {rejectModalSeller.bakeryName || rejectModalSeller.name} ({rejectModalSeller.email})
+                  </p>
+                </div>
+              </div>
+
+              {rejectError && (
+                <div className="p-2.5 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs">
+                  {rejectError}
+                </div>
+              )}
+
+              <form onSubmit={handleConfirmReject} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-bakery-800 mb-1">
+                    Reason for rejection <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={rejectReason}
+                    onChange={(e) => setRejectReason(e.target.value)}
+                    placeholder="Please enter a reason for rejection"
+                    required
+                    className="input-bakery text-xs"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setRejectModalSeller(null)}
+                    className="btn-outline text-xs py-2 px-4"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingReject}
+                    className="btn-primary bg-red-600 hover:bg-red-700 text-white text-xs py-2 px-4"
+                  >
+                    {isSubmittingReject ? 'Rejecting...' : 'Confirm Reject'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Seller Details Modal */}
       <SellerDetailModal

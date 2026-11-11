@@ -196,7 +196,7 @@ export const seedDatabase = async () => {
     {
       name: 'Savory Bakes & Patties',
       description: 'Flaky bakery chicken patties, spiced vegetable turnovers, and mini quiches.',
-      image: 'https://images.unsplash.com/photo-1621236378699-8597faf6a173?w=600&auto=format&fit=crop',
+      image: 'https://images.unsplash.com/photo-1608198093002-ad4e005484ec?w=600&auto=format&fit=crop',
       isActive: true
     }
   ];
@@ -234,7 +234,7 @@ export const seedDatabase = async () => {
       stock: 6,
       preparationTimeHours: 16,
       isEggless: false,
-      images: ['https://images.unsplash.com/photo-1535141192574-5d4897c13136?w=600&auto=format&fit=crop']
+      images: ['https://images.unsplash.com/photo-1542826438-bd32f43d626f?w=600&auto=format&fit=crop']
     },
     {
       title: 'Classic Red Velvet Cream Cheese Cake (2 Lbs)',
@@ -479,7 +479,7 @@ export const seedDatabase = async () => {
       stock: 25,
       preparationTimeHours: 3,
       isEggless: false,
-      images: ['https://images.unsplash.com/photo-1621236378699-8597faf6a173?w=600&auto=format&fit=crop']
+      images: ['https://images.unsplash.com/photo-1608198093002-ad4e005484ec?w=600&auto=format&fit=crop']
     },
     {
       title: 'Spinach & Feta Mediterranean Pastry Turnovers (Pack of 4)',

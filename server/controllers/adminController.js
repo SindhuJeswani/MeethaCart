@@ -19,7 +19,9 @@ export const getMetrics = async (req, res) => {
       blockedSellers,
       totalCategories,
       totalItems,
-      totalOrders
+      pendingItems,
+      totalOrders,
+      ordersByStatusArr
     ] = await Promise.all([
       User.countDocuments(),
       User.countDocuments({ role: 'buyer' }),
@@ -29,8 +31,24 @@ export const getMetrics = async (req, res) => {
       User.countDocuments({ role: 'seller', sellerStatus: 'blocked' }),
       Category.countDocuments(),
       Item.countDocuments(),
-      Order.countDocuments()
+      Item.countDocuments({ approvalStatus: 'Pending' }),
+      Order.countDocuments(),
+      Order.aggregate([
+        { $group: { _id: '$status', count: { $sum: 1 } } }
+      ])
     ]);
+
+    const ordersByStatus = {
+      Placed: 0,
+      Accepted: 0,
+      Preparing: 0,
+      Ready: 0,
+      Completed: 0,
+      Rejected: 0
+    };
+    (ordersByStatusArr || []).forEach((g) => {
+      if (g._id) ordersByStatus[g._id] = g.count;
+    });
 
     return res.status(200).json({
       success: true,
@@ -43,7 +61,9 @@ export const getMetrics = async (req, res) => {
         blockedSellers,
         totalCategories,
         totalItems,
-        totalOrders
+        pendingItems,
+        totalOrders,
+        ordersByStatus
       }
     });
   } catch (error) {
@@ -195,11 +215,13 @@ export const getSellerDetails = async (req, res) => {
 };
 
 export const updateSellerStatus = async (req, res) => {
+  let targetStatus = req.body?.status;
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, reason } = req.body;
+    targetStatus = status;
 
-    const validStatuses = ['pending', 'approved', 'blocked'];
+    const validStatuses = ['pending', 'approved', 'rejected', 'blocked'];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({
         success: false,
@@ -207,29 +229,45 @@ export const updateSellerStatus = async (req, res) => {
       });
     }
 
-    const targetUser = await User.findById(id);
-    if (!targetUser) {
+    const seller = await User.findById(id);
+    if (!seller || seller.role !== 'seller') {
       return res.status(404).json({
         success: false,
-        message: 'Seller / User not found.'
+        message: 'Seller account not found.'
       });
     }
 
-    if (targetUser.role === 'admin') {
+    if (seller.role === 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Admin accounts cannot be blocked, suspended, or modified.'
       });
     }
 
-    if (targetUser.role !== 'seller') {
+    // Already processed check for approval / rejection
+    if ((status === 'approved' || status === 'rejected') && seller.sellerStatus !== 'pending') {
       return res.status(400).json({
         success: false,
-        message: 'Target user is not a seller.'
+        message: 'This request has already been processed'
       });
     }
 
-    const seller = targetUser;
+    if (status === 'rejected') {
+      if (!reason || !reason.trim()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Please enter a reason for rejection'
+        });
+      }
+      seller.rejectionReason = reason.trim();
+    }
+
+    if (status === 'approved') {
+      seller.approvedAt = new Date();
+      seller.approvedBy = req.user._id;
+      seller.rejectionReason = null;
+    }
+
     seller.sellerStatus = status;
     await seller.save();
 
@@ -241,11 +279,97 @@ export const updateSellerStatus = async (req, res) => {
         name: seller.name,
         bakeryName: seller.bakeryName,
         email: seller.email,
-        sellerStatus: seller.sellerStatus
+        sellerStatus: seller.sellerStatus,
+        approvedAt: seller.approvedAt,
+        rejectionReason: seller.rejectionReason
       }
     });
   } catch (error) {
+    if (targetStatus === 'approved') {
+      return res.status(500).json({ success: false, message: 'Server error. Account was not approved.' });
+    }
+    if (targetStatus === 'rejected') {
+      return res.status(500).json({ success: false, message: 'Server error. Request was not rejected.' });
+    }
     return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/**
+ * @desc    Block a user (buyer or seller) with reason
+ * @route   PATCH /api/admin/users/:id/block
+ * @access  Protected (Admin)
+ */
+export const blockUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+
+    if (!reason || !reason.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please enter a reason for blocking'
+      });
+    }
+
+    const targetUser = await User.findById(id);
+    if (!targetUser) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+    if (targetUser.role === 'admin') {
+      return res.status(403).json({ success: false, message: 'Admin accounts cannot be blocked.' });
+    }
+
+    targetUser.isBlocked = true;
+    targetUser.blockReason = reason.trim();
+    if (targetUser.role === 'seller') {
+      targetUser.sellerStatus = 'blocked';
+    }
+    await targetUser.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `User '${targetUser.name}' has been blocked.`,
+      user: targetUser
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Server error. Account was not blocked.'
+    });
+  }
+};
+
+/**
+ * @desc    Unblock a previously blocked user
+ * @route   PATCH /api/admin/users/:id/unblock
+ * @access  Protected (Admin)
+ */
+export const unblockUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const targetUser = await User.findById(id);
+    if (!targetUser) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    targetUser.isBlocked = false;
+    targetUser.blockReason = null;
+    if (targetUser.role === 'seller') {
+      targetUser.sellerStatus = 'approved';
+    }
+    await targetUser.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `User '${targetUser.name}' has been unblocked.`,
+      user: targetUser
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Server error. Account was not unblocked.'
+    });
   }
 };
 
@@ -256,19 +380,32 @@ export const updateSellerStatus = async (req, res) => {
  */
 export const getUsers = async (req, res) => {
   try {
-    const { role, search, page = 1, limit = 20 } = req.query;
+    const { role, search, status, isBlocked, page = 1, limit = 50 } = req.query;
 
     const query = {};
     if (role && ['buyer', 'seller', 'admin'].includes(role)) {
       query.role = role;
     }
 
+    if (isBlocked === 'true' || status === 'blocked') {
+      query.$or = [{ isBlocked: true }, { sellerStatus: 'blocked' }];
+    } else if (isBlocked === 'false' || status === 'active') {
+      query.isBlocked = { $ne: true };
+      query.sellerStatus = { $ne: 'blocked' };
+    }
+
     if (search && search.trim()) {
       const term = search.trim();
-      query.$or = [
+      const searchConditions = [
         { name: { $regex: term, $options: 'i' } },
         { email: { $regex: term, $options: 'i' } }
       ];
+      if (query.$or) {
+        query.$and = [{ $or: query.$or }, { $or: searchConditions }];
+        delete query.$or;
+      } else {
+        query.$or = searchConditions;
+      }
     }
 
     const skip = (Number(page) - 1) * Number(limit);
@@ -295,22 +432,63 @@ export const getUsers = async (req, res) => {
 };
 
 /**
- * @desc    Orders monitoring endpoint (M2 empty state & structure for M4)
+ * @desc    Orders marketplace monitoring (all orders + filters + summary counts)
  * @route   GET /api/admin/orders
  * @access  Protected (Admin)
  */
 export const getAdminOrders = async (req, res) => {
   try {
-    const orders = await Order.find()
-      .populate('buyer', 'name email')
-      .populate('seller', 'name bakeryName')
-      .sort({ createdAt: -1 });
+    const { status, seller, buyer, date, startDate, endDate } = req.query;
+    const query = {};
+
+    if (status && status !== 'all') {
+      query.status = status;
+    }
+
+    if (seller && seller.match(/^[0-9a-fA-F]{24}$/)) {
+      query.seller = seller;
+    }
+
+    if (buyer && buyer.match(/^[0-9a-fA-F]{24}$/)) {
+      query.buyer = buyer;
+    }
+
+    if (date) {
+      const d = new Date(date);
+      if (!isNaN(d.getTime())) {
+        const start = new Date(d);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(d);
+        end.setHours(23, 59, 59, 999);
+        query.createdAt = { $gte: start, $lte: end };
+      }
+    } else if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) query.createdAt.$gte = new Date(startDate);
+      if (endDate) query.createdAt.$lte = new Date(endDate);
+    }
+
+    const [orders, totalUsers, totalSellers, totalItems, totalOrders] = await Promise.all([
+      Order.find(query)
+        .populate('buyer', 'name email phone')
+        .populate('seller', 'name bakeryName phone address')
+        .sort({ createdAt: -1 }),
+      User.countDocuments(),
+      User.countDocuments({ role: 'seller' }),
+      Item.countDocuments(),
+      Order.countDocuments()
+    ]);
 
     return res.status(200).json({
       success: true,
       count: orders.length,
-      orders,
-      note: 'Orders module will be fully populated in Milestone 4.'
+      summary: {
+        totalUsers,
+        totalSellers,
+        totalItems,
+        totalOrders
+      },
+      orders
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });

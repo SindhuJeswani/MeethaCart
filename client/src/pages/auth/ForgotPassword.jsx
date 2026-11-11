@@ -104,6 +104,7 @@ const ForgotPassword = () => {
         variants={shakeVariant}
         animate={isShaking ? 'shake' : 'idle'}
         onSubmit={handleSubmit}
+        noValidate
         className="space-y-5"
       >
         <div>

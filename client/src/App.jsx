@@ -109,7 +109,7 @@ function AppContent() {
     <>
       <TopProgressBar />
       {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
-      <div className="min-h-screen w-full flex flex-col font-sans overflow-x-hidden ajrak-bg-pattern selection:bg-amber-200 selection:text-amber-900" style={{ backgroundColor: 'var(--color-bg)' }}>
+      <div className="min-h-screen w-full flex flex-col font-sans overflow-x-hidden selection:bg-amber-200 selection:text-amber-900" style={{ backgroundColor: 'var(--color-bg)' }}>
         {!isWelcomePage && <Navbar />}
         <main className="flex-1 flex flex-col overflow-x-hidden">
           <AnimatePresence mode="wait">

@@ -1,16 +1,16 @@
 /**
  * MeethaCart Sindhi Ajrak Theme Configuration
- * Deep royal indigo, terracotta brick red, and geometric heritage block-print
+ * Deep royal indigo, terracotta brick red, and solid light background
  */
 
 export const THEME = {
   id: 'ajrak',
   name: 'Sindhi Ajrak',
-  description: 'Deep royal indigo, terracotta brick red, and geometric heritage block-print',
-  swatches: ['#1C2B5E', '#9E2F22', '#F4EEE3'],
+  description: 'Deep royal indigo, terracotta brick red, and solid light background',
+  swatches: ['#1C2B5E', '#9E2F22', '#F8FAFB'],
   badge: 'Heritage',
   tokens: {
-    '--color-bg': '#F4EEE3',
+    '--color-bg': '#F8FAFB',
     '--color-surface': '#FBF7EE',
     '--color-surface-alt': '#EDE6D8',
     '--color-primary': '#1C2B5E',

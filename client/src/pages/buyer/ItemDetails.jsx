@@ -3,6 +3,7 @@ import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../services/api';
 import ItemCard from '../../components/items/ItemCard';
+import fallbackImg from '../../assets/fallback-item.jpg';
 import {
   Clock,
   Store,
@@ -36,6 +37,11 @@ const ItemDetails = () => {
   const [isAdding, setIsAdding] = useState(false);
 
   useEffect(() => {
+    // Scroll strictly to top when viewing an item
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [id]);
+
+  useEffect(() => {
     const fetchItemAndRelated = async () => {
       try {
         setLoading(true);
@@ -44,6 +50,7 @@ const ItemDetails = () => {
         if (res.data?.success) {
           const it = res.data.item;
           setItem(it);
+          setActiveImageIndex(0);
           if (it.sizes?.length) {
             setSelectedSize(it.sizes[0].name);
           }
@@ -162,9 +169,22 @@ const ItemDetails = () => {
     );
   }
 
-  const images = (item.images && item.images.length > 0)
-    ? item.images.map((img) => img.startsWith('http') ? img : (img.startsWith('/uploads') ? `http://localhost:5000${img}` : img))
-    : ['https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&auto=format&fit=crop&q=80'];
+  const resolveImageUrl = (img) => {
+    if (!img) return fallbackImg;
+    if (img.startsWith('http://') || img.startsWith('https://')) return img;
+    if (img.startsWith('/uploads/')) return `http://localhost:5000${img}`;
+    if (img.startsWith('uploads/')) return `http://localhost:5000/${img}`;
+    return img;
+  };
+
+  const rawImages = (item.images && item.images.length > 0)
+    ? item.images
+    : [fallbackImg];
+  const images = rawImages.map(resolveImageUrl);
+
+  const unitPrice = ((selectedSize && item.sizes?.find((s) => s.name?.toLowerCase() === selectedSize.trim().toLowerCase())?.price) || item.price) || 0;
+  const numQuantity = Math.max(1, Number(quantity) || 1);
+  const totalPrice = unitPrice * numQuantity;
 
   const category = item.category;
   const seller = item.seller;
@@ -202,9 +222,13 @@ const ItemDetails = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: TIMING.normal, ease: EASING.out }}
-                src={images[activeImageIndex]}
+                src={images[activeImageIndex] || fallbackImg}
                 alt={item.title}
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = fallbackImg;
+                }}
               />
             </AnimatePresence>
 
@@ -233,9 +257,13 @@ const ItemDetails = () => {
                   }`}
                 >
                   <img
-                    src={img}
+                    src={img || fallbackImg}
                     alt={`Thumbnail ${idx + 1}`}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = fallbackImg;
+                    }}
                   />
                 </motion.button>
               ))}
@@ -286,10 +314,26 @@ const ItemDetails = () => {
             <div className="flex items-center justify-between gap-3">
               <div>
                 <span className="text-[10px] uppercase font-bold text-bakery-500 tracking-wider block">
-                  Price (PKR)
+                  {numQuantity > 1 ? 'Total Price (PKR)' : 'Price (PKR)'}
                 </span>
-                <div className="price-sticker text-2xl sm:text-3xl font-serif font-bold text-chocolate">
-                  Rs. {((selectedSize && item.sizes?.find((s) => s.name?.toLowerCase() === selectedSize.trim().toLowerCase())?.price) || item.price)?.toLocaleString()}
+                <div className="price-sticker overflow-hidden">
+                  <AnimatePresence mode="popLayout" initial={false}>
+                    <motion.div
+                      key={totalPrice}
+                      initial={{ opacity: 0, y: -6, scale: 0.96 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 6, scale: 0.96 }}
+                      transition={{ type: 'spring', stiffness: 500, damping: 28 }}
+                      className="text-2xl sm:text-3xl font-serif font-bold text-chocolate inline-flex items-baseline gap-2"
+                    >
+                      <span>Rs. {totalPrice.toLocaleString()}</span>
+                      {numQuantity > 1 && (
+                        <span className="text-xs font-sans font-medium text-bakery-500">
+                          ({numQuantity} × Rs. {unitPrice.toLocaleString()})
+                        </span>
+                      )}
+                    </motion.div>
+                  </AnimatePresence>
                 </div>
               </div>
 

@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: [true, 'Password is required'],
-      minlength: [6, 'Password must be at least 6 characters'],
+      minlength: [8, 'The password must be at least 8 characters'],
       select: false // Exclude from queries by default for security
     },
     role: {
@@ -33,12 +33,38 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false
     },
+    preferredLanguage: {
+      type: String,
+      enum: ['English', 'Urdu'],
+      default: 'English'
+    },
     sellerStatus: {
       type: String,
-      enum: ['pending', 'approved', 'blocked'],
+      enum: ['pending', 'approved', 'rejected', 'blocked'],
       default: function () {
         return this.role === 'seller' ? 'pending' : 'approved';
       }
+    },
+    rejectionReason: {
+      type: String,
+      default: null
+    },
+    approvedAt: {
+      type: Date,
+      default: null
+    },
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+    isBlocked: {
+      type: Boolean,
+      default: false
+    },
+    blockReason: {
+      type: String,
+      default: null
     },
     phone: {
       type: String,
@@ -50,6 +76,10 @@ const userSchema = new mongoose.Schema(
       trim: true,
       default: ''
     },
+    bakeryCategories: {
+      type: [String],
+      default: []
+    },
     bio: {
       type: String,
       trim: true,
@@ -57,6 +87,11 @@ const userSchema = new mongoose.Schema(
       default: ''
     },
     address: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    storeAddress: {
       type: String,
       trim: true,
       default: ''

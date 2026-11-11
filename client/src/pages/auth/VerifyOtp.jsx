@@ -23,12 +23,10 @@ const VerifyOtp = () => {
   const email = location.state?.email || pendingAuth?.email || '';
   const purpose = location.state?.purpose || pendingAuth?.purpose || 'signup_verification';
   const initialCooldown = location.state?.cooldownSeconds || pendingAuth?.cooldownSeconds || 60;
-  const initialDevOtp = location.state?.devOtp || pendingAuth?.devOtp || '';
 
   const [digits, setDigits] = useState(['', '', '', '', '', '']);
   const [activeIdx, setActiveIdx] = useState(0);
   const [cooldown, setCooldown] = useState(initialCooldown);
-  const [devOtp, setDevOtp] = useState(initialDevOtp);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [error, setError] = useState('');
@@ -117,18 +115,6 @@ const VerifyOtp = () => {
     inputRefs.current[nextIdx]?.focus();
   };
 
-  const fillDevOtp = (code) => {
-    if (!code) return;
-    const split = code.split('').slice(0, 6);
-    const newDigits = ['', '', '', '', '', ''];
-    split.forEach((c, i) => {
-      newDigits[i] = c;
-    });
-    setDigits(newDigits);
-    setActiveIdx(5);
-    inputRefs.current[5]?.focus();
-  };
-
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
     setError('');
@@ -191,7 +177,6 @@ const VerifyOtp = () => {
       setIsResending(true);
       const res = await resendOtp(email, purpose);
       setSuccessMsg(res.message || 'A fresh verification code has been sent.');
-      if (res.devOtp) setDevOtp(res.devOtp);
       setCooldown(res.cooldownSeconds || 60);
       setDigits(['', '', '', '', '', '']);
       setActiveIdx(0);
@@ -256,42 +241,6 @@ const VerifyOtp = () => {
           )}
         </div>
       )}
-
-      {/* Dev Mode Banner (Quick fill for developer convenience) */}
-      <AnimatePresence>
-        {devOtp && (
-          <motion.div
-            key="dev-otp-card"
-            initial={{ opacity: 0, y: -10, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="mb-4 p-3.5 rounded-xl bg-amber-50/90 border border-amber-300 text-amber-900 shadow-sm"
-          >
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-bold uppercase tracking-wider text-amber-800 flex items-center gap-1.5">
-                <span>⚡</span> Dev Mode Helper
-              </span>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                type="button"
-                onClick={() => fillDevOtp(devOtp)}
-                className="text-xs font-semibold px-2.5 py-1 rounded-md bg-amber-200 hover:bg-amber-300 text-amber-950 transition-colors shadow-xs"
-              >
-                Auto-fill Code
-              </motion.button>
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className="font-mono text-2xl font-black tracking-widest text-amber-900">
-                {devOtp}
-              </span>
-              <span className="text-xs text-amber-700">
-                (Logged for development testing)
-              </span>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Delivery & Spam Disclaimer */}
       <div className="mb-4 p-3 rounded-lg bg-bakery-100 border border-bakery-200 text-xs text-bakery-800 flex items-start gap-2">

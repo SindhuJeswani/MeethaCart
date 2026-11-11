@@ -268,55 +268,70 @@ const Home = () => {
             <motion.div
               whileHover={{ y: -3 }}
               transition={{ duration: 0.15 }}
-              className="flex items-start gap-3.5 p-3 rounded-xl hover:bg-bakery-100/50 transition-colors"
             >
-              <div className="w-10 h-10 rounded-xl bg-bakery-100 border border-bakery-200 flex items-center justify-center shrink-0 text-chocolate shadow-xs">
-                <Search className="w-4 h-4 text-caramel" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-chocolate text-sm">
-                  1. Find a baker or item
-                </h4>
-                <p className="text-xs text-bakery-600 mt-1 leading-relaxed">
-                  Search by cake type, dessert category, or location to find bakers near you.
-                </p>
-              </div>
+              <Link
+                to="/items"
+                className="flex items-start gap-3.5 p-3 rounded-xl hover:bg-bakery-100/60 transition-colors group cursor-pointer block"
+              >
+                <div className="w-10 h-10 rounded-xl bg-bakery-100 border border-bakery-200 flex items-center justify-center shrink-0 text-chocolate shadow-xs group-hover:border-caramel/40 group-hover:bg-white transition-colors">
+                  <Search className="w-4 h-4 text-caramel group-hover:scale-110 transition-transform" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-chocolate text-sm group-hover:text-caramel transition-colors flex items-center gap-1">
+                    <span>1. Find a baker or item</span>
+                    <ArrowRight className="w-3.5 h-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-caramel" />
+                  </h4>
+                  <p className="text-xs text-bakery-600 mt-1 leading-relaxed">
+                    Search by cake type, dessert category, or location to find bakers near you.
+                  </p>
+                </div>
+              </Link>
             </motion.div>
 
             <motion.div
               whileHover={{ y: -3 }}
               transition={{ duration: 0.15 }}
-              className="flex items-start gap-3.5 p-3 rounded-xl hover:bg-bakery-100/50 transition-colors"
             >
-              <div className="w-10 h-10 rounded-xl bg-bakery-100 border border-bakery-200 flex items-center justify-center shrink-0 text-chocolate shadow-xs">
-                <UtensilsCrossed className="w-4 h-4 text-caramel" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-chocolate text-sm">
-                  2. Order or request custom
-                </h4>
-                <p className="text-xs text-bakery-600 mt-1 leading-relaxed">
-                  Choose ready items or contact the baker with custom flavors, weights, and dates.
-                </p>
-              </div>
+              <Link
+                to="/items"
+                className="flex items-start gap-3.5 p-3 rounded-xl hover:bg-bakery-100/60 transition-colors group cursor-pointer block"
+              >
+                <div className="w-10 h-10 rounded-xl bg-bakery-100 border border-bakery-200 flex items-center justify-center shrink-0 text-chocolate shadow-xs group-hover:border-caramel/40 group-hover:bg-white transition-colors">
+                  <UtensilsCrossed className="w-4 h-4 text-caramel group-hover:scale-110 transition-transform" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-chocolate text-sm group-hover:text-caramel transition-colors flex items-center gap-1">
+                    <span>2. Order or request custom</span>
+                    <ArrowRight className="w-3.5 h-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-caramel" />
+                  </h4>
+                  <p className="text-xs text-bakery-600 mt-1 leading-relaxed">
+                    Choose ready items or contact the baker with custom flavors, weights, and dates.
+                  </p>
+                </div>
+              </Link>
             </motion.div>
 
             <motion.div
               whileHover={{ y: -3 }}
               transition={{ duration: 0.15 }}
-              className="flex items-start gap-3.5 p-3 rounded-xl hover:bg-bakery-100/50 transition-colors"
             >
-              <div className="w-10 h-10 rounded-xl bg-bakery-100 border border-bakery-200 flex items-center justify-center shrink-0 text-chocolate shadow-xs">
-                <PackageCheck className="w-4 h-4 text-caramel" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-chocolate text-sm">
-                  3. Freshly prepared for you
-                </h4>
-                <p className="text-xs text-bakery-600 mt-1 leading-relaxed">
-                  Your order is prepared fresh on demand and delivered on your specified schedule.
-                </p>
-              </div>
+              <Link
+                to="/items"
+                className="flex items-start gap-3.5 p-3 rounded-xl hover:bg-bakery-100/60 transition-colors group cursor-pointer block"
+              >
+                <div className="w-10 h-10 rounded-xl bg-bakery-100 border border-bakery-200 flex items-center justify-center shrink-0 text-chocolate shadow-xs group-hover:border-caramel/40 group-hover:bg-white transition-colors">
+                  <PackageCheck className="w-4 h-4 text-caramel group-hover:scale-110 transition-transform" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-chocolate text-sm group-hover:text-caramel transition-colors flex items-center gap-1">
+                    <span>3. Freshly prepared for you</span>
+                    <ArrowRight className="w-3.5 h-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-caramel" />
+                  </h4>
+                  <p className="text-xs text-bakery-600 mt-1 leading-relaxed">
+                    Your order is prepared fresh on demand and delivered on your specified schedule.
+                  </p>
+                </div>
+              </Link>
             </motion.div>
           </div>
         </div>

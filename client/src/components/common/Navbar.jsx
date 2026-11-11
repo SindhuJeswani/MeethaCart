@@ -128,7 +128,7 @@ const Navbar = () => {
           </form>
 
           {/* Desktop Right Action Controls */}
-          <div className="flex items-center gap-2 lg:gap-2.5 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 lg:gap-3 shrink-0">
             
             {/* Desktop Home Link */}
             <Link
@@ -156,19 +156,21 @@ const Navbar = () => {
               <span>Browse Items</span>
             </Link>
 
-            {isAuthenticated && user?.role === 'buyer' && (
+            {/* Shopping Cart Icon (visible for guests and buyers) */}
+            {(!user || user.role === 'buyer') && (
               <Link
                 to="/cart"
-                className={`relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium tracking-wide transition-all ${
+                className={`relative inline-flex items-center justify-center p-2 rounded-full transition-all ${
                   isActive('/cart')
-                    ? 'bg-white/20 text-white font-semibold shadow-xs'
-                    : 'text-amber-100/80 hover:text-white hover:bg-white/10'
+                    ? 'bg-white/20 text-white shadow-xs'
+                    : 'text-amber-100/90 hover:text-white hover:bg-white/10'
                 }`}
+                title="Shopping Cart"
+                aria-label="Shopping Cart"
               >
-                <ShoppingCart className="w-3.5 h-3.5 text-amber-300/90 shrink-0" />
-                <span>Cart</span>
+                <ShoppingCart className="w-4 h-4 text-amber-300 shrink-0" />
                 {cartCount > 0 && (
-                  <span className="min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center">
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center shadow-xs">
                     {cartCount}
                   </span>
                 )}
@@ -232,6 +234,17 @@ const Navbar = () => {
                           <LayoutDashboard className="w-4 h-4 text-amber-300 shrink-0" />
                           <span>{user?.role === 'admin' ? 'Admin Portal' : user?.role === 'seller' ? 'Baker Dashboard' : 'My Dashboard'}</span>
                         </Link>
+
+                        {user?.role === 'buyer' && (
+                          <Link
+                            to="/buyer/dashboard"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-amber-100 hover:text-white hover:bg-white/10 transition-colors"
+                          >
+                            <Package className="w-4 h-4 text-amber-300 shrink-0" />
+                            <span>My Orders</span>
+                          </Link>
+                        )}
 
                         {user?.role === 'seller' && (
                           <>
@@ -391,7 +404,7 @@ const Navbar = () => {
                   </Link>
                 ))}
 
-                {isAuthenticated && user?.role === 'buyer' && (
+                {(!user || user?.role === 'buyer') && (
                   <Link
                     to="/cart"
                     onClick={() => setMobileOpen(false)}
@@ -399,7 +412,7 @@ const Navbar = () => {
                   >
                     <span className="flex items-center gap-2">
                       <ShoppingCart className="w-4 h-4 text-amber-300" />
-                      <span>Cart</span>
+                      <span>Shopping Cart</span>
                     </span>
                     {cartCount > 0 && <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-bold">{cartCount}</span>}
                   </Link>

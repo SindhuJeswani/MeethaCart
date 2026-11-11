@@ -157,7 +157,9 @@ const ItemReviews = () => {
 
   const getThumbnail = (img) => {
     if (!img) return fallbackImg;
-    if (img.startsWith('http') || img.startsWith('data:')) return img;
+    if (img.startsWith('http://') || img.startsWith('https://') || img.startsWith('data:')) return img;
+    if (img.startsWith('/uploads/')) return `http://localhost:5000${img}`;
+    if (img.startsWith('uploads/')) return `http://localhost:5000/${img}`;
     return img;
   };
 
@@ -292,6 +294,10 @@ const ItemReviews = () => {
                           src={getThumbnail(item.images?.[0])}
                           alt={item.title}
                           className="w-28 h-28 sm:w-36 sm:h-36 rounded-xl object-cover border border-bakery-200 shadow-xs"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = fallbackImg;
+                          }}
                         />
                         {item.images?.length > 1 && (
                           <div className="flex md:grid md:grid-cols-3 gap-1 max-w-[144px]">
@@ -301,6 +307,10 @@ const ItemReviews = () => {
                                 src={getThumbnail(img)}
                                 alt=""
                                 className="w-8 h-8 rounded-md object-cover border border-bakery-200"
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.src = fallbackImg;
+                                }}
                               />
                             ))}
                           </div>

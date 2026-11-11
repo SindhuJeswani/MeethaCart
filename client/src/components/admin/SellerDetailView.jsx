@@ -43,6 +43,7 @@ import {
   TIMING,
   EASING
 } from '../../animations/motion';
+import fallbackImg from '../../assets/fallback-item.jpg';
 
 const SellerDetailView = ({ sellerId, onStatusChange, isModal = false, onClose }) => {
   const [data, setData] = useState(null);
@@ -601,7 +602,10 @@ const SellerDetailView = ({ sellerId, onStatusChange, isModal = false, onClose }
                 const isToggling = togglingItemId === item._id;
                 const isOutOfStock = item.stock === 0;
                 const isLowStock = item.stock > 0 && item.stock <= 5;
-                const coverImage = item.images?.[0] || 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=600&auto=format&fit=crop';
+                const rawImg = item.images?.[0];
+                const coverImage = rawImg
+                  ? (rawImg.startsWith('http') ? rawImg : `http://localhost:5000${rawImg.startsWith('/') ? '' : '/'}${rawImg}`)
+                  : fallbackImg;
 
                 return (
                   <motion.div
@@ -621,6 +625,10 @@ const SellerDetailView = ({ sellerId, onStatusChange, isModal = false, onClose }
                           alt={item.title}
                           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                           loading="lazy"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = fallbackImg;
+                          }}
                         />
 
                         {/* Top Badges */}

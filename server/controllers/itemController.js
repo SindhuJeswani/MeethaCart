@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js';
 import { Item } from '../models/Item.js';
 import { Category } from '../models/Category.js';
+import { Cart } from '../models/Cart.js';
 
 /**
  * @desc    Get all bakery items with live search & multi-filtering
@@ -24,12 +25,23 @@ export const getItems = async (req, res) => {
 
     const query = { isAvailable: true, approvalStatus: 'Approved', stock: { $gt: 0 } };
 
-    // 1. Keyword search (matches title or description)
+    // 1. Keyword search (matches item title, description, or seller name)
     if (search && search.trim()) {
       const term = search.trim();
+      const matchingSellers = await User.find({
+        role: 'seller',
+        sellerStatus: 'approved',
+        isBlocked: { $ne: true },
+        $or: [
+          { name: { $regex: term, $options: 'i' } },
+          { bakeryName: { $regex: term, $options: 'i' } }
+        ]
+      }).distinct('_id');
+
       query.$or = [
         { title: { $regex: term, $options: 'i' } },
-        { description: { $regex: term, $options: 'i' } }
+        { description: { $regex: term, $options: 'i' } },
+        { seller: { $in: matchingSellers } }
       ];
     }
 
@@ -56,10 +68,11 @@ export const getItems = async (req, res) => {
       }
     }
 
-    // Filter: Milestone 3 only displays items from verified, approved home bakers
+    // Filter: only display items from verified, approved, non-blocked sellers
     const approvedSellers = await User.find({
       role: 'seller',
-      sellerStatus: 'approved'
+      sellerStatus: 'approved',
+      isBlocked: { $ne: true }
     }).distinct('_id');
 
     if (seller && seller.match(/^[0-9a-fA-F]{24}$/)) {
@@ -126,7 +139,7 @@ export const getItems = async (req, res) => {
       items
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: 'Unable to load items. Please try again.' });
   }
 };
 
@@ -240,7 +253,7 @@ export const getMyItems = async (req, res) => {
       items
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: 'Unable to load items. Please try again.' });
   }
 };
 
@@ -270,6 +283,7 @@ export const createItem = async (req, res) => {
 
     const {
       title,
+      name: aliasName,
       description,
       category,
       price,
@@ -282,7 +296,15 @@ export const createItem = async (req, res) => {
       images: imageUrls
     } = req.body;
 
-    if (!title || !description || !category || price === undefined) {
+    const itemTitle = (title || aliasName || '').trim();
+    if (!itemTitle) {
+      return res.status(400).json({
+        success: false,
+        message: 'Item name is required'
+      });
+    }
+
+    if (!description || !category || price === undefined) {
       return res.status(400).json({
         success: false,
         message: 'Title, description, category, and price are required.'
@@ -290,10 +312,10 @@ export const createItem = async (req, res) => {
     }
 
     const numericPrice = Number(price);
-    if (isNaN(numericPrice) || numericPrice < 1) {
+    if (isNaN(numericPrice) || numericPrice <= 0) {
       return res.status(400).json({
         success: false,
-        message: 'Price must be a valid positive number.'
+        message: 'Price must be a positive number'
       });
     }
 
@@ -387,7 +409,7 @@ export const createItem = async (req, res) => {
       item: populatedItem
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: 'Server error. Item was not saved.' });
   }
 };
 
@@ -440,6 +462,7 @@ export const updateItem = async (req, res) => {
 
     const {
       title,
+      name: aliasName,
       description,
       category,
       price,
@@ -453,14 +476,20 @@ export const updateItem = async (req, res) => {
       images: existingImages
     } = req.body;
 
-    if (title) item.title = title.trim();
-    if (description) item.description = description.trim();
+    if (title !== undefined || aliasName !== undefined) {
+      const itemTitle = (title !== undefined ? title : aliasName).trim();
+      if (!itemTitle) {
+        return res.status(400).json({ success: false, message: 'Item name is required' });
+      }
+      item.title = itemTitle;
+    }
+    if (description !== undefined) item.description = description.trim();
     if (category) item.category = category;
 
     if (price !== undefined) {
       const p = Number(price);
-      if (isNaN(p) || p < 1) {
-        return res.status(400).json({ success: false, message: 'Price must be at least 1 PKR.' });
+      if (isNaN(p) || p <= 0) {
+        return res.status(400).json({ success: false, message: 'Price must be a positive number' });
       }
       item.price = p;
     }
@@ -522,7 +551,7 @@ export const updateItem = async (req, res) => {
       item: populatedItem
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: 'Server error. Item was not updated.' });
   }
 };
 
@@ -548,6 +577,9 @@ export const deleteItem = async (req, res) => {
       });
     }
 
+    // Remove from all active carts
+    await Cart.updateMany({}, { $pull: { items: { item: id } } });
+
     await Item.findByIdAndDelete(id);
 
     return res.status(200).json({
@@ -555,7 +587,7 @@ export const deleteItem = async (req, res) => {
       message: `Bakery item '${item.title}' deleted successfully.`
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: 'Server error. Item was not deleted.' });
   }
 };
 

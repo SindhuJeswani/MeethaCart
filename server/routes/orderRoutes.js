@@ -2,6 +2,7 @@ import express from 'express';
 import {
   createOrder,
   getOrderById,
+  getBuyerOrders,
   getSellerOrders,
   acceptOrder,
   rejectOrder,
@@ -16,6 +17,9 @@ router.use(protect);
 
 // Buyer order creation
 router.post('/', authorize('buyer'), createOrder);
+
+// Buyer order history (M6)
+router.get('/my-orders', authorize('buyer'), getBuyerOrders);
 
 // Seller incoming orders list
 router.get('/seller/my-orders', authorize('seller', 'admin'), getSellerOrders);

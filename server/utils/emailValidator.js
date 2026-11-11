@@ -41,6 +41,45 @@ const DISPOSABLE_DOMAINS = new Set([
 ]);
 
 /**
+ * Mapping of common domain typos to their intended domain
+ */
+const COMMON_DOMAIN_TYPOS = {
+  'gmial.com': 'gmail.com',
+  'gmal.com': 'gmail.com',
+  'gamil.com': 'gmail.com',
+  'gmaill.com': 'gmail.com',
+  'gmai.com': 'gmail.com',
+  'gimail.com': 'gmail.com',
+  'hotmial.com': 'hotmail.com',
+  'hotmai.com': 'hotmail.com',
+  'hotmaill.com': 'hotmail.com',
+  'yahooo.com': 'yahoo.com',
+  'yaho.com': 'yahoo.com',
+  'outlok.com': 'outlook.com',
+  'outloo.com': 'outlook.com',
+  'outlock.com': 'outlook.com',
+  'iclud.com': 'icloud.com',
+  'iclou.com': 'icloud.com'
+};
+
+/**
+ * Check if the domain has a known common typo and return the suggested full email
+ * @param {string} email
+ * @returns {string|null} - Suggested email or null
+ */
+export const checkDomainTypo = (email) => {
+  if (!email || !email.includes('@')) return null;
+  const parts = email.trim().toLowerCase().split('@');
+  if (parts.length !== 2) return null;
+  const [localPart, domainPart] = parts;
+  const suggestion = COMMON_DOMAIN_TYPOS[domainPart];
+  if (suggestion) {
+    return `${localPart}@${suggestion}`;
+  }
+  return null;
+};
+
+/**
  * Validates email syntax using standard RFC 5322 regex
  * @param {string} email
  * @returns {boolean}

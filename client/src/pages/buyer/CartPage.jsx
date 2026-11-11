@@ -21,6 +21,7 @@ import {
   X
 } from 'lucide-react';
 import { buttonTap, TIMING, EASING } from '../../animations/motion';
+import fallbackImg from '../../assets/fallback-item.jpg';
 
 const CartPage = () => {
   const { items, cartCount, totalPrice, updateQuantity, updateCartItem, removeItem, clearCart, loading } = useCart();
@@ -226,12 +227,10 @@ const CartPage = () => {
                   const product = entry.item || {};
                   const isEditing = editingItemId === entry._id;
                   const itemTotal = entry.price * entry.quantity;
-                  const imageSrc =
-                    product.images && product.images.length > 0
-                      ? product.images[0].startsWith('http')
-                        ? product.images[0]
-                        : `http://localhost:5000${product.images[0]}`
-                      : 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=500&auto=format&fit=crop';
+                  const rawImage = product.images && product.images.length > 0 ? product.images[0] : null;
+                  const imageSrc = rawImage
+                    ? (rawImage.startsWith('http') ? rawImage : `http://localhost:5000${rawImage.startsWith('/') ? '' : '/'}${rawImage}`)
+                    : fallbackImg;
 
                   return (
                     <motion.div
@@ -248,6 +247,10 @@ const CartPage = () => {
                             src={imageSrc}
                             alt={product.title || 'Bakery Item'}
                             className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover border border-bakery-200 shrink-0 bg-bakery-100"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = fallbackImg;
+                            }}
                           />
                           <div className="space-y-1">
                             <h3 className="font-serif font-bold text-chocolate text-sm sm:text-base">

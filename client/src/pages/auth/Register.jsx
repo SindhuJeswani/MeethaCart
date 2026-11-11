@@ -34,6 +34,9 @@ const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [bakeryName, setBakeryName] = useState(location.state?.bakeryName || '');
   const [phone, setPhone] = useState(location.state?.phone || '');
+  const [address, setAddress] = useState('');
+  const [preferredLanguage, setPreferredLanguage] = useState('English');
+  const [termsAgreed, setTermsAgreed] = useState(true);
   const [error, setError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -73,19 +76,25 @@ const Register = () => {
     }
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match.');
+      setError('Passwords do not match');
       triggerShake();
       return;
     }
 
     if (password.length < 8) {
-      setError('Password must be at least 8 characters long.');
+      setError('The password must be at least 8 characters');
       triggerShake();
       return;
     }
 
     if (role === 'seller' && !bakeryName.trim()) {
-      setError('Bakery name is required for sellers.');
+      setError('Store name is required');
+      triggerShake();
+      return;
+    }
+
+    if (!termsAgreed) {
+      setError('Please agree to the terms and conditions.');
       triggerShake();
       return;
     }
@@ -96,9 +105,14 @@ const Register = () => {
         name: name.trim(),
         email: email.trim(),
         password,
+        confirmPassword,
         role,
         phone: phone.trim(),
-        bakeryName: role === 'seller' ? bakeryName.trim() : ''
+        bakeryName: role === 'seller' ? bakeryName.trim() : '',
+        address: address.trim(),
+        deliveryAddress: address.trim(),
+        preferredLanguage,
+        termsAgreed
       });
 
       if (res?.success) {
@@ -109,21 +123,24 @@ const Register = () => {
             formData: {
               name: name.trim(),
               phone: phone.trim(),
-              bakeryName: role === 'seller' ? bakeryName.trim() : ''
+              bakeryName: role === 'seller' ? bakeryName.trim() : '',
+              address: address.trim(),
+              preferredLanguage
             },
             message: 'A 6-digit verification code has been sent to your email.'
           }
         });
       }
     } catch (err) {
-      const msg = err.response?.data?.message || err.message || 'Registration failed.';
+      const msg = err.response?.data?.message || err.message || 'Server error. Please try again later.';
       const field = err.response?.data?.field;
       if (
         field === 'email' ||
-        msg.includes('email') ||
-        msg.includes('domain') ||
-        msg.includes('Temporary') ||
-        msg.includes('verification code')
+        msg.toLowerCase().includes('email') ||
+        msg.toLowerCase().includes('domain') ||
+        msg.toLowerCase().includes('temporary') ||
+        msg.toLowerCase().includes('code') ||
+        msg.toLowerCase().includes('account with this email')
       ) {
         setEmailError(msg);
       } else {
@@ -222,6 +239,7 @@ const Register = () => {
           variants={shakeVariant}
           animate={isShaking ? 'shake' : 'idle'}
           onSubmit={handleSubmit}
+          noValidate
           className="space-y-4"
         >
           {/* Full Name */}

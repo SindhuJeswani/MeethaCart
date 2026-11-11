@@ -93,7 +93,9 @@ const SellerItems = () => {
 
   const getThumbnail = (img) => {
     if (!img) return fallbackImg;
-    if (img.startsWith('http') || img.startsWith('data:')) return img;
+    if (img.startsWith('http://') || img.startsWith('https://') || img.startsWith('data:')) return img;
+    if (img.startsWith('/uploads/')) return `http://localhost:5000${img}`;
+    if (img.startsWith('uploads/')) return `http://localhost:5000/${img}`;
     return img;
   };
 
@@ -221,6 +223,10 @@ const SellerItems = () => {
                             src={getThumbnail(it.images?.[0])}
                             alt={it.title || 'Bakery Item'}
                             className="w-12 h-12 rounded-xl object-cover border border-bakery-200 shrink-0"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = fallbackImg;
+                            }}
                           />
                           <div>
                             <div className="font-bold text-chocolate">{it.title || 'Untitled Item'}</div>

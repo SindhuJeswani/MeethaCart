@@ -3,6 +3,7 @@ import { User } from '../models/User.js';
 import { otpService } from '../services/otpService.js';
 import {
   isValidEmailFormat,
+  checkDomainTypo,
   isDisposableDomain,
   verifyDomainCanReceiveMail
 } from '../utils/emailValidator.js';
@@ -23,11 +24,18 @@ const formatUserResponse = (user) => ({
   email: user.email,
   role: user.role,
   isVerified: user.isVerified,
+  preferredLanguage: user.preferredLanguage || 'English',
   sellerStatus: user.sellerStatus,
+  isBlocked: Boolean(user.isBlocked || user.sellerStatus === 'blocked'),
+  blockReason: user.blockReason || null,
+  rejectionReason: user.rejectionReason || null,
+  approvedAt: user.approvedAt || null,
   phone: user.phone || '',
   bakeryName: user.bakeryName || '',
+  bakeryCategories: user.bakeryCategories || [],
   bio: user.bio || '',
   address: user.address || '',
+  storeAddress: user.storeAddress || '',
   avatar: user.avatar || ''
 });
 
@@ -38,12 +46,43 @@ const formatUserResponse = (user) => ({
  */
 export const register = async (req, res) => {
   try {
-    const { name, email, password, role, bakeryName, phone } = req.body;
+    const {
+      name,
+      email,
+      password,
+      confirmPassword,
+      role,
+      bakeryName,
+      storeName,
+      phone,
+      preferredLanguage,
+      address,
+      deliveryAddress,
+      storeAddress,
+      bio,
+      bakeryCategories,
+      avatar,
+      termsAgreed
+    } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
         message: 'Name, email, and password are required.'
+      });
+    }
+
+    if (confirmPassword !== undefined && password !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Passwords do not match'
+      });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: 'The password must be at least 8 characters'
       });
     }
 
@@ -62,17 +101,36 @@ export const register = async (req, res) => {
       });
     }
 
-    // Step 1: Format & syntax check
+    const effectiveBakeryName = (bakeryName || storeName || '').trim();
+    if (role === 'seller' && !effectiveBakeryName) {
+      return res.status(400).json({
+        success: false,
+        message: 'Store name is required'
+      });
+    }
+
+    // Step 1: Format & syntax check (trim spaces, lowercase, valid syntax)
     const normalizedEmail = email.toLowerCase().trim();
     if (!isValidEmailFormat(normalizedEmail)) {
       return res.status(400).json({
         success: false,
         field: 'email',
-        message: 'Please enter a valid email address.'
+        message: 'This is not a valid email address. Please check it and try again.'
       });
     }
 
-    // Step 2: Already registered check
+    // Step 2: Common typos of popular domains
+    const suggestedEmail = checkDomainTypo(normalizedEmail);
+    if (suggestedEmail) {
+      return res.status(400).json({
+        success: false,
+        field: 'email',
+        suggestedEmail,
+        message: `This email looks wrong. Did you mean ${suggestedEmail}?`
+      });
+    }
+
+    // Step 3: Already registered check
     const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser && existingUser.isVerified) {
       return res.status(400).json({
@@ -82,43 +140,32 @@ export const register = async (req, res) => {
       });
     }
 
-    // Step 3: Domain check (DNS MX with A fallback, 5s timeout)
+    // Step 4: Domain check (DNS MX with fallback to A, ~5s timeout)
     const domain = normalizedEmail.split('@')[1];
     const domainCheck = await verifyDomainCanReceiveMail(domain, 5000);
     if (!domainCheck.valid) {
       return res.status(400).json({
         success: false,
         field: 'email',
-        message: 'This email domain does not exist or cannot receive emails. Please check your email address.'
+        message: 'This email does not exist or cannot receive emails. Please enter a correct email address.'
       });
     }
 
-    // Step 4: Disposable domain check
+    // Step 5: Disposable domain check
     if (isDisposableDomain(domain)) {
       return res.status(400).json({
         success: false,
         field: 'email',
-        message: 'Temporary email addresses are not allowed.'
-      });
-    }
-
-    if (password.length < 8) {
-      return res.status(400).json({
-        success: false,
-        message: 'Password must be at least 8 characters long.'
+        message: 'Temporary email addresses are not allowed. Please use your real email.'
       });
     }
 
     const assignedRole = role;
+    const finalLanguage = preferredLanguage === 'Urdu' ? 'Urdu' : 'English';
+    const finalAddress = (deliveryAddress || address || '').trim();
+    const finalStoreAddress = (storeAddress || address || '').trim();
 
-    if (assignedRole === 'seller' && (!bakeryName || !bakeryName.trim())) {
-      return res.status(400).json({
-        success: false,
-        message: 'Bakery name is required for sellers.'
-      });
-    }
-
-    // Step 5: Send OTP FIRST before creating / updating any database record
+    // Step 6: Send OTP FIRST before creating / updating any database record
     let otpResult;
     try {
       otpResult = await otpService.createAndSendOtp(normalizedEmail, 'signup_verification');
@@ -132,7 +179,7 @@ export const register = async (req, res) => {
           ? 'Email service is temporarily unavailable. Please try again later.'
           : (mailErr.message?.includes('Too many requests')
             ? mailErr.message
-            : 'We could not send a verification code to this email. Please check that the email address is correct.')
+            : 'We could not send a code to this email. This email address looks wrong or does not exist.')
       });
     }
 
@@ -141,8 +188,14 @@ export const register = async (req, res) => {
       existingUser.name = name.trim();
       existingUser.password = password;
       existingUser.role = assignedRole;
-      existingUser.bakeryName = bakeryName ? bakeryName.trim() : '';
+      existingUser.preferredLanguage = finalLanguage;
+      existingUser.bakeryName = assignedRole === 'seller' ? effectiveBakeryName : '';
       existingUser.phone = phone ? phone.trim() : '';
+      if (finalAddress) existingUser.address = finalAddress;
+      if (finalStoreAddress) existingUser.storeAddress = finalStoreAddress;
+      if (bio) existingUser.bio = bio.trim();
+      if (avatar) existingUser.avatar = avatar;
+      if (Array.isArray(bakeryCategories)) existingUser.bakeryCategories = bakeryCategories;
       await existingUser.save();
     } else {
       await User.create({
@@ -150,8 +203,14 @@ export const register = async (req, res) => {
         email: normalizedEmail,
         password,
         role: assignedRole,
-        bakeryName: bakeryName ? bakeryName.trim() : '',
+        preferredLanguage: finalLanguage,
+        bakeryName: assignedRole === 'seller' ? effectiveBakeryName : '',
         phone: phone ? phone.trim() : '',
+        address: finalAddress,
+        storeAddress: finalStoreAddress,
+        bio: bio ? bio.trim() : '',
+        avatar: avatar || '',
+        bakeryCategories: Array.isArray(bakeryCategories) ? bakeryCategories : [],
         isVerified: false,
         sellerStatus: assignedRole === 'seller' ? 'pending' : 'approved'
       });
@@ -168,7 +227,7 @@ export const register = async (req, res) => {
     console.error('[Register Error]:', error);
     return res.status(500).json({
       success: false,
-      message: error.message || 'Server error during registration.'
+      message: 'Server error. Please try again later.'
     });
   }
 };
@@ -243,13 +302,34 @@ export const login = async (req, res) => {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
+
+    // 1. Format check
+    if (!isValidEmailFormat(normalizedEmail)) {
+      return res.status(400).json({
+        success: false,
+        field: 'email',
+        message: 'This is not a valid email address. Please check it and try again.'
+      });
+    }
+
+    // 2. Domain typo check
+    const typoSuggestion = checkDomainTypo(normalizedEmail);
+    if (typoSuggestion) {
+      return res.status(400).json({
+        success: false,
+        field: 'email',
+        suggestedEmail: typoSuggestion,
+        message: `This email looks wrong. Did you mean ${typoSuggestion}?`
+      });
+    }
+
     const user = await User.findOne({ email: normalizedEmail }).select('+password');
 
     if (!user) {
       return res.status(401).json({
         success: false,
         field: 'email',
-        message: 'No account found with this email address.'
+        message: 'This email is not registered. Please check your email or create an account.'
       });
     }
 
@@ -257,10 +337,33 @@ export const login = async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password.'
+        message: 'Invalid email or password'
       });
     }
 
+    // Check if account is blocked (for both buyers and sellers)
+    if (user.isBlocked || user.sellerStatus === 'blocked') {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account has been blocked. Please contact the admin'
+      });
+    }
+
+    // Check if seller account status
+    if (user.role === 'seller') {
+      if (user.sellerStatus === 'pending') {
+        return res.status(403).json({
+          success: false,
+          message: 'Your seller account is awaiting admin approval'
+        });
+      }
+      if (user.sellerStatus === 'rejected') {
+        return res.status(403).json({
+          success: false,
+          message: 'Your seller registration was rejected'
+        });
+      }
+    }
 
     // Check account verification
     if (!user.isVerified) {
@@ -273,14 +376,6 @@ export const login = async (req, res) => {
         message: 'Your account is not verified yet. A fresh verification OTP has been sent to your email.',
         cooldownSeconds: unverifiedOtp.cooldownSeconds,
         devOtp: unverifiedOtp.devOtp
-      });
-    }
-
-    // Check if seller is blocked
-    if (user.role === 'seller' && user.sellerStatus === 'blocked') {
-      return res.status(403).json({
-        success: false,
-        message: 'Your seller account has been suspended by the Admin. Please contact support.'
       });
     }
 
@@ -297,7 +392,7 @@ export const login = async (req, res) => {
     console.error('[Login Error]:', error);
     return res.status(500).json({
       success: false,
-      message: error.message || 'Server error during login.'
+      message: 'Server error. Please try again later.'
     });
   }
 };
@@ -416,17 +511,28 @@ export const forgotPassword = async (req, res) => {
       return res.status(400).json({
         success: false,
         field: 'email',
-        message: 'Please enter a valid email address.'
+        message: 'This is not a valid email address. Please check it and try again.'
       });
     }
 
-    // 2. Check if user exists
+    // 2. Domain typo check
+    const typoSuggestion = checkDomainTypo(normalizedEmail);
+    if (typoSuggestion) {
+      return res.status(400).json({
+        success: false,
+        field: 'email',
+        suggestedEmail: typoSuggestion,
+        message: `This email looks wrong. Did you mean ${typoSuggestion}?`
+      });
+    }
+
+    // 3. Check if user exists
     const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
       return res.status(404).json({
         success: false,
         field: 'email',
-        message: 'No account found with this email address.'
+        message: 'This email is not registered. Please enter the email you used to sign up.'
       });
     }
 
@@ -456,7 +562,7 @@ export const forgotPassword = async (req, res) => {
         ? 'Email service is temporarily unavailable. Please try again later.'
         : (error.message?.includes('Too many requests')
           ? error.message
-          : 'We could not send a verification code to this email. Please check that the email address is correct.')
+          : 'We could not send a code to this email. This email address looks wrong or does not exist.')
     });
   }
 };

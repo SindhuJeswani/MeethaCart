@@ -52,7 +52,14 @@ const Login = () => {
     } catch (err) {
       const msg = err.response?.data?.message || err.message || 'Invalid credentials.';
       const field = err.response?.data?.field;
-      if (field === 'email' || msg.includes('No account found')) {
+      if (
+        field === 'email' ||
+        msg.toLowerCase().includes('email') ||
+        msg.toLowerCase().includes('not registered') ||
+        msg.toLowerCase().includes('no account found') ||
+        msg.toLowerCase().includes('not a valid') ||
+        msg.toLowerCase().includes('looks wrong')
+      ) {
         setEmailError(msg);
       } else {
         setError(msg);
@@ -99,6 +106,7 @@ const Login = () => {
         variants={shakeVariant}
         animate={isShaking ? 'shake' : 'idle'}
         onSubmit={handleSubmit}
+        noValidate
         className="space-y-5"
       >
         {/* Email Address */}

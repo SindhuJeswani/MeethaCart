@@ -23,7 +23,7 @@ const getCartSummary = (cart) => {
 
       if (liveItem.approvalStatus !== 'Approved') {
         unavailableReason = 'Item is not approved';
-      } else if (sellerStatus === 'blocked') {
+      } else if (seller?.isBlocked || sellerStatus === 'blocked') {
         unavailableReason = 'Seller is blocked';
       } else if (sellerStatus && sellerStatus !== 'approved') {
         unavailableReason = 'Seller is not approved';
@@ -83,7 +83,7 @@ export const getCart = async (req, res) => {
       path: 'items.item',
       populate: {
         path: 'seller',
-        select: 'name bakeryName phone address sellerStatus'
+        select: 'name bakeryName phone address sellerStatus isBlocked'
       }
     });
 
@@ -143,6 +143,7 @@ export const addToCart = async (req, res) => {
       !item.isAvailable ||
       item.approvalStatus !== 'Approved' ||
       item.stock <= 0 ||
+      item.seller?.isBlocked ||
       item.seller?.sellerStatus !== 'approved'
     ) {
       return res.status(400).json({

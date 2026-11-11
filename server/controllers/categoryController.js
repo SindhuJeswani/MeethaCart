@@ -59,7 +59,7 @@ export const createCategory = async (req, res) => {
     if (!name || !name.trim()) {
       return res.status(400).json({
         success: false,
-        message: 'Category name is required.'
+        message: 'Category name is required'
       });
     }
 
@@ -88,7 +88,10 @@ export const createCategory = async (req, res) => {
       category
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({
+      success: false,
+      message: 'Server error. Changes were not saved.'
+    });
   }
 };
 
@@ -110,20 +113,29 @@ export const updateCategory = async (req, res) => {
       });
     }
 
-    if (name && name.trim() !== category.name) {
-      const trimmedName = name.trim();
-      const existing = await Category.findOne({
-        name: { $regex: new RegExp(`^${trimmedName}$`, 'i') },
-        _id: { $ne: id }
-      });
-
-      if (existing) {
+    if (name !== undefined) {
+      if (!name || !name.trim()) {
         return res.status(400).json({
           success: false,
-          message: 'Another category with this name already exists.'
+          message: 'Category name is required'
         });
       }
-      category.name = trimmedName;
+
+      if (name.trim() !== category.name) {
+        const trimmedName = name.trim();
+        const existing = await Category.findOne({
+          name: { $regex: new RegExp(`^${trimmedName}$`, 'i') },
+          _id: { $ne: id }
+        });
+
+        if (existing) {
+          return res.status(400).json({
+            success: false,
+            message: 'Another category with this name already exists.'
+          });
+        }
+        category.name = trimmedName;
+      }
     }
 
     if (description !== undefined) category.description = description.trim();
@@ -138,7 +150,10 @@ export const updateCategory = async (req, res) => {
       category
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({
+      success: false,
+      message: 'Server error. Changes were not saved.'
+    });
   }
 };
 
@@ -164,7 +179,7 @@ export const deleteCategory = async (req, res) => {
     if (linkedItemCount > 0) {
       return res.status(400).json({
         success: false,
-        message: `Cannot delete '${category.name}' because ${linkedItemCount} bakery item(s) are currently attached to it. Please reassign or delete those items first.`
+        message: 'This category is in use and cannot be deleted'
       });
     }
 
@@ -175,6 +190,9 @@ export const deleteCategory = async (req, res) => {
       message: `Category '${category.name}' deleted successfully.`
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({
+      success: false,
+      message: 'Server error. Changes were not saved.'
+    });
   }
 };

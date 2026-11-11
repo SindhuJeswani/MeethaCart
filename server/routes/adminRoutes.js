@@ -6,6 +6,8 @@ import {
   getSellerDetails,
   updateSellerStatus,
   getUsers,
+  blockUser,
+  unblockUser,
   getAdminOrders,
   deleteUser,
   updateUserRole,
@@ -37,12 +39,12 @@ router.patch('/items/:id/reject', rejectItem);
 
 // User management directory
 router.get('/users', getUsers);
+router.patch('/users/:id/block', blockUser);
+router.patch('/users/:id/unblock', unblockUser);
 router.delete('/users/:id', deleteUser);
 router.patch('/users/:id/role', updateUserRole);
 
-// Orders monitoring (Milestone 4 feature - locked behind feature flag)
-if (FEATURES.ORDERS_API) {
-  router.get('/orders', getAdminOrders);
-}
+// Orders monitoring (Milestone 2 marketplace monitoring)
+router.get('/orders', getAdminOrders);
 
 export default router;
