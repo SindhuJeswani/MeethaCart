@@ -120,7 +120,7 @@ const ItemCard = ({ item }) => {
       exit={{ opacity: 0, scale: 0.94 }}
       whileHover={cardHover}
       transition={{ duration: TIMING.normal, ease: EASING.out }}
-      className="group card-bakery overflow-hidden flex flex-col h-full"
+      className="item-card group card-bakery overflow-hidden flex flex-col h-full"
     >
       {/* Image container with smooth zoom on hover */}
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-bakery-100">
@@ -149,9 +149,9 @@ const ItemCard = ({ item }) => {
         )}
 
         {/* Badges */}
-        <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5 pointer-events-none">
+        <div className="absolute top-2.5 left-2.5 flex flex-col items-start gap-1.5 pointer-events-none max-w-[calc(100%-1.25rem)]">
           {categoryName && (
-            <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-white/95 text-chocolate shadow-[0_2px_8px_rgba(74,44,26,0.06)] border border-amber-950/[0.08] backdrop-blur-xs">
+            <span className="max-w-full truncate whitespace-nowrap px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-white/95 text-chocolate shadow-[0_2px_8px_rgba(74,44,26,0.06)] border border-amber-950/[0.08] backdrop-blur-xs">
               {categoryName}
             </span>
           )}
@@ -169,7 +169,7 @@ const ItemCard = ({ item }) => {
       </div>
 
       {/* Card Body */}
-      <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between gap-3.5">
+      <div className="p-3 sm:p-4 flex-1 flex flex-col gap-3">
         <div>
           {/* Seller / Location */}
           <Link
@@ -182,7 +182,7 @@ const ItemCard = ({ item }) => {
           </Link>
 
           {/* Item title */}
-          <Link to={`/items/${item?._id}`} className="block mt-1.5">
+          <Link to={`/items/${item?._id}`} className="block mt-2">
             <h3 className="font-serif font-bold text-chocolate text-sm sm:text-base leading-snug line-clamp-2 group-hover:text-caramel transition-colors">
               {item?.title}
             </h3>
@@ -190,39 +190,41 @@ const ItemCard = ({ item }) => {
         </div>
 
         {/* Pricing & Details Link */}
-        <div className="pt-3 border-t border-amber-950/[0.06] flex items-center justify-between gap-2 mt-auto">
-          <div>
+        <div className="pt-3 border-t border-amber-950/[0.06] space-y-3 mt-auto">
+          <div className="flex items-center justify-between gap-2">
             <div className="text-sm sm:text-base font-serif font-bold text-chocolate leading-none">
               Rs. {item?.price ? item.price.toLocaleString() : '0'}
             </div>
             {item?.preparationTimeHours ? (
-              <span className="text-[10px] text-bakery-500 font-medium flex items-center gap-1 mt-1">
+              <span className="text-[10px] text-bakery-500 font-medium flex items-center gap-1">
                 <Clock className="w-2.5 h-2.5 text-caramel" />
                 <span>{item.preparationTimeHours} h prep</span>
               </span>
             ) : null}
           </div>
 
-          <div className="flex items-center gap-1.5">
-            <motion.div whileHover={{ scale: 1.03 }} whileTap={buttonTap}>
+          <div className="flex items-center gap-2">
+            <motion.div className="flex-1 min-w-0" whileHover={{ scale: 1.02 }} whileTap={buttonTap}>
               <Link
                 to={`/items/${item?._id}`}
-                className="btn-primary text-[10px] sm:text-xs py-2 px-2 sm:px-3 font-bold rounded-xl whitespace-nowrap shadow-xs hover:shadow-sm"
+                className="btn-primary w-full min-w-0 text-[10px] sm:text-xs py-2 px-2 sm:px-3 font-bold rounded-xl whitespace-nowrap shadow-xs hover:shadow-sm"
               >
-                <span>View item</span>
+                <span className="sm:hidden">View</span>
+                <span className="hidden sm:inline">View item</span>
               </Link>
             </motion.div>
             {isBuyerOrGuest && (
               <motion.button
+                className="btn-secondary flex-1 min-w-0 text-[10px] sm:text-xs py-2 px-2 sm:px-3 font-bold rounded-xl whitespace-nowrap flex items-center justify-center gap-1 disabled:opacity-60 disabled:cursor-not-allowed"
                 whileHover={!isUnavailable ? { scale: 1.03 } : undefined}
                 whileTap={!isUnavailable ? buttonTap : undefined}
                 type="button"
                 disabled={isUnavailable || isAdding}
                 onClick={handleAddToCart}
-                className="btn-secondary text-[10px] sm:text-xs py-2 px-2 sm:px-3 font-bold rounded-xl whitespace-nowrap flex items-center gap-1 disabled:opacity-60 disabled:cursor-not-allowed"
+                aria-label={isUnavailable ? 'Item unavailable' : isAdding ? 'Adding item to cart' : 'Add item to cart'}
               >
                 <ShoppingCart className="w-3 h-3" />
-                <span>{isUnavailable ? 'Unavailable' : isAdding ? 'Adding...' : 'Add to Cart'}</span>
+                <span className="hidden sm:inline">{isUnavailable ? 'Unavailable' : isAdding ? 'Adding...' : 'Add to Cart'}</span>
               </motion.button>
             )}
           </div>

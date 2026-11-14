@@ -152,6 +152,19 @@ h1, h2, h3, h4, h5, h6,
   box-shadow: var(--shadow-card) !important;
 }
 
+.item-card {
+  border: 1px solid #E5DED2 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 2px 8px rgba(28, 43, 94, 0.08) !important;
+}
+
+.item-card .btn-primary,
+.item-card .btn-secondary {
+  border-radius: 9px !important;
+  border-width: 1px !important;
+  box-shadow: 0 2px 4px rgba(28, 43, 94, 0.12) !important;
+}
+
 /* ─── Chips & Badges ─── */
 .chip {
   background-color: #FBF7EE !important;

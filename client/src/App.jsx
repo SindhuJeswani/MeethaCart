@@ -37,6 +37,7 @@ import ResetPassword from './pages/auth/ResetPassword';
 import BrowseItems from './pages/buyer/BrowseItems';
 import ItemDetails from './pages/buyer/ItemDetails';
 import SellerPublicProfile from './pages/buyer/SellerPublicProfile';
+import LegalPage from './pages/LegalPage';
 
 // Protected Buyer Pages (Milestone 3)
 import BuyerDashboard from './pages/buyer/BuyerDashboard';
@@ -130,6 +131,8 @@ function AppContent() {
                 <Route path="/verify-otp" element={<VerifyOtp />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/terms" element={<LegalPage type="terms" />} />
+                <Route path="/privacy" element={<LegalPage type="privacy" />} />
                 <Route path="/seller/:id" element={<SellerPublicProfile />} />
                 <Route path="/items" element={<BrowseItems />} />
                 <Route path="/items/:id" element={<ItemDetails />} />

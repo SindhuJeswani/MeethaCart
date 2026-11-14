@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import mongoose from 'mongoose';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { connectDB } from '../config/db.js';
@@ -16,11 +17,17 @@ export const seedDatabase = async () => {
   console.log('🌱 Starting MeethaCart Milestone 3 Seeder (Karachi Dataset)...');
   console.log('🌱 =======================================================\n');
 
-  await connectDB();
-
   const adminEmail = (process.env.ADMIN_EMAIL || 'admin@meethacart.pk').toLowerCase().trim();
   const adminPassword = process.env.ADMIN_PASSWORD || 'Password123!';
   const defaultPassword = 'Password123!';
+
+  if (adminPassword.length < 8) {
+    throw new Error('ADMIN_PASSWORD must be at least 8 characters before seeding.');
+  }
+
+  if (mongoose.connection.readyState !== 1) {
+    await connectDB();
+  }
 
   // 1. Clear previous collections
   await User.deleteMany({});
